@@ -58,13 +58,12 @@ jobs:
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
-
         with:
-          images: ghcr.io/moontechlab/lunatv
+          images: ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv
           tags: |
             type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable={{is_default_branch}}
 
-      - name: Build and push by digest
+      - name: Build 和 push by digest
         id: build
         uses: docker/build-push-action@v5
         with:
@@ -72,8 +71,8 @@ jobs:
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          tags: ghcr.io/moontechlab/lunatv:${{ github.event.inputs.tag || 'latest' }}
-          outputs: type=image,name=ghcr.io/moontechlab/lunatv,name-canonical=true,push=true
+          tags: ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv:${{ github.event.inputs.tag || 'latest' }}
+          outputs: type=image,name=ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -115,11 +114,11 @@ jobs:
         id: lowercase
         run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
-      - name: Create manifest list and push
+      - name: Create manifest list 和 push
         working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create -t ghcr.io/moontechlab/lunatv:${{ github.event.inputs.tag || 'latest' }} \
-            $(printf 'ghcr.io/moontechlab/lunatv@sha256:%s ' *)
+          docker buildx imagetools create -t ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv:${{ github.event.inputs.tag || 'latest' }} \
+            $(printf 'ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv@sha256:%s ' *)
 
   cleanup-refresh:
     runs-on: ubuntu-latest
