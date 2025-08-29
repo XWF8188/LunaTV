@@ -2,12 +2,12 @@
 
 'use client';
 
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Heart } from 'lucide-react';
 import Artplayer from 'artplayer';
 import artplayerPluginDanmuku from 'artplayer-plugin-danmuku';
 import Hls from 'hls.js';
-import { Heart } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useRef, useState } from 'react';
 
 
 import {
@@ -84,6 +84,10 @@ function PlayPageClient() {
 
   // 跳过检查的时间间隔控制
   const lastSkipCheckRef = useRef(0);
+  
+  // 进度条拖拽状态管理
+  const isDraggingProgressRef = useRef(false);
+  const seekResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 去广告开关（从 localStorage 继承，默认 true）
   const [blockAdEnabled, setBlockAdEnabled] = useState<boolean>(() => {
@@ -331,7 +335,7 @@ function PlayPageClient() {
           
           // 仅测试连通性和响应时间
           const startTime = performance.now();
-          const response = await fetch(episodeUrl, { 
+          await fetch(episodeUrl, { 
             method: 'HEAD', 
             mode: 'no-cors',
             signal: AbortSignal.timeout(3000) // 3秒超时
@@ -614,7 +618,6 @@ function PlayPageClient() {
       try {
         const memInfo = (performance as any).memory;
         const usedJSHeapSize = memInfo.usedJSHeapSize;
-        const totalJSHeapSize = memInfo.totalJSHeapSize;
         const heapLimit = memInfo.jsHeapSizeLimit;
         
         // 计算内存使用率
@@ -1979,245 +1982,6 @@ function PlayPageClient() {
               }
             },
           },
-          {
-            name: '弹幕字号',
-            html: '弹幕字号',
-            icon: '<text x="50%" y="50%" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">字</text>',
-            selector: [
-              {
-                html: '小号 (18px)',
-                value: 18,
-              },
-              {
-                html: '默认 (25px)',
-                value: 25,
-                default: true,
-              },
-              {
-                html: '大号 (32px)',
-                value: 32,
-              },
-              {
-                html: '特大 (40px)',
-                value: 40,
-              },
-            ],
-            onSelect: function (item) {
-              if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-                try {
-                  // 显示处理中状态
-                  artPlayerRef.current.notice.show = '弹幕字号调整中...';
-                  
-                  // 增加防抖延迟，优化性能
-                  if ((window as any).danmakuConfigTimeout) {
-                    clearTimeout((window as any).danmakuConfigTimeout);
-                  }
-                  (window as any).danmakuConfigTimeout = setTimeout(() => {
-                    if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-                      const currentFontSize = artPlayerRef.current.plugins.artplayerPluginDanmuku.fontSize;
-                      
-                      // 只有字体大小真正改变时才更新（配置变更会自动触发保存）
-                      if (currentFontSize !== item.value) {
-                        artPlayerRef.current.plugins.artplayerPluginDanmuku.config({
-                          fontSize: item.value
-                        });
-                        artPlayerRef.current.notice.show = `弹幕字号已调整: ${item.html}`;
-                      }
-                    }
-                  }, 200); // 增加到200ms
-                } catch (error) {
-                  console.error('调整弹幕字号失败:', error);
-                  artPlayerRef.current.notice.show = '弹幕字号调整失败';
-                }
-              }
-              return item.html;
-            },
-          },
-          {
-            name: '弹幕区域',
-            html: '弹幕区域',
-            icon: '<text x="50%" y="50%" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">区</text>',
-            selector: [
-              {
-                html: '1/4屏幕',
-                value: [10, '75%'], // 顶部10px，底部75%边距
-                default: true,
-              },
-              {
-                html: '1/2屏幕',
-                value: [10, '50%'], // 顶部10px，底部50%边距
-              },
-              {
-                html: '3/4屏幕',
-                value: [10, '25%'], // 顶部10px，底部25%边距
-              },
-              {
-                html: '全屏',
-                value: [10, '5%'], // 顶部10px，底部5%边距（留点安全区域）
-              },
-            ],
-            onSelect: function (item) {
-              if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-                try {
-                  artPlayerRef.current.plugins.artplayerPluginDanmuku.config({
-                    margin: item.value
-                  });
-                  artPlayerRef.current.notice.show = `弹幕区域已调整: ${item.html}`;
-                } catch (error) {
-                  console.error('调整弹幕区域失败:', error);
-                  artPlayerRef.current.notice.show = '弹幕区域调整失败';
-                }
-              }
-              return item.html;
-            },
-          },
-          {
-            name: '弹幕速度',
-            html: '弹幕速度',
-            icon: '<text x="50%" y="50%" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">速</text>',
-            selector: [
-              {
-                html: '极慢 (10秒)',
-                value: 10,
-              },
-              {
-                html: '慢速 (7秒)',
-                value: 7,
-              },
-              {
-                html: '默认 (5秒)',
-                value: 5,
-                default: true,
-              },
-              {
-                html: '快速 (3秒)',
-                value: 3,
-              },
-              {
-                html: '极快 (1秒)',
-                value: 1,
-              },
-            ],
-            onSelect: function (item) {
-              if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-                try {
-                  artPlayerRef.current.plugins.artplayerPluginDanmuku.config({
-                    speed: item.value
-                  });
-                  artPlayerRef.current.notice.show = `弹幕速度已调整: ${item.html}`;
-                } catch (error) {
-                  console.error('调整弹幕速度失败:', error);
-                  artPlayerRef.current.notice.show = '弹幕速度调整失败';
-                }
-              }
-              return item.html;
-            },
-          },
-          {
-            name: '弹幕透明度',
-            html: '弹幕透明度',
-            icon: '<text x="50%" y="50%" font-size="11" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">透</text>',
-            selector: [
-              {
-                html: '完全透明 (10%)',
-                value: 0.1,
-              },
-              {
-                html: '半透明 (30%)',
-                value: 0.3,
-              },
-              {
-                html: '较淡 (50%)',
-                value: 0.5,
-              },
-              {
-                html: '默认 (80%)',
-                value: 0.8,
-                default: true,
-              },
-              {
-                html: '完全不透明 (100%)',
-                value: 1.0,
-              },
-            ],
-            onSelect: function (item) {
-              if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-                try {
-                  artPlayerRef.current.plugins.artplayerPluginDanmuku.config({
-                    opacity: item.value
-                  });
-                  artPlayerRef.current.notice.show = `弹幕透明度已调整: ${item.html}`;
-                } catch (error) {
-                  console.error('调整弹幕透明度失败:', error);
-                  artPlayerRef.current.notice.show = '弹幕透明度调整失败';
-                }
-              }
-              return item.html;
-            },
-          },
-          {
-            name: '按类型蒙蔽',
-            html: '按类型蒙蔽',
-            icon: '<text x="50%" y="50%" font-size="11" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">蒙</text>',
-            selector: [
-              {
-                html: '显示全部',
-                value: [0, 1, 2], // 显示所有类型
-                default: true,
-              },
-              {
-                html: '蒙蔽滚动',
-                value: [1, 2], // 只显示顶部和底部
-              },
-              {
-                html: '蒙蔽顶部',
-                value: [0, 2], // 只显示滚动和底部
-              },
-              {
-                html: '蒙蔽底部',
-                value: [0, 1], // 只显示滚动和顶部
-              },
-              {
-                html: '只显示滚动',
-                value: [0], // 只显示滚动
-              },
-            ],
-            onSelect: function (item) {
-              if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-                try {
-                  artPlayerRef.current.plugins.artplayerPluginDanmuku.config({
-                    modes: item.value
-                  });
-                  artPlayerRef.current.notice.show = `弹幕类型已调整: ${item.html}`;
-                } catch (error) {
-                  console.error('调整弹幕类型失败:', error);
-                  artPlayerRef.current.notice.show = '弹幕类型调整失败';
-                }
-              }
-              return item.html;
-            },
-          },
-          {
-            name: '防重叠',
-            html: '防重叠',
-            icon: '<text x="50%" y="50%" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">防</text>',
-            switch: true,
-            onSwitch: function (item) {
-              const nextState = !item.switch;
-              if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-                try {
-                  artPlayerRef.current.plugins.artplayerPluginDanmuku.config({
-                    antiOverlap: nextState
-                  });
-                  artPlayerRef.current.notice.show = nextState ? '弹幕防重叠已开启' : '弹幕防重叠已关闭';
-                } catch (error) {
-                  console.error('调整弹幕防重叠失败:', error);
-                  artPlayerRef.current.notice.show = '弹幕防重叠调整失败';
-                }
-              }
-              return nextState;
-            },
-          },
         ],
         // 控制栏配置
         controls: [
@@ -2324,11 +2088,35 @@ function PlayPageClient() {
           }
         });
 
-        // 监听播放进度跳转，触发弹幕重置
-        artPlayerRef.current.on('seek', (currentTime: number) => {
+        // 监听播放进度跳转，优化弹幕重置
+        artPlayerRef.current.on('seek', () => {
+          if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
+            // 清除之前的重置计时器
+            if (seekResetTimeoutRef.current) {
+              clearTimeout(seekResetTimeoutRef.current);
+            }
+            
+            // 延迟重置弹幕，避免拖拽过程中频繁重置
+            seekResetTimeoutRef.current = setTimeout(() => {
+              if (!isDraggingProgressRef.current && artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
+                artPlayerRef.current.plugins.artplayerPluginDanmuku.reset();
+                console.log('进度跳转，弹幕已重置');
+              }
+            }, 200); // 200ms延迟
+          }
+        });
+
+        // 监听拖拽状态
+        artPlayerRef.current.on('video:seeking', () => {
+          isDraggingProgressRef.current = true;
+        });
+
+        artPlayerRef.current.on('video:seeked', () => {
+          isDraggingProgressRef.current = false;
+          // 拖拽结束后再重置弹幕
           if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
             artPlayerRef.current.plugins.artplayerPluginDanmuku.reset();
-            console.log('进度跳转，弹幕已重置');
+            console.log('拖拽结束，弹幕已重置');
           }
         });
 
@@ -2411,50 +2199,7 @@ function PlayPageClient() {
         setIsVideoLoading(false);
       });
 
-      // 监听视频时间更新事件，实现跳过片头片尾
-      artPlayerRef.current.on('video:timeupdate', () => {
-        if (!skipConfigRef.current.enable) return;
-
-        const currentTime = artPlayerRef.current.currentTime || 0;
-        const duration = artPlayerRef.current.duration || 0;
-        const now = Date.now();
-
-        // 限制跳过检查频率为1.5秒一次
-        if (now - lastSkipCheckRef.current < 1500) return;
-        lastSkipCheckRef.current = now;
-
-        // 跳过片头
-        if (
-          skipConfigRef.current.intro_time > 0 &&
-          currentTime < skipConfigRef.current.intro_time
-        ) {
-          artPlayerRef.current.currentTime = skipConfigRef.current.intro_time;
-          artPlayerRef.current.notice.show = `已跳过片头 (${formatTime(
-            skipConfigRef.current.intro_time
-          )})`;
-        }
-
-        // 跳过片尾
-        if (
-          skipConfigRef.current.outro_time < 0 &&
-          duration > 0 &&
-          currentTime >
-          artPlayerRef.current.duration + skipConfigRef.current.outro_time
-        ) {
-          if (
-            currentEpisodeIndexRef.current <
-            (detailRef.current?.episodes?.length || 1) - 1
-          ) {
-            handleNextEpisode();
-          } else {
-            artPlayerRef.current.pause();
-          }
-          artPlayerRef.current.notice.show = `已跳过片尾 (${formatTime(
-            skipConfigRef.current.outro_time
-          )})`;
-        }
-      });
-
+      // 监听播放器错误
       artPlayerRef.current.on('error', (err: any) => {
         console.error('播放器错误:', err);
         if (artPlayerRef.current.currentTime > 0) {
@@ -2473,15 +2218,61 @@ function PlayPageClient() {
         }
       });
 
+      // 合并的timeupdate监听器 - 处理跳过片头片尾和保存进度
       artPlayerRef.current.on('video:timeupdate', () => {
-        const now = Date.now();
-        let interval = 5000;
-        if (process.env.NEXT_PUBLIC_STORAGE_TYPE === 'upstash') {
-          interval = 20000;
+        const currentTime = artPlayerRef.current.currentTime || 0;
+        const duration = artPlayerRef.current.duration || 0;
+        const now = performance.now(); // 使用performance.now()更精确
+
+        // 跳过片头片尾逻辑 - 优化频率控制
+        if (skipConfigRef.current.enable) {
+          const SKIP_CHECK_INTERVAL = 1000; // 降低到1秒，提高响应性
+          
+          if (now - lastSkipCheckRef.current >= SKIP_CHECK_INTERVAL) {
+            lastSkipCheckRef.current = now;
+
+            // 跳过片头
+            if (
+              skipConfigRef.current.intro_time > 0 &&
+              currentTime < skipConfigRef.current.intro_time
+            ) {
+              artPlayerRef.current.currentTime = skipConfigRef.current.intro_time;
+              artPlayerRef.current.notice.show = `已跳过片头 (${formatTime(
+                skipConfigRef.current.intro_time
+              )})`;
+              return; // 避免执行后续逻辑
+            }
+
+            // 跳过片尾
+            if (
+              skipConfigRef.current.outro_time < 0 &&
+              duration > 0 &&
+              currentTime > duration + skipConfigRef.current.outro_time
+            ) {
+              if (
+                currentEpisodeIndexRef.current <
+                (detailRef.current?.episodes?.length || 1) - 1
+              ) {
+                handleNextEpisode();
+              } else {
+                artPlayerRef.current.pause();
+              }
+              artPlayerRef.current.notice.show = `已跳过片尾 (${formatTime(
+                skipConfigRef.current.outro_time
+              )})`;
+              return; // 避免执行后续逻辑
+            }
+          }
         }
-        if (now - lastSaveTimeRef.current > interval) {
+
+        // 保存播放进度逻辑 - 优化所有存储类型的保存间隔
+        const saveNow = Date.now();
+        // upstash需要更长间隔避免频率限制，其他存储类型也适当降低频率减少性能开销
+        const interval = process.env.NEXT_PUBLIC_STORAGE_TYPE === 'upstash' ? 20000 : 10000; // 统一提高到10秒
+        
+        if (saveNow - lastSaveTimeRef.current > interval) {
           saveCurrentPlayProgress();
-          lastSaveTimeRef.current = now;
+          lastSaveTimeRef.current = saveNow;
         }
       });
 
@@ -2507,6 +2298,11 @@ function PlayPageClient() {
       // 清理定时器
       if (saveIntervalRef.current) {
         clearInterval(saveIntervalRef.current);
+      }
+
+      // 清理弹幕重置定时器
+      if (seekResetTimeoutRef.current) {
+        clearTimeout(seekResetTimeoutRef.current);
       }
 
       // 释放 Wake Lock
