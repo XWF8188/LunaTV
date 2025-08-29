@@ -49,7 +49,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.CR_PAT }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set lowercase repository owner
         id: lowercase
@@ -63,7 +63,7 @@ jobs:
           tags: |
             type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable={{is_default_branch}}
 
-      - name: Build 和 push by digest
+      - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v5
         with:
@@ -108,13 +108,13 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.CR_PAT }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set lowercase repository owner
         id: lowercase
         run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
-      - name: Create manifest list 和 push
+      - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create -t ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv:${{ github.event.inputs.tag || 'latest' }} \
@@ -129,7 +129,7 @@ jobs:
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@main
         with:
-          token: ${{ secrets.CR_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           retain_days: 0
           keep_minimum_runs: 2
