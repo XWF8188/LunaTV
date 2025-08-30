@@ -3,11 +3,14 @@
 'use client';
 
 import { Suspense, useEffect, useRef, useState } from 'react';
+
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Heart } from 'lucide-react';
 import Artplayer from 'artplayer';
 import artplayerPluginDanmuku from 'artplayer-plugin-danmuku';
 import Hls from 'hls.js';
+import { Heart } from 'lucide-react';
+
+import artplayerPluginChromecast from '@/lib/artplayer-plugin-chromecast';
 
 
 import {
@@ -88,6 +91,9 @@ function PlayPageClient() {
   // 进度条拖拽状态管理
   const isDraggingProgressRef = useRef(false);
   const seekResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // resize事件防抖管理
+  const resizeResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 去广告开关（从 localStorage 继承，默认 true）
   const [blockAdEnabled, setBlockAdEnabled] = useState<boolean>(() => {
@@ -252,6 +258,10 @@ function PlayPageClient() {
   // 播放进度保存相关
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastSaveTimeRef = useRef<number>(0);
+  
+  // 弹幕加载状态管理，防止重复加载
+  const danmuLoadingRef = useRef<boolean>(false);
+  const lastDanmuLoadKeyRef = useRef<string>('');
 
   const artPlayerRef = useRef<any>(null);
   const artRef = useRef<HTMLDivElement | null>(null);
@@ -880,12 +890,28 @@ function PlayPageClient() {
     }
   }
 
-  // 加载外部弹幕数据（带缓存）
+  // 加载外部弹幕数据（带缓存和防重复）
   const loadExternalDanmu = async (): Promise<any[]> => {
     if (!externalDanmuEnabledRef.current) {
       console.log('外部弹幕开关已关闭');
       return [];
     }
+    
+    // 生成当前请求的唯一标识
+    const currentVideoTitle = videoTitle;
+    const currentVideoYear = videoYear; 
+    const currentVideoDoubanId = videoDoubanId;
+    const currentEpisodeNum = currentEpisodeIndex + 1;
+    const requestKey = `${currentVideoTitle}_${currentVideoYear}_${currentVideoDoubanId}_${currentEpisodeNum}`;
+    
+    // 防止重复加载相同内容
+    if (danmuLoadingRef.current || lastDanmuLoadKeyRef.current === requestKey) {
+      console.log('弹幕正在加载中或内容未变化，跳过本次请求');
+      return [];
+    }
+    
+    danmuLoadingRef.current = true;
+    lastDanmuLoadKeyRef.current = requestKey;
     
     try {
       const params = new URLSearchParams();
@@ -995,12 +1021,18 @@ function PlayPageClient() {
       console.error('加载外部弹幕失败:', error);
       console.log('弹幕加载失败，返回空结果');
       return [];
+    } finally {
+      // 重置加载状态
+      danmuLoadingRef.current = false;
     }
   };
 
   // 当集数索引变化时自动更新视频地址
   useEffect(() => {
     updateVideoUrl(detail, currentEpisodeIndex);
+    
+    // 重置弹幕加载标识，允许新集数加载弹幕
+    lastDanmuLoadKeyRef.current = '';
     
     // 如果播放器已经存在且弹幕插件已加载，重新加载弹幕
     if (artPlayerRef.current && artPlayerRef.current.plugins?.artplayerPluginDanmuku) {
@@ -1636,12 +1668,43 @@ function PlayPageClient() {
     }
     console.log(videoUrl);
 
-    // 检测移动设备和Safari浏览器
+    // 检测移动设备和浏览器类型
     const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
     const isSafari = /^(?:(?!chrome|android).)*safari/i.test(userAgent);
     const isIOS = /iPad|iPhone|iPod/i.test(userAgent) && !(window as any).MSStream;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) || isIOS;
     const isWebKit = isSafari || isIOS;
+    // Chrome浏览器检测 - 只有真正的Chrome才支持Chromecast
+    // 排除各种厂商浏览器，即使它们的UA包含Chrome字样
+    const isChrome = /Chrome/i.test(userAgent) && 
+                    !/Edg/i.test(userAgent) &&      // 排除Edge
+                    !/OPR/i.test(userAgent) &&      // 排除Opera
+                    !/SamsungBrowser/i.test(userAgent) && // 排除三星浏览器
+                    !/OPPO/i.test(userAgent) &&     // 排除OPPO浏览器
+                    !/OppoBrowser/i.test(userAgent) && // 排除OppoBrowser
+                    !/HeyTapBrowser/i.test(userAgent) && // 排除HeyTapBrowser (OPPO新版浏览器)
+                    !/OnePlus/i.test(userAgent) &&  // 排除OnePlus浏览器
+                    !/Xiaomi/i.test(userAgent) &&   // 排除小米浏览器
+                    !/MIUI/i.test(userAgent) &&     // 排除MIUI浏览器
+                    !/Huawei/i.test(userAgent) &&   // 排除华为浏览器
+                    !/Vivo/i.test(userAgent) &&     // 排除Vivo浏览器
+                    !/UCBrowser/i.test(userAgent) && // 排除UC浏览器
+                    !/QQBrowser/i.test(userAgent) && // 排除QQ浏览器
+                    !/Baidu/i.test(userAgent) &&    // 排除百度浏览器
+                    !/SogouMobileBrowser/i.test(userAgent); // 排除搜狗浏览器
+
+    // 调试信息：输出设备检测结果和投屏策略
+    console.log('🔍 设备检测结果:', {
+      userAgent,
+      isIOS,
+      isSafari,
+      isMobile,
+      isWebKit,
+      isChrome,
+      'AirPlay按钮': isIOS || isSafari ? '✅ 显示' : '❌ 隐藏',
+      'Chromecast按钮': isChrome && !isIOS ? '✅ 显示' : '❌ 隐藏',
+      '投屏策略': isIOS || isSafari ? '🍎 AirPlay (WebKit)' : isChrome ? '📺 Chromecast (Cast API)' : '❌ 不支持投屏'
+    });
 
     // 优先使用ArtPlayer的switch方法，避免重建播放器
     if (artPlayerRef.current && !loading) {
@@ -1726,13 +1789,15 @@ function PlayPageClient() {
         mutex: true,
         playsInline: true,
         autoPlayback: false,
-        airplay: true,
         theme: '#22c55e',
         lang: 'zh-cn',
         hotkey: false,
         fastForward: true,
         autoOrientation: true,
         lock: true,
+        // AirPlay 仅在支持 WebKit API 的浏览器中启用
+        // 主要是 Safari (桌面和移动端) 和 iOS 上的其他浏览器
+        airplay: isIOS || isSafari,
         moreVideoAttr: {
           crossOrigin: 'anonymous',
         },
@@ -1995,11 +2060,11 @@ function PlayPageClient() {
             },
           },
         ],
-        // 弹幕插件配置
+        // 弹幕插件配置 - 禁用控制栏按钮，通过设置菜单控制
         plugins: [
           artplayerPluginDanmuku({
             danmuku: [], // 初始为空数组，后续通过load方法加载
-            speed: parseInt(localStorage.getItem('danmaku_speed') || '5'), // 弹幕持续时间（从localStorage读取）
+            speed: parseInt(localStorage.getItem('danmaku_speed') || '6'), // 弹幕持续时间，稍微加快减少同屏数量
             opacity: parseFloat(localStorage.getItem('danmaku_opacity') || '0.8'), // 弹幕透明度（从localStorage读取）
             fontSize: parseInt(localStorage.getItem('danmaku_fontSize') || '25'), // 弹幕字体大小（从localStorage读取）
             color: '#FFFFFF', // 默认弹幕颜色
@@ -2010,17 +2075,191 @@ function PlayPageClient() {
             synchronousPlayback: true, // 弹幕与视频播放同步
             visible: localStorage.getItem('danmaku_visible') !== 'false', // 弹幕层可见状态（从localStorage读取，默认true）
             emitter: false, // 关闭弹幕发射器，节省工具栏空间
-            maxLength: 100, // 弹幕最大长度
+            maxLength: 50, // 减少弹幕最大长度，过长弹幕影响性能
             lockTime: 3, // 输入框锁定时间
             theme: 'dark', // 弹幕主题
-            width: 300, // 屏幕宽度小于300px时，弹幕控件移到播放器主体
+            width: 300, // 当播放器宽度小于此值时，弹幕控件置于播放器底部，确保移动端正常显示
+            // 添加弹幕过滤器，过滤掉可能影响性能的弹幕
+            filter: (danmu) => {
+              // 过滤过长的弹幕（影响渲染性能）
+              if (danmu.text.length > 50) return false;
+              // 过滤特殊字符过多的弹幕（可能导致渲染问题）
+              if (/[^\u4e00-\u9fa5a-zA-Z0-9\s.,!?；，。！？]/g.test(danmu.text) && 
+                  (danmu.text.match(/[^\u4e00-\u9fa5a-zA-Z0-9\s.,!?；，。！？]/g) || []).length > 5) return false;
+              return true;
+            },
           }),
+          // Chromecast 插件加载策略：
+          // 只在 Chrome 浏览器中显示 Chromecast（排除 iOS Chrome）
+          // Safari 和 iOS：不显示 Chromecast（用原生 AirPlay）
+          // 其他浏览器：不显示 Chromecast（不支持 Cast API）
+          ...(isChrome && !isIOS ? [
+            artplayerPluginChromecast({
+              onStateChange: (state) => {
+                console.log('Chromecast state changed:', state);
+              },
+              onCastAvailable: (available) => {
+                console.log('Chromecast available:', available);
+              },
+              onCastStart: () => {
+                console.log('Chromecast started');
+              },
+              onError: (error) => {
+                console.error('Chromecast error:', error);
+              }
+            })
+          ] : []),
         ],
       });
 
       // 监听播放器事件
       artPlayerRef.current.on('ready', async () => {
         setError(null);
+
+        // 添加弹幕插件按钮选择性隐藏CSS
+        const optimizeDanmukuControlsCSS = () => {
+          if (document.getElementById('danmuku-controls-optimize')) return;
+          
+          const style = document.createElement('style');
+          style.id = 'danmuku-controls-optimize';
+          style.textContent = `
+            /* 只显示弹幕配置按钮，隐藏开关按钮和发射器 */
+            .artplayer-plugin-danmuku .apd-toggle {
+              display: none !important;
+            }
+            
+            .artplayer-plugin-danmuku .apd-emitter {
+              display: none !important;
+            }
+            
+            /* 弹幕配置面板自动适配定位 - 完全模仿ArtPlayer设置面板 */
+            .artplayer-plugin-danmuku .apd-config {
+              /* 确保相对定位容器不影响面板定位 */
+              position: relative;
+            }
+            
+            .artplayer-plugin-danmuku .apd-config-panel {
+              /* 改为绝对定位，相对于播放器容器 */
+              position: fixed !important;
+              left: auto !important;
+              right: 10px !important; /* 与ArtPlayer --art-padding 一致 */
+              transform: none !important; /* 移除任何变换 */
+              z-index: 91 !important; /* 比ArtPlayer设置面板(90)稍高 */
+            }
+          `;
+          document.head.appendChild(style);
+        };
+        
+        // 应用CSS优化
+        optimizeDanmukuControlsCSS();
+
+        // 移动端弹幕配置按钮点击切换支持 - 基于ArtPlayer设置按钮原理
+        const addMobileDanmakuToggle = () => {
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
+          setTimeout(() => {
+            const configButton = document.querySelector('.artplayer-plugin-danmuku .apd-config');
+            const configPanel = document.querySelector('.artplayer-plugin-danmuku .apd-config-panel');
+            
+            if (!configButton || !configPanel) {
+              console.warn('弹幕配置按钮或面板未找到');
+              return;
+            }
+            
+            console.log('设备类型:', isMobile ? '移动端' : '桌面端');
+            
+            if (isMobile) {
+              // 移动端：添加点击切换支持 + 持久位置修正
+              console.log('为移动端添加弹幕配置按钮点击切换功能');
+              
+              let isConfigVisible = false;
+              
+              // 弹幕面板位置修正函数 - 完全模仿ArtPlayer设置面板算法
+              const adjustPanelPosition = () => {
+                const player = document.querySelector('.artplayer');
+                if (!player || !configButton || !configPanel) return;
+                
+                try {
+                  const panelElement = configPanel as HTMLElement;
+                  
+                  // 始终清除内联样式，使用CSS默认定位
+                  panelElement.style.left = '';
+                  panelElement.style.right = '';
+                  panelElement.style.transform = '';
+                  
+                  console.log('弹幕面板：使用CSS默认定位，自动适配屏幕方向');
+                } catch (error) {
+                  console.warn('弹幕面板位置调整失败:', error);
+                }
+              };
+              
+              // 添加点击事件监听器
+              configButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                isConfigVisible = !isConfigVisible;
+                
+                if (isConfigVisible) {
+                  (configPanel as HTMLElement).style.display = 'block';
+                  // 显示后立即调整位置
+                  setTimeout(adjustPanelPosition, 10);
+                  console.log('移动端弹幕配置面板：显示');
+                } else {
+                  (configPanel as HTMLElement).style.display = 'none';
+                  console.log('移动端弹幕配置面板：隐藏');
+                }
+              });
+              
+              // 监听ArtPlayer的resize事件，在每次resize后重新调整弹幕面板位置
+              if (artPlayerRef.current) {
+                artPlayerRef.current.on('resize', () => {
+                  if (isConfigVisible) {
+                    console.log('检测到ArtPlayer resize事件，重新调整弹幕面板位置');
+                    setTimeout(adjustPanelPosition, 50); // 短暂延迟确保resize完成
+                  }
+                });
+                console.log('已监听ArtPlayer resize事件，实现自动适配');
+              }
+              
+              // 额外监听屏幕方向变化事件，确保完全自动适配
+              const handleOrientationChange = () => {
+                if (isConfigVisible) {
+                  console.log('检测到屏幕方向变化，重新调整弹幕面板位置');
+                  setTimeout(adjustPanelPosition, 100); // 稍长延迟等待方向变化完成
+                }
+              };
+              
+              window.addEventListener('orientationchange', handleOrientationChange);
+              window.addEventListener('resize', handleOrientationChange);
+              
+              // 清理函数
+              const _cleanup = () => {
+                window.removeEventListener('orientationchange', handleOrientationChange);
+                window.removeEventListener('resize', handleOrientationChange);
+              };
+              
+              // 点击其他地方自动隐藏
+              document.addEventListener('click', (e) => {
+                if (isConfigVisible && 
+                    !configButton.contains(e.target as Node) && 
+                    !configPanel.contains(e.target as Node)) {
+                  isConfigVisible = false;
+                  (configPanel as HTMLElement).style.display = 'none';
+                  console.log('点击外部区域，隐藏弹幕配置面板');
+                }
+              });
+              
+              console.log('移动端弹幕配置切换功能已激活');
+            } else {
+              // 桌面端：保持原有hover机制
+              console.log('桌面端保持原有hover机制');
+            }
+          }, 2000); // 延迟2秒确保弹幕插件完全初始化
+        };
+        
+        // 启用移动端弹幕配置切换
+        addMobileDanmakuToggle();
 
         // 播放器就绪后，加载外部弹幕数据
         console.log('播放器已就绪，开始加载外部弹幕');
@@ -2122,10 +2361,18 @@ function PlayPageClient() {
 
         // 监听播放器窗口尺寸变化，触发弹幕重置（双重保障）
         artPlayerRef.current.on('resize', () => {
-          if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-            artPlayerRef.current.plugins.artplayerPluginDanmuku.reset();
-            console.log('窗口尺寸变化，弹幕已重置');
+          // 清除之前的重置计时器
+          if (resizeResetTimeoutRef.current) {
+            clearTimeout(resizeResetTimeoutRef.current);
           }
+          
+          // 延迟重置弹幕，避免连续触发（全屏切换优化）
+          resizeResetTimeoutRef.current = setTimeout(() => {
+            if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
+              artPlayerRef.current.plugins.artplayerPluginDanmuku.reset();
+              console.log('窗口尺寸变化，弹幕已重置（防抖优化）');
+            }
+          }, 300); // 300ms防抖，减少全屏切换时的卡顿
         });
 
         // 播放器就绪后，如果正在播放则请求 Wake Lock
@@ -2303,6 +2550,11 @@ function PlayPageClient() {
       // 清理弹幕重置定时器
       if (seekResetTimeoutRef.current) {
         clearTimeout(seekResetTimeoutRef.current);
+      }
+      
+      // 清理resize防抖定时器
+      if (resizeResetTimeoutRef.current) {
+        clearTimeout(resizeResetTimeoutRef.current);
       }
 
       // 释放 Wake Lock

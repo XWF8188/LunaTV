@@ -18,6 +18,7 @@ import PageLayout from '@/components/PageLayout';
 import SearchResultFilter, { SearchFilterCategory } from '@/components/SearchResultFilter';
 import SearchSuggestions from '@/components/SearchSuggestions';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
+import VirtualSearchGrid from '@/components/VirtualSearchGrid';
 
 function SearchPageClient() {
   // 搜索历史
@@ -39,6 +40,14 @@ function SearchPageClient() {
   const pendingResultsRef = useRef<SearchResult[]>([]);
   const flushTimerRef = useRef<number | null>(null);
   const [useFluidSearch, setUseFluidSearch] = useState(true);
+  // 虚拟化开关状态
+  const [useVirtualization, setUseVirtualization] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('useVirtualization');
+      return saved !== null ? JSON.parse(saved) : true; // 默认启用
+    }
+    return true;
+  });
   // 聚合卡片 refs 与聚合统计缓存
   const groupRefs = useRef<Map<string, React.RefObject<VideoCardHandle>>>(new Map());
   const groupStatsRef = useRef<Map<string, { douban_id?: number; episodes?: number; source_names: string[] }>>(new Map());
@@ -113,6 +122,15 @@ function SearchPageClient() {
   const [viewMode, setViewMode] = useState<'agg' | 'all'>(() => {
     return getDefaultAggregate() ? 'agg' : 'all';
   });
+
+  // 保存虚拟化设置
+  const toggleVirtualization = () => {
+    const newValue = !useVirtualization;
+    setUseVirtualization(newValue);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('useVirtualization', JSON.stringify(newValue));
+    }
+  };
 
   // 在“无排序”场景用于每个源批次的预排序：完全匹配标题优先，其次年份倒序，未知年份最后
   const sortBatchForNoOrder = (items: SearchResult[]) => {
@@ -716,8 +734,9 @@ function SearchPageClient() {
                   )}
                 </h2>
               </div>
-              {/* 筛选器 + 聚合开关 同行 */}
-              <div className='mb-8 flex items-center justify-between gap-3'>
+              {/* 筛选器 + 开关控件 */}
+              <div className='mb-8 space-y-4'>
+                {/* 筛选器 */}
                 <div className='flex-1 min-w-0'>
                   {viewMode === 'agg' ? (
                     <SearchResultFilter
@@ -733,96 +752,133 @@ function SearchPageClient() {
                     />
                   )}
                 </div>
-                {/* 聚合开关 */}
-                <label className='flex items-center gap-2 cursor-pointer select-none shrink-0'>
-                  <span className='text-xs sm:text-sm text-gray-700 dark:text-gray-300'>聚合</span>
-                  <div className='relative'>
-                    <input
-                      type='checkbox'
-                      className='sr-only peer'
-                      checked={viewMode === 'agg'}
-                      onChange={() => setViewMode(viewMode === 'agg' ? 'all' : 'agg')}
-                    />
-                    <div className='w-9 h-5 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                    <div className='absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4'></div>
-                  </div>
-                </label>
+                
+                {/* 开关控件行 */}
+                <div className='flex items-center justify-end gap-6'>
+                  {/* 虚拟化开关 */}
+                  <label className='flex items-center gap-2 cursor-pointer select-none shrink-0'>
+                    <span className='text-xs sm:text-sm text-gray-700 dark:text-gray-300'>虚拟滑动</span>
+                    <div className='relative'>
+                      <input
+                        type='checkbox'
+                        className='sr-only peer'
+                        checked={useVirtualization}
+                        onChange={toggleVirtualization}
+                      />
+                      <div className='w-9 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-500 transition-colors dark:bg-gray-600'></div>
+                      <div className='absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4'></div>
+                    </div>
+                  </label>
+                  
+                  {/* 聚合开关 */}
+                  <label className='flex items-center gap-2 cursor-pointer select-none shrink-0'>
+                    <span className='text-xs sm:text-sm text-gray-700 dark:text-gray-300'>聚合</span>
+                    <div className='relative'>
+                      <input
+                        type='checkbox'
+                        className='sr-only peer'
+                        checked={viewMode === 'agg'}
+                        onChange={() => setViewMode(viewMode === 'agg' ? 'all' : 'agg')}
+                      />
+                      <div className='w-9 h-5 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
+                      <div className='absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4'></div>
+                    </div>
+                  </label>
+                </div>
               </div>
-              {searchResults.length === 0 ? (
-                isLoading ? (
-                  <div className='flex justify-center items-center h-40'>
-                    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
-                  </div>
-                ) : (
-                  <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
-                    未找到相关结果
-                  </div>
-                )
+              {/* 条件渲染：虚拟化 vs 传统网格 */}
+              {useVirtualization ? (
+                <VirtualSearchGrid
+                  allResults={searchResults}
+                  filteredResults={filteredAllResults}
+                  aggregatedResults={aggregatedResults}
+                  filteredAggResults={filteredAggResults}
+                  viewMode={viewMode}
+                  searchQuery={searchQuery}
+                  isLoading={isLoading}
+                  groupRefs={groupRefs}
+                  groupStatsRef={groupStatsRef}
+                  getGroupRef={getGroupRef}
+                  computeGroupStats={computeGroupStats}
+                />
               ) : (
-                <div
-                  key={`search-results-${viewMode}`}
-                  className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'
-                >
-                  {viewMode === 'agg'
-                    ? filteredAggResults.map(([mapKey, group]) => {
-                      const title = group[0]?.title || '';
-                      const poster = group[0]?.poster || '';
-                      const year = group[0]?.year || 'unknown';
-                      const { episodes, source_names, douban_id } = computeGroupStats(group);
-                      const type = episodes === 1 ? 'movie' : 'tv';
+                // 传统网格渲染（保持原有逻辑）
+                searchResults.length === 0 ? (
+                  isLoading ? (
+                    <div className='flex justify-center items-center h-40'>
+                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
+                    </div>
+                  ) : (
+                    <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
+                      未找到相关结果
+                    </div>
+                  )
+                ) : (
+                  <div
+                    key={`search-results-${viewMode}`}
+                    className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'
+                  >
+                    {viewMode === 'agg'
+                      ? filteredAggResults.map(([mapKey, group]) => {
+                        const title = group[0]?.title || '';
+                        const poster = group[0]?.poster || '';
+                        const year = group[0]?.year || 'unknown';
+                        const { episodes, source_names, douban_id } = computeGroupStats(group);
+                        const type = episodes === 1 ? 'movie' : 'tv';
 
-                      // 如果该聚合第一次出现，写入初始统计
-                      if (!groupStatsRef.current.has(mapKey)) {
-                        groupStatsRef.current.set(mapKey, { episodes, source_names, douban_id });
-                      }
+                        // 如果该聚合第一次出现，写入初始统计
+                        if (!groupStatsRef.current.has(mapKey)) {
+                          groupStatsRef.current.set(mapKey, { episodes, source_names, douban_id });
+                        }
 
-                      return (
-                        <div key={`agg-${mapKey}`} className='w-full'>
+                        return (
+                          <div key={`agg-${mapKey}`} className='w-full'>
+                            <VideoCard
+                              ref={getGroupRef(mapKey)}
+                              from='search'
+                              isAggregate={true}
+                              title={title}
+                              poster={poster}
+                              year={year}
+                              episodes={episodes}
+                              source_names={source_names}
+                              douban_id={douban_id}
+                              query={
+                                searchQuery.trim() !== title
+                                  ? searchQuery.trim()
+                                  : ''
+                              }
+                              type={type}
+                            />
+                          </div>
+                        );
+                      })
+                      : filteredAllResults.map((item) => (
+                        <div
+                          key={`all-${item.source}-${item.id}`}
+                          className='w-full'
+                        >
                           <VideoCard
-                            ref={getGroupRef(mapKey)}
-                            from='search'
-                            isAggregate={true}
-                            title={title}
-                            poster={poster}
-                            year={year}
-                            episodes={episodes}
-                            source_names={source_names}
-                            douban_id={douban_id}
+                            id={item.id}
+                            title={item.title}
+                            poster={item.poster}
+                            episodes={item.episodes.length}
+                            source={item.source}
+                            source_name={item.source_name}
+                            douban_id={item.douban_id}
                             query={
-                              searchQuery.trim() !== title
+                              searchQuery.trim() !== item.title
                                 ? searchQuery.trim()
                                 : ''
                             }
-                            type={type}
+                            year={item.year}
+                            from='search'
+                            type={item.episodes.length > 1 ? 'tv' : 'movie'}
                           />
                         </div>
-                      );
-                    })
-                    : filteredAllResults.map((item) => (
-                      <div
-                        key={`all-${item.source}-${item.id}`}
-                        className='w-full'
-                      >
-                        <VideoCard
-                          id={item.id}
-                          title={item.title}
-                          poster={item.poster}
-                          episodes={item.episodes.length}
-                          source={item.source}
-                          source_name={item.source_name}
-                          douban_id={item.douban_id}
-                          query={
-                            searchQuery.trim() !== item.title
-                              ? searchQuery.trim()
-                              : ''
-                          }
-                          year={item.year}
-                          from='search'
-                          type={item.episodes.length > 1 ? 'tv' : 'movie'}
-                        />
-                      </div>
-                    ))}
-                </div>
+                      ))}
+                  </div>
+                )
               )}
             </section>
           ) : searchHistory.length > 0 ? (

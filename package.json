@@ -1,6 +1,6 @@
 {
   "name": "moontv",
-  "version": "4.3.3",
+  "version": "4.3.6",
   "private": true,
   "scripts": {
     "dev": "pnpm gen:manifest && next dev -H 0.0.0.0",
@@ -44,6 +44,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.4.0",
+    "react-window": "^2.0.0",
+    "react-window-infinite-loader": "^1.0.10",
     "redis": "^4.6.7",
     "swiper": "^11.2.8",
     "tailwind-merge": "^2.6.0",
@@ -62,6 +64,8 @@
     "@types/node": "24.0.3",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^19.1.6",
+    "@types/react-window": "^1.8.8",
+    "@types/react-window-infinite-loader": "^1.0.9",
     "@types/testing-library__jest-dom": "^5.14.9",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",

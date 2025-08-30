@@ -719,10 +719,26 @@ export async function GET(request: NextRequest) {
     // 按时间排序
     allDanmu.sort((a, b) => a.time - b.time);
 
+    // 去重处理：移除相同时间和内容的重复弹幕
+    const uniqueDanmu: DanmuItem[] = [];
+    const seenMap = new Map<string, boolean>();
+    
+    allDanmu.forEach(danmu => {
+      // 创建唯一标识：时间(秒，保留1位小数) + 文本内容
+      const uniqueKey = `${Math.round(danmu.time * 10) / 10}_${danmu.text.trim()}`;
+      
+      if (!seenMap.has(uniqueKey)) {
+        seenMap.set(uniqueKey, true);
+        uniqueDanmu.push(danmu);
+      }
+    });
+    
+    console.log(`弹幕去重: ${allDanmu.length} -> ${uniqueDanmu.length} 条`);
+
     return NextResponse.json({
-      danmu: allDanmu,
+      danmu: uniqueDanmu,
       platforms: platformInfo,
-      total: allDanmu.length,
+      total: uniqueDanmu.length,
     });
 
   } catch (error) {
