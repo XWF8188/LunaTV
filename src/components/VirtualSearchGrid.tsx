@@ -244,6 +244,8 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
           style={{
             overflowX: 'hidden',
             overflowY: 'auto',
+            // 确保不创建新的stacking context，让菜单能正确显示在最顶层
+            isolation: 'auto',
           }}
           onCellsRendered={({ rowStartIndex, rowStopIndex }) => {
             const visibleStopIndex = rowStopIndex;

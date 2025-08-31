@@ -1,6 +1,7 @@
 import { Radio, X } from 'lucide-react';
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ActionItem {
   id: string;
@@ -138,29 +139,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
 
   if (!isVisible) return null;
 
-  const getActionColor = (color: ActionItem['color']) => {
-    switch (color) {
-      case 'danger':
-        return 'text-red-600 dark:text-red-400';
-      case 'primary':
-        return 'text-green-600 dark:text-green-400';
-      default:
-        return 'text-gray-700 dark:text-gray-300';
-    }
-  };
-
-  const getActionHoverColor = (color: ActionItem['color']) => {
-    switch (color) {
-      case 'danger':
-        return 'hover:bg-red-50/50 dark:hover:bg-red-900/10';
-      case 'primary':
-        return 'hover:bg-green-50/50 dark:hover:bg-green-900/10';
-      default:
-        return 'hover:bg-gray-50/50 dark:hover:bg-gray-800/20';
-    }
-  };
-
-  return (
+  const renderContent = () => (
     <div
       className="fixed inset-0 z-[9999] flex items-end justify-center"
       onTouchMove={(e) => {
@@ -344,6 +323,33 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
       </div>
     </div>
   );
+
+  const getActionColor = (color: ActionItem['color']) => {
+    switch (color) {
+      case 'danger':
+        return 'text-red-600 dark:text-red-400';
+      case 'primary':
+        return 'text-green-600 dark:text-green-400';
+      default:
+        return 'text-gray-700 dark:text-gray-300';
+    }
+  };
+
+  const getActionHoverColor = (color: ActionItem['color']) => {
+    switch (color) {
+      case 'danger':
+        return 'hover:bg-red-50/50 dark:hover:bg-red-900/10';
+      case 'primary':
+        return 'hover:bg-green-50/50 dark:hover:bg-green-900/10';
+      default:
+        return 'hover:bg-gray-50/50 dark:hover:bg-gray-800/20';
+    }
+  };
+
+  // 使用Portal将菜单渲染到body外层，避免被虚拟滚动容器的overflow限制
+  return typeof window !== 'undefined' 
+    ? createPortal(renderContent(), document.body) 
+    : null;
 };
 
 export default MobileActionSheet;
