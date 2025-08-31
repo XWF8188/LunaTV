@@ -50,7 +50,7 @@ jobs:
 
           CONTENT=""
           if [ -n "$CHANGELOG_FILE" ]; then
-            CONTENT=$(awk '/^## ${{ env.VERSION }}/ {flag=1;next} /^## / {flag=0} flag {print}' $CHANGELOG_FILE)
+            CONTENT=$(awk '/^## \[?'"${{ env.VERSION }}"'\]?/ {flag=1;next} /^## / {flag=0} flag {print}' $CHANGELOG_FILE)
           fi
 
           if [ -z "$CONTENT" ]; then
@@ -62,6 +62,9 @@ jobs:
             echo "既无 CHANGELOG 也无提交日志，使用默认说明"
             CONTENT="版本号来自 VERSION.txt"
           fi
+
+          echo "提取到的内容："
+          echo "$CONTENT"
 
           echo "CONTENT<<EOF" >> $GITHUB_ENV
           echo "$CONTENT" >> $GITHUB_ENV
