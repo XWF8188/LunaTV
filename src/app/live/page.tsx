@@ -2,12 +2,16 @@
 
 'use client';
 
-import Artplayer from 'artplayer';
-import Hls from 'hls.js';
-import { Heart, Radio, Tv } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
+import Artplayer from 'artplayer';
+import Hls from 'hls.js';
+import { Heart, Radio, Search, Tv, X } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+import {
+  debounce,
+} from '@/lib/channel-search';
 import {
   deleteFavorite,
   generateStorageKey,
@@ -101,6 +105,10 @@ function LivePageClient() {
 
   // 过滤后的频道列表
   const [filteredChannels, setFilteredChannels] = useState<LiveChannel[]>([]);
+
+  // 搜索相关状态
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentSourceSearchResults, setCurrentSourceSearchResults] = useState<LiveChannel[]>([]);
 
   // 节目单信息
   const [epgData, setEpgData] = useState<{
@@ -648,6 +656,30 @@ function LivePageClient() {
     }
   };
 
+  // 简化的搜索频道（只在当前源内搜索）
+  const searchCurrentSourceChannels = (query: string) => {
+    if (!query.trim()) {
+      setCurrentSourceSearchResults([]);
+      return;
+    }
+
+    const normalizedQuery = query.toLowerCase();
+    const results = currentChannels.filter(channel => 
+      channel.name.toLowerCase().includes(normalizedQuery) ||
+      channel.group.toLowerCase().includes(normalizedQuery)
+    );
+    setCurrentSourceSearchResults(results);
+  };
+
+  // 防抖搜索
+  const debouncedSearch = debounce(searchCurrentSourceChannels, 300);
+
+  // 处理搜索输入
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    debouncedSearch(query);
+  };
+
   // 切换收藏
   const handleToggleFavorite = async () => {
     if (!currentSourceRef.current || !currentChannelRef.current) return;
@@ -693,6 +725,13 @@ function LivePageClient() {
   useEffect(() => {
     fetchLiveSources();
   }, []);
+
+  // 只在用户开始搜索时才加载跨源数据，而不是页面加载时就加载
+  // useEffect(() => {
+  //   if (liveSources.length > 0) {
+  //     loadAllChannelsAcrossSources();
+  //   }
+  // }, [liveSources]);
 
   // 检查收藏状态
   useEffect(() => {
@@ -1333,8 +1372,33 @@ function LivePageClient() {
                 {/* 频道 Tab 内容 */}
                 {activeTab === 'channels' && (
                   <>
-                    {/* 分组标签 */}
-                    <div className='flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-6 px-6 flex-shrink-0'>
+                    {/* 搜索框 */}
+                    <div className='mb-4 -mx-6 px-6 flex-shrink-0'>
+                      <div className='relative'>
+                        <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400' />
+                        <input
+                          type='text'
+                          placeholder='搜索频道...'
+                          value={searchQuery}
+                          onChange={(e) => handleSearchChange(e.target.value)}
+                          className='w-full pl-10 pr-8 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                        />
+                        {searchQuery && (
+                          <button
+                            onClick={() => handleSearchChange('')}
+                            className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                          >
+                            <X className='w-4 h-4' />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {!searchQuery.trim() ? (
+                      // 原有的分组显示模式
+                      <>
+                        {/* 分组标签 */}
+                        <div className='flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-6 px-6 flex-shrink-0'>
                       {/* 切换状态提示 */}
                       {isSwitchingSource && (
                         <div className='flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400'>
@@ -1458,6 +1522,81 @@ function LivePageClient() {
                         </div>
                       )}
                     </div>
+                      </>
+                    ) : (
+                      // 搜索结果显示（仅当前源）
+                      <div className='flex-1 overflow-y-auto space-y-2 pb-4'>
+                        {currentSourceSearchResults.length > 0 ? (
+                          <div className='space-y-1 mb-2'>
+                            <div className='text-xs text-gray-500 dark:text-gray-400 px-2'>
+                              在 "{currentSource?.name}" 中找到 {currentSourceSearchResults.length} 个频道
+                            </div>
+                          </div>
+                        ) : null}
+                        
+                        {currentSourceSearchResults.length > 0 ? (
+                          currentSourceSearchResults.map(channel => {
+                            const isActive = channel.id === currentChannel?.id;
+                            return (
+                              <button
+                                key={channel.id}
+                                onClick={() => handleChannelChange(channel)}
+                                disabled={isSwitchingSource}
+                                className={`w-full p-3 rounded-lg text-left transition-all duration-200 ${
+                                  isSwitchingSource
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : isActive
+                                      ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
+                                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                }`}
+                              >
+                                <div className='flex items-center gap-3'>
+                                  <div className='w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
+                                    {channel.logo ? (
+                                      <img
+                                        src={`/api/proxy/logo?url=${encodeURIComponent(channel.logo)}&source=${currentSource?.key || ''}`}
+                                        alt={channel.name}
+                                        className='w-full h-full rounded object-contain'
+                                        loading="lazy"
+                                      />
+                                    ) : (
+                                      <Tv className='w-5 h-5 text-gray-500' />
+                                    )}
+                                  </div>
+                                  <div className='flex-1 min-w-0'>
+                                    <div 
+                                      className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'
+                                      dangerouslySetInnerHTML={{ 
+                                        __html: searchQuery ? 
+                                          channel.name.replace(
+                                            new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), 
+                                            '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>'
+                                          ) : channel.name 
+                                      }}
+                                    />
+                                    <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                                      {channel.group}
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className='flex flex-col items-center justify-center py-12 text-center'>
+                            <div className='w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4'>
+                              <Search className='w-8 h-8 text-gray-400 dark:text-gray-600' />
+                            </div>
+                            <p className='text-gray-500 dark:text-gray-400 font-medium'>
+                              未找到匹配的频道
+                            </p>
+                            <p className='text-sm text-gray-400 dark:text-gray-500 mt-1'>
+                              在当前直播源 "{currentSource?.name}" 中未找到匹配结果
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
 

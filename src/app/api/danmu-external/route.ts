@@ -204,16 +204,68 @@ async function processSelectedResult(selectedResult: any, episode?: string | nul
   }
 }
 
+// 用户代理池 - 防止被封IP
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+];
+
+// 请求限制器 - 防止被封IP
+let lastDoubanRequestTime = 0;
+const MIN_DOUBAN_REQUEST_INTERVAL = 1000; // 1秒最小间隔
+
+function getRandomUserAgent(): string {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
+
+function randomDelay(min = 500, max = 1500): Promise<void> {
+  const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+  return new Promise(resolve => setTimeout(resolve, delay));
+}
+
 // 从豆瓣页面提取平台视频链接
 async function extractPlatformUrls(doubanId: string, episode?: string | null): Promise<PlatformUrl[]> {
   if (!doubanId) return [];
 
+  // 添加超时控制 - 在try块外定义以便catch块使用
+  const controller = new AbortController();
+  let timeoutId: NodeJS.Timeout | undefined;
+  
   try {
+    // 请求限流：确保请求间隔 - 防止被封IP
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastDoubanRequestTime;
+    if (timeSinceLastRequest < MIN_DOUBAN_REQUEST_INTERVAL) {
+      await new Promise(resolve => 
+        setTimeout(resolve, MIN_DOUBAN_REQUEST_INTERVAL - timeSinceLastRequest)
+      );
+    }
+    lastDoubanRequestTime = Date.now();
+
+    // 添加随机延时 - 防止被封IP
+    await randomDelay(300, 1000);
+
+    // 设置超时控制
+    timeoutId = setTimeout(() => controller.abort(), 10000);
+
     const response = await fetch(`https://movie.douban.com/subject/${doubanId}/`, {
+      signal: controller.signal,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': getRandomUserAgent(),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0',
+        // 随机添加Referer - 防止被封IP
+        ...(Math.random() > 0.5 ? { 'Referer': 'https://www.douban.com/' } : {}),
       },
     });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       console.log(`❌ 豆瓣页面请求失败: ${response.status}`);
@@ -377,7 +429,16 @@ async function extractPlatformUrls(doubanId: string, episode?: string | null): P
     console.log(`✅ 总共提取到 ${convertedUrls.length} 个平台链接`);
     return convertedUrls;
   } catch (error) {
-    console.error('❌ 提取平台链接失败:', error);
+    // 清理超时定时器
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('❌ 豆瓣请求超时 (10秒):', doubanId);
+    } else {
+      console.error('❌ 提取平台链接失败:', error);
+    }
     return [];
   }
 }
