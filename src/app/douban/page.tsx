@@ -19,6 +19,7 @@ import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
+import VirtualDoubanGrid from '@/components/VirtualDoubanGrid';
 
 function DoubanPageClient() {
   const searchParams = useSearchParams();
@@ -31,6 +32,15 @@ function DoubanPageClient() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 虚拟化开关状态
+  const [useVirtualization, setUseVirtualization] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('useDoubanVirtualization');
+      return saved !== null ? JSON.parse(saved) : true; // 默认启用
+    }
+    return true;
+  });
 
   // 用于存储最新参数值的 refs
   const currentParamsRef = useRef({
@@ -77,6 +87,25 @@ function DoubanPageClient() {
 
   // 星期选择器状态
   const [selectedWeekday, setSelectedWeekday] = useState<string>('');
+
+  // 保存虚拟化设置
+  const toggleVirtualization = () => {
+    const newValue = !useVirtualization;
+    setUseVirtualization(newValue);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('useDoubanVirtualization', JSON.stringify(newValue));
+    }
+    
+    // 切换虚拟化模式时，立即同步参数引用，避免一致性检查失败
+    currentParamsRef.current = {
+      type,
+      primarySelection,
+      secondarySelection,
+      multiLevelSelection: multiLevelValues,
+      selectedWeekday,
+      currentPage,
+    };
+  };
 
   // 获取自定义分类数据
   useEffect(() => {
@@ -355,16 +384,22 @@ function DoubanPageClient() {
       }
 
       if (data.code === 200) {
-        // 检查参数是否仍然一致，如果一致才设置数据
-        // 使用 ref 获取最新的当前值
+        // 更宽松的参数检查：只检查关键参数，忽略currentPage的差异
         const currentSnapshot = { ...currentParamsRef.current };
+        const keyParamsMatch = (
+          requestSnapshot.type === currentSnapshot.type &&
+          requestSnapshot.primarySelection === currentSnapshot.primarySelection &&
+          requestSnapshot.secondarySelection === currentSnapshot.secondarySelection &&
+          requestSnapshot.selectedWeekday === currentSnapshot.selectedWeekday &&
+          JSON.stringify(requestSnapshot.multiLevelSelection) === JSON.stringify(currentSnapshot.multiLevelSelection)
+        );
 
-        if (isSnapshotEqual(requestSnapshot, currentSnapshot)) {
+        if (keyParamsMatch) {
           setDoubanData(data.list);
           setHasMore(data.list.length !== 0);
           setLoading(false);
         } else {
-          console.log('参数不一致，不执行任何操作，避免设置过期数据');
+          console.log('关键参数不一致，不执行任何操作，避免设置过期数据');
         }
         // 如果参数不一致，不执行任何操作，避免设置过期数据
       } else {
@@ -430,6 +465,9 @@ function DoubanPageClient() {
           selectedWeekday,
           currentPage,
         };
+
+        // 立即更新currentParamsRef，避免异步更新导致的一致性检查失败
+        currentParamsRef.current = requestSnapshot;
 
         try {
           setIsLoadingMore(true);
@@ -515,15 +553,21 @@ function DoubanPageClient() {
           }
 
           if (data.code === 200) {
-            // 检查参数是否仍然一致，如果一致才设置数据
-            // 使用 ref 获取最新的当前值
+            // 更宽松的参数检查：只检查关键参数，忽略currentPage的差异
             const currentSnapshot = { ...currentParamsRef.current };
+            const keyParamsMatch = (
+              requestSnapshot.type === currentSnapshot.type &&
+              requestSnapshot.primarySelection === currentSnapshot.primarySelection &&
+              requestSnapshot.secondarySelection === currentSnapshot.secondarySelection &&
+              requestSnapshot.selectedWeekday === currentSnapshot.selectedWeekday &&
+              JSON.stringify(requestSnapshot.multiLevelSelection) === JSON.stringify(currentSnapshot.multiLevelSelection)
+            );
 
-            if (isSnapshotEqual(requestSnapshot, currentSnapshot)) {
+            if (keyParamsMatch) {
               setDoubanData((prev) => [...prev, ...data.list]);
               setHasMore(data.list.length !== 0);
             } else {
-              console.log('参数不一致，不执行任何操作，避免设置过期数据');
+              console.log('关键参数不一致，不执行任何操作，避免设置过期数据');
             }
           } else {
             throw new Error(data.message || '获取数据失败');
@@ -547,8 +591,13 @@ function DoubanPageClient() {
     selectedWeekday,
   ]);
 
-  // 设置滚动监听
+  // 设置滚动监听（只在非虚拟化模式下启用）
   useEffect(() => {
+    // 如果启用了虚拟化，则不使用传统的滚动监听
+    if (useVirtualization) {
+      return;
+    }
+
     // 如果没有更多数据或正在加载，则不设置监听
     if (!hasMore || isLoadingMore || loading) {
       return;
@@ -576,7 +625,7 @@ function DoubanPageClient() {
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, isLoadingMore, loading]);
+  }, [hasMore, isLoadingMore, loading, useVirtualization]);
 
   // 处理选择器变化
   const handlePrimaryChange = useCallback(
@@ -681,6 +730,13 @@ function DoubanPageClient() {
     setSelectedWeekday(weekday);
   }, []);
 
+  // 处理虚拟化组件的加载更多请求
+  const handleVirtualLoadMore = useCallback(() => {
+    if (hasMore && !isLoadingMore) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [hasMore, isLoadingMore]);
+
   const getPageTitle = () => {
     // 根据 type 生成标题
     return type === 'movie'
@@ -749,63 +805,96 @@ function DoubanPageClient() {
               />
             </div>
           )}
+
+          {/* 虚拟化开关 */}
+          <div className='flex justify-end'>
+            <label className='flex items-center gap-2 cursor-pointer select-none'>
+              <span className='text-xs sm:text-sm text-gray-700 dark:text-gray-300'>虚拟滑动</span>
+              <div className='relative'>
+                <input
+                  type='checkbox'
+                  className='sr-only peer'
+                  checked={useVirtualization}
+                  onChange={toggleVirtualization}
+                />
+                <div className='w-9 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-500 transition-colors dark:bg-gray-600'></div>
+                <div className='absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4'></div>
+              </div>
+            </label>
+          </div>
         </div>
 
         {/* 内容展示区域 */}
         <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
-          {/* 内容网格 */}
-          <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
-            {loading || !selectorsReady
-              ? // 显示骨架屏
-              skeletonData.map((index) => <DoubanCardSkeleton key={index} />)
-              : // 显示实际数据
-              doubanData.map((item, index) => (
-                <div key={`${item.title}-${index}`} className='w-full'>
-                  <VideoCard
-                    from='douban'
-                    title={item.title}
-                    poster={item.poster}
-                    douban_id={Number(item.id)}
-                    rate={item.rate}
-                    year={item.year}
-                    type={type === 'movie' ? 'movie' : ''} // 电影类型严格控制，tv 不控
-                    isBangumi={
-                      type === 'anime' && primarySelection === '每日放送'
-                    }
-                  />
-                </div>
-              ))}
-          </div>
+          {/* 条件渲染：虚拟化 vs 传统网格 */}
+          {useVirtualization ? (
+            <VirtualDoubanGrid
+              doubanData={doubanData}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={handleVirtualLoadMore}
+              type={type}
+              loading={loading || !selectorsReady}
+              primarySelection={primarySelection}
+              isBangumi={type === 'anime' && primarySelection === '每日放送'}
+            />
+          ) : (
+            <>
+              {/* 传统网格渲染 */}
+              <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+                {loading || !selectorsReady
+                  ? // 显示骨架屏
+                  skeletonData.map((index) => <DoubanCardSkeleton key={index} />)
+                  : // 显示实际数据
+                  doubanData.map((item, index) => (
+                    <div key={`${item.title}-${index}`} className='w-full'>
+                      <VideoCard
+                        from='douban'
+                        title={item.title}
+                        poster={item.poster}
+                        douban_id={Number(item.id)}
+                        rate={item.rate}
+                        year={item.year}
+                        type={type === 'movie' ? 'movie' : ''} // 电影类型严格控制，tv 不控
+                        isBangumi={
+                          type === 'anime' && primarySelection === '每日放送'
+                        }
+                      />
+                    </div>
+                  ))}
+              </div>
 
-          {/* 加载更多指示器 */}
-          {hasMore && !loading && (
-            <div
-              ref={(el) => {
-                if (el && el.offsetParent !== null) {
-                  (
-                    loadingRef as React.MutableRefObject<HTMLDivElement | null>
-                  ).current = el;
-                }
-              }}
-              className='flex justify-center mt-12 py-8'
-            >
-              {isLoadingMore && (
-                <div className='flex items-center gap-2'>
-                  <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-green-500'></div>
-                  <span className='text-gray-600'>加载中...</span>
+              {/* 加载更多指示器 */}
+              {hasMore && !loading && (
+                <div
+                  ref={(el) => {
+                    if (el && el.offsetParent !== null) {
+                      (
+                        loadingRef as React.MutableRefObject<HTMLDivElement | null>
+                      ).current = el;
+                    }
+                  }}
+                  className='flex justify-center mt-12 py-8'
+                >
+                  {isLoadingMore && (
+                    <div className='flex items-center gap-2'>
+                      <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-green-500'></div>
+                      <span className='text-gray-600'>加载中...</span>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* 没有更多数据提示 */}
-          {!hasMore && doubanData.length > 0 && (
-            <div className='text-center text-gray-500 py-8'>已加载全部内容</div>
-          )}
+              {/* 没有更多数据提示 */}
+              {!hasMore && doubanData.length > 0 && (
+                <div className='text-center text-gray-500 py-8'>已加载全部内容</div>
+              )}
 
-          {/* 空状态 */}
-          {!loading && doubanData.length === 0 && (
-            <div className='text-center text-gray-500 py-8'>暂无相关内容</div>
+              {/* 空状态 */}
+              {!loading && doubanData.length === 0 && (
+                <div className='text-center text-gray-500 py-8'>暂无相关内容</div>
+              )}
+            </>
           )}
         </div>
       </div>
