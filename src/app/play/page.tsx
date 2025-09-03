@@ -70,6 +70,10 @@ function PlayPageClient() {
   const [movieDetails, setMovieDetails] = useState<any>(null);
   const [loadingMovieDetails, setLoadingMovieDetails] = useState(false);
 
+  // bangumi详情状态
+  const [bangumiDetails, setBangumiDetails] = useState<any>(null);
+  const [loadingBangumiDetails, setLoadingBangumiDetails] = useState(false);
+
   // 跳过片头片尾配置
   const [skipConfig, setSkipConfig] = useState<{
     enable: boolean;
@@ -182,28 +186,53 @@ function PlayPageClient() {
     videoDoubanId,
   ]);
 
-  // 加载豆瓣详情
+  // 加载详情（豆瓣或bangumi）
   useEffect(() => {
     const loadMovieDetails = async () => {
-      if (!videoDoubanId || videoDoubanId === 0 || loadingMovieDetails || movieDetails) {
+      if (!videoDoubanId || videoDoubanId === 0) {
         return;
       }
-      
-      setLoadingMovieDetails(true);
-      try {
-        const response = await getDoubanDetails(videoDoubanId.toString());
-        if (response.code === 200 && response.data) {
-          setMovieDetails(response.data);
+
+      // 检测是否为bangumi ID
+      if (isBangumiId(videoDoubanId)) {
+        // 加载bangumi详情
+        if (loadingBangumiDetails || bangumiDetails) {
+          return;
         }
-      } catch (error) {
-        console.error('Failed to load movie details:', error);
-      } finally {
-        setLoadingMovieDetails(false);
+        
+        setLoadingBangumiDetails(true);
+        try {
+          const bangumiData = await fetchBangumiDetails(videoDoubanId);
+          if (bangumiData) {
+            setBangumiDetails(bangumiData);
+          }
+        } catch (error) {
+          console.error('Failed to load bangumi details:', error);
+        } finally {
+          setLoadingBangumiDetails(false);
+        }
+      } else {
+        // 加载豆瓣详情
+        if (loadingMovieDetails || movieDetails) {
+          return;
+        }
+        
+        setLoadingMovieDetails(true);
+        try {
+          const response = await getDoubanDetails(videoDoubanId.toString());
+          if (response.code === 200 && response.data) {
+            setMovieDetails(response.data);
+          }
+        } catch (error) {
+          console.error('Failed to load movie details:', error);
+        } finally {
+          setLoadingMovieDetails(false);
+        }
       }
     };
 
     loadMovieDetails();
-  }, [videoDoubanId, loadingMovieDetails, movieDetails]);
+  }, [videoDoubanId, loadingMovieDetails, movieDetails, loadingBangumiDetails, bangumiDetails]);
 
   // 视频播放地址
   const [videoUrl, setVideoUrl] = useState('');
@@ -300,6 +329,77 @@ function PlayPageClient() {
   // -----------------------------------------------------------------------------
   // 工具函数（Utils）
   // -----------------------------------------------------------------------------
+
+  // bangumi ID检测（6位数字）
+  const isBangumiId = (id: number): boolean => {
+    return id > 0 && id.toString().length === 6;
+  };
+
+  // bangumi缓存配置
+  const BANGUMI_CACHE_EXPIRE = 4 * 60 * 60 * 1000; // 4小时，和douban详情一致
+
+  // bangumi缓存工具函数
+  const getBangumiCache = (id: number) => {
+    if (typeof localStorage === 'undefined') return null;
+    
+    try {
+      const cacheKey = `bangumi-details-${id}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (!cached) return null;
+      
+      const { data, expire } = JSON.parse(cached);
+      if (Date.now() > expire) {
+        localStorage.removeItem(cacheKey);
+        return null;
+      }
+      
+      return data;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const setBangumiCache = (id: number, data: any) => {
+    if (typeof localStorage === 'undefined') return;
+    
+    try {
+      const cacheKey = `bangumi-details-${id}`;
+      const cacheData = {
+        data,
+        expire: Date.now() + BANGUMI_CACHE_EXPIRE,
+        created: Date.now()
+      };
+      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    } catch (e) {
+      console.warn('Failed to cache bangumi details:', e);
+    }
+  };
+
+  // 获取bangumi详情（带缓存）
+  const fetchBangumiDetails = async (bangumiId: number) => {
+    // 检查缓存
+    const cached = getBangumiCache(bangumiId);
+    if (cached) {
+      console.log(`Bangumi详情缓存命中: ${bangumiId}`);
+      return cached;
+    }
+
+    try {
+      const response = await fetch(`https://api.bgm.tv/v0/subjects/${bangumiId}`);
+      if (response.ok) {
+        const bangumiData = await response.json();
+        
+        // 保存到缓存
+        setBangumiCache(bangumiId, bangumiData);
+        console.log(`Bangumi详情已缓存: ${bangumiId}`);
+        
+        return bangumiData;
+      }
+    } catch (error) {
+      console.log('Failed to fetch bangumi details:', error);
+    }
+    return null;
+  };
 
   // 播放源优选函数（针对旧iPad做极端保守优化）
   const preferBestSource = async (
@@ -3034,16 +3134,96 @@ function PlayPageClient() {
                 {detail?.type_name && <span>{detail.type_name}</span>}
               </div>
 
-              {/* 豆瓣详细信息 */}
+              {/* 详细信息（豆瓣或bangumi） */}
               {videoDoubanId && videoDoubanId !== 0 && (
                 <div className='mb-4 flex-shrink-0'>
-                  {loadingMovieDetails && !movieDetails && (
+                  {/* 加载状态 */}
+                  {(loadingMovieDetails || loadingBangumiDetails) && !movieDetails && !bangumiDetails && (
                     <div className='animate-pulse'>
                       <div className='h-4 bg-gray-300 rounded w-64 mb-2'></div>
                       <div className='h-4 bg-gray-300 rounded w-48'></div>
                     </div>
                   )}
                   
+                  {/* Bangumi详情 */}
+                  {bangumiDetails && (
+                    <div className='space-y-2 text-sm'>
+                      {/* Bangumi评分 */}
+                      {bangumiDetails.rating?.score && (
+                        <div className='flex items-center gap-2'>
+                          <span className='font-semibold text-gray-700 dark:text-gray-300'>Bangumi评分: </span>
+                          <div className='flex items-center'>
+                            <span className='text-yellow-600 dark:text-yellow-400 font-bold text-base'>
+                              {bangumiDetails.rating.score}
+                            </span>
+                            <div className='flex ml-1'>
+                              {[...Array(5)].map((_, i) => (
+                                <svg
+                                  key={i}
+                                  className={`w-3 h-3 ${
+                                    i < Math.floor(parseFloat(bangumiDetails.rating.score) / 2)
+                                      ? 'text-yellow-500'
+                                      : 'text-gray-300 dark:text-gray-600'
+                                  }`}
+                                  fill='currentColor'
+                                  viewBox='0 0 20 20'
+                                >
+                                  <path d='M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z' />
+                                </svg>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 制作信息从infobox提取 */}
+                      {bangumiDetails.infobox && bangumiDetails.infobox.map((info: any, index: number) => {
+                        if (info.key === '导演' && info.value) {
+                          const directors = Array.isArray(info.value) ? info.value.map((v: any) => v.v || v).join('、') : info.value;
+                          return (
+                            <div key={index}>
+                              <span className='font-semibold text-gray-700 dark:text-gray-300'>导演: </span>
+                              <span className='text-gray-600 dark:text-gray-400'>{directors}</span>
+                            </div>
+                          );
+                        }
+                        if (info.key === '制作' && info.value) {
+                          const studios = Array.isArray(info.value) ? info.value.map((v: any) => v.v || v).join('、') : info.value;
+                          return (
+                            <div key={index}>
+                              <span className='font-semibold text-gray-700 dark:text-gray-300'>制作: </span>
+                              <span className='text-gray-600 dark:text-gray-400'>{studios}</span>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
+                      
+                      {/* 播出日期 */}
+                      {bangumiDetails.date && (
+                        <div>
+                          <span className='font-semibold text-gray-700 dark:text-gray-300'>播出日期: </span>
+                          <span className='text-gray-600 dark:text-gray-400'>{bangumiDetails.date}</span>
+                        </div>
+                      )}
+                      
+                      {/* 标签信息 */}
+                      <div className='flex flex-wrap gap-2 mt-3'>
+                        {bangumiDetails.tags && bangumiDetails.tags.slice(0, 4).map((tag: any, index: number) => (
+                          <span key={index} className='bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs'>
+                            {tag.name}
+                          </span>
+                        ))}
+                        {bangumiDetails.total_episodes && (
+                          <span className='bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs'>
+                            共{bangumiDetails.total_episodes}话
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 豆瓣详情 */}
                   {movieDetails && (
                     <div className='space-y-2 text-sm'>
                       {/* 豆瓣评分 */}
@@ -3149,12 +3329,12 @@ function PlayPageClient() {
                 </div>
               )}
               {/* 剧情简介 */}
-              {detail?.desc && (
+              {(detail?.desc || bangumiDetails?.summary) && (
                 <div
                   className='mt-0 text-base leading-relaxed opacity-90 overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide'
                   style={{ whiteSpace: 'pre-line' }}
                 >
-                  {detail.desc}
+                  {bangumiDetails?.summary || detail?.desc}
                 </div>
               )}
             </div>
@@ -3164,23 +3344,27 @@ function PlayPageClient() {
           <div className='hidden md:block md:col-span-1 md:order-first'>
             <div className='pl-0 py-4 pr-6'>
               <div className='relative bg-gray-300 dark:bg-gray-700 aspect-[2/3] flex items-center justify-center rounded-xl overflow-hidden'>
-                {videoCover ? (
+                {(videoCover || bangumiDetails?.images?.large) ? (
                   <>
                     <img
-                      src={processImageUrl(videoCover)}
+                      src={processImageUrl(bangumiDetails?.images?.large || videoCover)}
                       alt={videoTitle}
                       className='w-full h-full object-cover'
                     />
 
-                    {/* 豆瓣链接按钮 */}
+                    {/* 链接按钮（bangumi或豆瓣） */}
                     {videoDoubanId !== 0 && (
                       <a
-                        href={`https://movie.douban.com/subject/${videoDoubanId.toString()}`}
+                        href={
+                          bangumiDetails 
+                            ? `https://bgm.tv/subject/${videoDoubanId.toString()}`
+                            : `https://movie.douban.com/subject/${videoDoubanId.toString()}`
+                        }
                         target='_blank'
                         rel='noopener noreferrer'
                         className='absolute top-3 left-3'
                       >
-                        <div className='bg-green-500 text-white text-xs font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-green-600 hover:scale-[1.1] transition-all duration-300 ease-out'>
+                        <div className={`${bangumiDetails ? 'bg-pink-500 hover:bg-pink-600' : 'bg-green-500 hover:bg-green-600'} text-white text-xs font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:scale-[1.1] transition-all duration-300 ease-out`}>
                           <svg
                             width='16'
                             height='16'

@@ -54,11 +54,13 @@ function setCache(key: string, data: any, expireTime: number): void {
   }
 }
 
-// 清理过期缓存
+// 清理过期缓存（包括bangumi缓存）
 function cleanExpiredCache(): void {
   if (typeof localStorage === 'undefined') return;
   
-  const keys = Object.keys(localStorage).filter(key => key.startsWith('douban-'));
+  const keys = Object.keys(localStorage).filter(key => 
+    key.startsWith('douban-') || key.startsWith('bangumi-')
+  );
   let cleanedCount = 0;
   
   keys.forEach(key => {
@@ -79,11 +81,11 @@ function cleanExpiredCache(): void {
   });
   
   if (cleanedCount > 0) {
-    console.log(`清理了 ${cleanedCount} 个过期的豆瓣缓存`);
+    console.log(`清理了 ${cleanedCount} 个过期缓存（豆瓣+Bangumi）`);
   }
 }
 
-// 获取缓存状态信息
+// 获取缓存状态信息（包括bangumi）
 export function getDoubanCacheStats(): {
   totalItems: number;
   totalSize: number;
@@ -93,12 +95,14 @@ export function getDoubanCacheStats(): {
     return { totalItems: 0, totalSize: 0, byType: {} };
   }
   
-  const keys = Object.keys(localStorage).filter(key => key.startsWith('douban-'));
+  const keys = Object.keys(localStorage).filter(key => 
+    key.startsWith('douban-') || key.startsWith('bangumi-')
+  );
   const byType: Record<string, number> = {};
   let totalSize = 0;
   
   keys.forEach(key => {
-    const type = key.split('-')[1]; // douban-{type}-{params}
+    const type = key.split('-')[1]; // douban-{type}-{params} 或 bangumi-{type}
     byType[type] = (byType[type] || 0) + 1;
     
     const data = localStorage.getItem(key);
@@ -114,13 +118,15 @@ export function getDoubanCacheStats(): {
   };
 }
 
-// 清理所有豆瓣缓存
+// 清理所有缓存（豆瓣+bangumi）
 export function clearDoubanCache(): void {
   if (typeof localStorage === 'undefined') return;
   
-  const keys = Object.keys(localStorage).filter(key => key.startsWith('douban-'));
+  const keys = Object.keys(localStorage).filter(key => 
+    key.startsWith('douban-') || key.startsWith('bangumi-')
+  );
   keys.forEach(key => localStorage.removeItem(key));
-  console.log(`清理了 ${keys.length} 个豆瓣缓存项`);
+  console.log(`清理了 ${keys.length} 个缓存项（豆瓣+Bangumi）`);
 }
 
 // 初始化缓存系统（应该在应用启动时调用）
@@ -133,7 +139,7 @@ export function initDoubanCache(): void {
   // 每10分钟清理一次过期缓存
   setInterval(cleanExpiredCache, 10 * 60 * 1000);
   
-  console.log('豆瓣缓存系统已初始化');
+  console.log('缓存系统已初始化（豆瓣+Bangumi）');
 }
 
 interface DoubanCategoriesParams {
