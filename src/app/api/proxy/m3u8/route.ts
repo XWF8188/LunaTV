@@ -134,6 +134,11 @@ function rewriteM3U8Content(content: string, baseUrl: string, req: Request, allo
       line = rewriteKeyUri(line, baseUrl, proxyBase);
     }
 
+    // 处理 EXT-X-MEDIA 标签中的 URI (音频轨道等)
+    if (line.startsWith('#EXT-X-MEDIA:')) {
+      line = rewriteMediaUri(line, baseUrl, proxyBase);
+    }
+
     // 处理嵌套的 M3U8 文件 (EXT-X-STREAM-INF)
     if (line.startsWith('#EXT-X-STREAM-INF:')) {
       rewrittenLines.push(line);
@@ -176,6 +181,30 @@ function rewriteKeyUri(line: string, baseUrl: string, proxyBase: string) {
     const resolvedUrl = resolveUrl(baseUrl, originalUri);
     const proxyUrl = `${proxyBase}/key?url=${encodeURIComponent(resolvedUrl)}`;
     return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
+  }
+  return line;
+}
+
+function rewriteMediaUri(line: string, baseUrl: string, proxyBase: string) {
+  const uriMatch = line.match(/URI="([^"]+)"/);
+  if (uriMatch) {
+    const originalUri = uriMatch[1];
+    // 检查URI是否有效，避免nan值
+    if (!originalUri || originalUri === 'nan' || originalUri.includes('nan')) {
+      console.warn('检测到无效的音频轨道URI:', originalUri, '原始行:', line);
+      // 移除URI属性，让HLS.js忽略这个音频轨道
+      return line.replace(/,?URI="[^"]*"/, '');
+    }
+    
+    try {
+      const resolvedUrl = resolveUrl(baseUrl, originalUri);
+      const proxyUrl = `${proxyBase}/m3u8?url=${encodeURIComponent(resolvedUrl)}`;
+      return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
+    } catch (error) {
+      console.warn('解析音频轨道URI失败:', originalUri, error);
+      // 移除URI属性，让HLS.js忽略这个音频轨道
+      return line.replace(/,?URI="[^"]*"/, '');
+    }
   }
   return line;
 }
