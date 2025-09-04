@@ -66,9 +66,7 @@ interface UserCacheStore {
   favorites?: CacheData<Record<string, Favorite>>;
   searchHistory?: CacheData<string[]>;
   skipConfigs?: CacheData<Record<string, SkipConfig>>;
-  // 新增豆瓣数据缓存
-  doubanDetails?: CacheData<Record<string, any>>;
-  doubanLists?: CacheData<Record<string, any>>;
+  // 注意：豆瓣缓存已迁移到统一存储，不再需要这里的缓存结构
 }
 
 // ---- 常量 ----
@@ -81,11 +79,7 @@ const CACHE_PREFIX = 'moontv_cache_';
 const CACHE_VERSION = '1.0.0';
 const CACHE_EXPIRE_TIME = 60 * 60 * 1000; // 一小时缓存过期
 
-// 豆瓣数据专用缓存过期时间
-const DOUBAN_CACHE_EXPIRE = {
-  details: 4 * 60 * 60 * 1000,  // 详情4小时（变化较少）
-  lists: 2 * 60 * 60 * 1000,   // 列表2小时（更新频繁）
-};
+// 注意：豆瓣缓存配置已迁移到 douban.client.ts
 
 // ---- 环境变量 ----
 const STORAGE_TYPE = (() => {
@@ -198,15 +192,7 @@ class HybridCacheManager {
       delete cache.favorites;
     }
 
-    // 清理过期的豆瓣详情缓存
-    if (cache.doubanDetails && now - cache.doubanDetails.timestamp > DOUBAN_CACHE_EXPIRE.details) {
-      delete cache.doubanDetails;
-    }
-
-    // 清理过期的豆瓣列表缓存
-    if (cache.doubanLists && now - cache.doubanLists.timestamp > DOUBAN_CACHE_EXPIRE.lists) {
-      delete cache.doubanLists;
-    }
+    // 注意：豆瓣缓存已迁移到统一存储，不再在这里处理
   }
 
   /**
@@ -414,94 +400,45 @@ class HybridCacheManager {
 
   // ---- 豆瓣数据缓存方法 ----
 
+  // 注意：以下豆瓣缓存相关方法已废弃，豆瓣缓存已迁移到统一存储系统
+  // 这些方法保留是为了向后兼容，但不再使用
+
   /**
-   * 检查豆瓣缓存是否有效（使用专门的过期时间）
+   * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
    */
   private isDoubanCacheValid<T>(cache: CacheData<T>, type: 'details' | 'lists'): boolean {
-    const now = Date.now();
-    const expireTime = type === 'details' ? DOUBAN_CACHE_EXPIRE.details : DOUBAN_CACHE_EXPIRE.lists;
-    return (
-      cache.version === CACHE_VERSION &&
-      now - cache.timestamp < expireTime
-    );
+    return false; // 始终返回false，强制使用新的缓存系统
   }
 
   /**
-   * 获取豆瓣详情缓存
+   * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
+   */
+  /**
+   * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
    */
   getDoubanDetails(id: string): any | null {
-    const username = this.getCurrentUsername();
-    if (!username) return null;
-
-    const userCache = this.getUserCache(username);
-    const cached = userCache.doubanDetails;
-    
-    if (cached && this.isDoubanCacheValid(cached, 'details')) {
-      return cached.data[id] || null;
-    }
-    return null;
+    return null; // 不再使用本地缓存，返回null强制使用新系统
   }
 
   /**
-   * 保存豆瓣详情缓存
+   * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
    */
   setDoubanDetails(id: string, data: any): void {
-    const username = this.getCurrentUsername();
-    if (!username) return;
-
-    const userCache = this.getUserCache(username);
-    
-    if (!userCache.doubanDetails) {
-      userCache.doubanDetails = {
-        data: {},
-        timestamp: Date.now(),
-        version: CACHE_VERSION
-      };
-    }
-
-    userCache.doubanDetails.data[id] = data;
-    userCache.doubanDetails.timestamp = Date.now();
-    
-    this.saveUserCache(username, userCache);
+    // 不再使用本地缓存，空实现
   }
 
   /**
-   * 获取豆瓣列表缓存
+   * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
    */
   getDoubanList(cacheKey: string): any | null {
-    const username = this.getCurrentUsername();
-    if (!username) return null;
-
-    const userCache = this.getUserCache(username);
-    const cached = userCache.doubanLists;
-    
-    if (cached && this.isDoubanCacheValid(cached, 'lists')) {
-      return cached.data[cacheKey] || null;
-    }
-    return null;
+    return null; // 不再使用本地缓存，返回null强制使用新系统
   }
 
   /**
-   * 保存豆瓣列表缓存
+   * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
    */
   setDoubanList(cacheKey: string, data: any): void {
-    const username = this.getCurrentUsername();
-    if (!username) return;
-
-    const userCache = this.getUserCache(username);
-    
-    if (!userCache.doubanLists) {
-      userCache.doubanLists = {
-        data: {},
-        timestamp: Date.now(),
-        version: CACHE_VERSION
-      };
-    }
-
-    userCache.doubanLists.data[cacheKey] = data;
-    userCache.doubanLists.timestamp = Date.now();
-    
-    this.saveUserCache(username, userCache);
+    // 不再使用本地缓存，空实现
   }
 
   /**
@@ -514,15 +451,11 @@ class HybridCacheManager {
   /**
    * 清除豆瓣缓存
    */
+  /**
+   * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
+   */
   clearDoubanCache(): void {
-    const username = this.getCurrentUsername();
-    if (!username) return;
-
-    const userCache = this.getUserCache(username);
-    delete userCache.doubanDetails;
-    delete userCache.doubanLists;
-    
-    this.saveUserCache(username, userCache);
+    // 不再使用本地缓存，空实现
   }
 }
 
@@ -1792,38 +1725,37 @@ export async function deleteSkipConfig(
 // ---- 豆瓣数据缓存导出函数 ----
 
 /**
- * 获取豆瓣详情缓存
+ * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
  * @param id 豆瓣ID
- * @returns 缓存的详情数据或null
+ * @returns null
  */
 export function getDoubanDetailsCache(id: string): any | null {
-  return cacheManager.getDoubanDetails(id);
+  return null; // 不再使用本地缓存
 }
 
 /**
- * 保存豆瓣详情缓存
+ * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
  * @param id 豆瓣ID
  * @param data 详情数据
  */
 export function setDoubanDetailsCache(id: string, data: any): void {
-  cacheManager.setDoubanDetails(id, data);
+  // 不再使用本地缓存
 }
 
 /**
- * 获取豆瓣列表缓存
+ * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
  * @param type 类型 (tv/movie)
  * @param tag 标签
  * @param pageStart 页面起始位置
  * @param pageSize 页面大小
- * @returns 缓存的列表数据或null
+ * @returns null
  */
 export function getDoubanListCache(type: string, tag: string, pageStart: number, pageSize: number): any | null {
-  const cacheKey = HybridCacheManager.generateDoubanListKey(type, tag, pageStart, pageSize);
-  return cacheManager.getDoubanList(cacheKey);
+  return null; // 不再使用本地缓存
 }
 
 /**
- * 保存豆瓣列表缓存
+ * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
  * @param type 类型 (tv/movie) 
  * @param tag 标签
  * @param pageStart 页面起始位置
@@ -1831,13 +1763,12 @@ export function getDoubanListCache(type: string, tag: string, pageStart: number,
  * @param data 列表数据
  */
 export function setDoubanListCache(type: string, tag: string, pageStart: number, pageSize: number, data: any): void {
-  const cacheKey = HybridCacheManager.generateDoubanListKey(type, tag, pageStart, pageSize);
-  cacheManager.setDoubanList(cacheKey, data);
+  // 不再使用本地缓存
 }
 
 /**
- * 清除所有豆瓣缓存
+ * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
  */
 export function clearDoubanCache(): void {
-  cacheManager.clearDoubanCache();
+  // 不再使用本地缓存
 }

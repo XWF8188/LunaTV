@@ -463,4 +463,41 @@ export abstract class BaseRedisStorage implements IStorage {
       throw new Error('清空数据失败');
     }
   }
+
+  // ---------- 通用缓存方法 ----------
+  private cacheKey(key: string) {
+    return `cache:${key}`;
+  }
+
+  async getCache(key: string): Promise<any | null> {
+    const val = await this.withRetry(() => this.client.get(this.cacheKey(key)));
+    return val ? JSON.parse(val) : null;
+  }
+
+  async setCache(key: string, data: any, expireSeconds?: number): Promise<void> {
+    const cacheKey = this.cacheKey(key);
+    const value = JSON.stringify(data);
+    
+    if (expireSeconds) {
+      await this.withRetry(() => this.client.setEx(cacheKey, expireSeconds, value));
+    } else {
+      await this.withRetry(() => this.client.set(cacheKey, value));
+    }
+  }
+
+  async deleteCache(key: string): Promise<void> {
+    await this.withRetry(() => this.client.del(this.cacheKey(key)));
+  }
+
+  async clearExpiredCache(prefix?: string): Promise<void> {
+    // Redis的TTL机制会自动清理过期数据，这里主要用于手动清理
+    // 可以根据需要实现特定前缀的缓存清理
+    const pattern = prefix ? `cache:${prefix}*` : 'cache:*';
+    const keys = await this.withRetry(() => this.client.keys(pattern));
+    
+    if (keys.length > 0) {
+      await this.withRetry(() => this.client.del(keys));
+      console.log(`Cleared ${keys.length} cache entries with pattern: ${pattern}`);
+    }
+  }
 }

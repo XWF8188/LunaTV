@@ -26,6 +26,7 @@ import {
   saveSkipConfig,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { ClientCache } from '@/lib/client-cache';
 import { getDoubanDetails } from '@/lib/douban.client';
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
@@ -266,7 +267,7 @@ function PlayPageClient() {
         }
       }
     }
-    return true;
+    return false;
   });
 
   // 保存优选时的测速结果，避免EpisodeSelector重复测速
@@ -274,29 +275,74 @@ function PlayPageClient() {
     Map<string, { quality: string; loadSpeed: string; pingTime: number }>
   >(new Map());
 
-  // 弹幕缓存：避免重复请求相同的弹幕数据，支持页面刷新持久化
-  const DANMU_CACHE_DURATION = 30 * 60 * 1000; // 30分钟缓存
-  const DANMU_CACHE_KEY = 'lunatv_danmu_cache';
+  // 弹幕缓存：避免重复请求相同的弹幕数据，支持页面刷新持久化（统一存储）
+  const DANMU_CACHE_DURATION = 30 * 60; // 30分钟缓存（秒）
+  const DANMU_CACHE_KEY_PREFIX = 'danmu-cache';
   
-  // 获取弹幕缓存
-  const getDanmuCache = (): Map<string, { data: any[]; timestamp: number }> => {
+  // 获取单个弹幕缓存
+  const getDanmuCacheItem = async (key: string): Promise<{ data: any[]; timestamp: number } | null> => {
     try {
-      const cached = localStorage.getItem(DANMU_CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        return new Map(Object.entries(parsed));
+      const cacheKey = `${DANMU_CACHE_KEY_PREFIX}-${key}`;
+      // 优先从统一存储获取
+      const cached = await ClientCache.get(cacheKey);
+      if (cached) return cached;
+      
+      // 兜底：从localStorage获取（兼容性）
+      if (typeof localStorage !== 'undefined') {
+        const oldCacheKey = 'lunatv_danmu_cache';
+        const localCached = localStorage.getItem(oldCacheKey);
+        if (localCached) {
+          const parsed = JSON.parse(localCached);
+          const cacheMap = new Map(Object.entries(parsed));
+          const item = cacheMap.get(key) as { data: any[]; timestamp: number } | undefined;
+          if (item && typeof item.timestamp === 'number' && Date.now() - item.timestamp < DANMU_CACHE_DURATION * 1000) {
+            return item;
+          }
+        }
       }
+      
+      return null;
     } catch (error) {
       console.warn('读取弹幕缓存失败:', error);
+      return null;
     }
-    return new Map();
   };
   
-  // 保存弹幕缓存
-  const setDanmuCache = (cache: Map<string, { data: any[]; timestamp: number }>) => {
+  // 保存单个弹幕缓存
+  const setDanmuCacheItem = async (key: string, data: any[]): Promise<void> => {
     try {
-      const obj = Object.fromEntries(cache.entries());
-      localStorage.setItem(DANMU_CACHE_KEY, JSON.stringify(obj));
+      const cacheKey = `${DANMU_CACHE_KEY_PREFIX}-${key}`;
+      const cacheData = { data, timestamp: Date.now() };
+      
+      // 主要存储：统一存储
+      await ClientCache.set(cacheKey, cacheData, DANMU_CACHE_DURATION);
+      
+      // 兜底存储：localStorage（兼容性，但只存储最近几个）
+      if (typeof localStorage !== 'undefined') {
+        try {
+          const oldCacheKey = 'lunatv_danmu_cache';
+          let localCache: Map<string, { data: any[]; timestamp: number }> = new Map();
+          
+          const existing = localStorage.getItem(oldCacheKey);
+          if (existing) {
+            const parsed = JSON.parse(existing);
+            localCache = new Map(Object.entries(parsed)) as Map<string, { data: any[]; timestamp: number }>;
+          }
+          
+          // 清理过期项并限制数量（最多保留10个）
+          const now = Date.now();
+          const validEntries = Array.from(localCache.entries())
+            .filter(([, item]) => typeof item.timestamp === 'number' && now - item.timestamp < DANMU_CACHE_DURATION * 1000)
+            .slice(-9); // 保留9个，加上新的共10个
+            
+          validEntries.push([key, cacheData]);
+          
+          const obj = Object.fromEntries(validEntries);
+          localStorage.setItem(oldCacheKey, JSON.stringify(obj));
+        } catch (e) {
+          // localStorage可能满了，忽略错误
+        }
+      }
     } catch (error) {
       console.warn('保存弹幕缓存失败:', error);
     }
@@ -338,47 +384,63 @@ function PlayPageClient() {
   // bangumi缓存配置
   const BANGUMI_CACHE_EXPIRE = 4 * 60 * 60 * 1000; // 4小时，和douban详情一致
 
-  // bangumi缓存工具函数
-  const getBangumiCache = (id: number) => {
-    if (typeof localStorage === 'undefined') return null;
-    
+  // bangumi缓存工具函数（统一存储）
+  const getBangumiCache = async (id: number) => {
     try {
       const cacheKey = `bangumi-details-${id}`;
-      const cached = localStorage.getItem(cacheKey);
-      if (!cached) return null;
+      // 优先从统一存储获取
+      const cached = await ClientCache.get(cacheKey);
+      if (cached) return cached;
       
-      const { data, expire } = JSON.parse(cached);
-      if (Date.now() > expire) {
-        localStorage.removeItem(cacheKey);
-        return null;
+      // 兜底：从localStorage获取（兼容性）
+      if (typeof localStorage !== 'undefined') {
+        const localCached = localStorage.getItem(cacheKey);
+        if (localCached) {
+          const { data, expire } = JSON.parse(localCached);
+          if (Date.now() <= expire) {
+            return data;
+          }
+          localStorage.removeItem(cacheKey);
+        }
       }
       
-      return data;
+      return null;
     } catch (e) {
+      console.warn('获取Bangumi缓存失败:', e);
       return null;
     }
   };
 
-  const setBangumiCache = (id: number, data: any) => {
-    if (typeof localStorage === 'undefined') return;
-    
+  const setBangumiCache = async (id: number, data: any) => {
     try {
       const cacheKey = `bangumi-details-${id}`;
-      const cacheData = {
-        data,
-        expire: Date.now() + BANGUMI_CACHE_EXPIRE,
-        created: Date.now()
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      const expireSeconds = Math.floor(BANGUMI_CACHE_EXPIRE / 1000); // 转换为秒
+      
+      // 主要存储：统一存储
+      await ClientCache.set(cacheKey, data, expireSeconds);
+      
+      // 兜底存储：localStorage（兼容性）
+      if (typeof localStorage !== 'undefined') {
+        try {
+          const cacheData = {
+            data,
+            expire: Date.now() + BANGUMI_CACHE_EXPIRE,
+            created: Date.now()
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        } catch (e) {
+          // localStorage可能满了，忽略错误
+        }
+      }
     } catch (e) {
-      console.warn('Failed to cache bangumi details:', e);
+      console.warn('设置Bangumi缓存失败:', e);
     }
   };
 
   // 获取bangumi详情（带缓存）
   const fetchBangumiDetails = async (bangumiId: number) => {
     // 检查缓存
-    const cached = getBangumiCache(bangumiId);
+    const cached = await getBangumiCache(bangumiId);
     if (cached) {
       console.log(`Bangumi详情缓存命中: ${bangumiId}`);
       return cached;
@@ -390,7 +452,7 @@ function PlayPageClient() {
         const bangumiData = await response.json();
         
         // 保存到缓存
-        setBangumiCache(bangumiId, bangumiData);
+        await setBangumiCache(bangumiId, bangumiData);
         console.log(`Bangumi详情已缓存: ${bangumiId}`);
         
         return bangumiData;
@@ -750,7 +812,7 @@ function PlayPageClient() {
   const isMobileGlobal = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) || isIOSGlobal;
 
   // 内存压力检测和清理（针对移动设备）
-  const checkMemoryPressure = () => {
+  const checkMemoryPressure = async () => {
     // 仅在支持performance.memory的浏览器中执行
     if (typeof performance !== 'undefined' && 'memory' in performance) {
       try {
@@ -769,7 +831,12 @@ function PlayPageClient() {
           
           // 清理弹幕缓存
           try {
-            localStorage.removeItem(DANMU_CACHE_KEY);
+            // 清理统一存储中的弹幕缓存
+            await ClientCache.clearExpired('danmu-cache');
+            
+            // 兜底清理localStorage中的弹幕缓存（兼容性）
+            const oldCacheKey = 'lunatv_danmu_cache';
+            localStorage.removeItem(oldCacheKey);
             console.log('弹幕缓存已清理');
           } catch (e) {
             console.warn('清理弹幕缓存失败:', e);
@@ -795,7 +862,8 @@ function PlayPageClient() {
     if (!isMobileGlobal) return;
     
     const memoryCheckInterval = setInterval(() => {
-      checkMemoryPressure();
+      // 异步调用内存检查，不阻塞定时器
+      checkMemoryPressure().catch(console.error);
     }, 30000); // 每30秒检查一次
     
     return () => {
@@ -1080,26 +1148,23 @@ function PlayPageClient() {
       console.log('- 豆瓣ID:', currentVideoDoubanId);
       console.log('- 集数:', currentEpisodeNum);
       
-      // 从localStorage获取缓存
-      const danmuCache = getDanmuCache();
-      console.log('- 缓存Map大小:', danmuCache.size);
-
       // 检查缓存
-      const cached = danmuCache.get(cacheKey);
+      console.log('🔍 检查弹幕缓存:', cacheKey);
+      const cached = await getDanmuCacheItem(cacheKey);
       if (cached) {
         console.log('📦 找到缓存数据:');
         console.log('- 缓存时间:', cached.timestamp);
         console.log('- 时间差:', now - cached.timestamp, 'ms');
-        console.log('- 缓存有效期:', DANMU_CACHE_DURATION, 'ms');
-        console.log('- 是否过期:', (now - cached.timestamp) >= DANMU_CACHE_DURATION);
+        console.log('- 缓存有效期:', DANMU_CACHE_DURATION * 1000, 'ms');
+        console.log('- 是否过期:', (now - cached.timestamp) >= (DANMU_CACHE_DURATION * 1000));
+        
+        if ((now - cached.timestamp) < (DANMU_CACHE_DURATION * 1000)) {
+          console.log('✅ 使用弹幕缓存数据，缓存键:', cacheKey);
+          console.log('📊 缓存弹幕数量:', cached.data.length);
+          return cached.data;
+        }
       } else {
         console.log('❌ 未找到缓存数据');
-      }
-      
-      if (cached && (now - cached.timestamp) < DANMU_CACHE_DURATION) {
-        console.log('✅ 使用弹幕缓存数据，缓存键:', cacheKey);
-        console.log('📊 缓存弹幕数量:', cached.data.length);
-        return cached.data;
       }
 
       console.log('开始获取外部弹幕，参数:', params.toString());
@@ -1120,29 +1185,13 @@ function PlayPageClient() {
       console.log('最终弹幕数据:', finalDanmu.length, '条');
       
       // 缓存结果
-      console.log('💾 保存弹幕到缓存:');
+      console.log('💾 保存弹幕到统一存储:');
       console.log('- 缓存键:', cacheKey);
       console.log('- 弹幕数量:', finalDanmu.length);
       console.log('- 保存时间:', now);
       
-      const updatedCache = getDanmuCache();
-      updatedCache.set(cacheKey, {
-        data: finalDanmu,
-        timestamp: now
-      });
-      
-      // 清理过期缓存
-      updatedCache.forEach((value, key) => {
-        if (now - value.timestamp >= DANMU_CACHE_DURATION) {
-          console.log('🗑️ 清理过期缓存:', key);
-          updatedCache.delete(key);
-        }
-      });
-      
-      // 保存到localStorage
-      setDanmuCache(updatedCache);
-      
-      console.log('✅ 缓存保存完成，当前缓存大小:', updatedCache.size);
+      // 保存到统一存储
+      await setDanmuCacheItem(cacheKey, finalDanmu);
       
       return finalDanmu;
     } catch (error) {

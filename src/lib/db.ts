@@ -239,6 +239,32 @@ export class DbManager {
       throw new Error('存储类型不支持清空数据操作');
     }
   }
+
+  // ---------- 通用缓存方法 ----------
+  async getCache(key: string): Promise<any | null> {
+    if (typeof this.storage.getCache === 'function') {
+      return await this.storage.getCache(key);
+    }
+    return null;
+  }
+
+  async setCache(key: string, data: any, expireSeconds?: number): Promise<void> {
+    if (typeof this.storage.setCache === 'function') {
+      await this.storage.setCache(key, data, expireSeconds);
+    }
+  }
+
+  async deleteCache(key: string): Promise<void> {
+    if (typeof this.storage.deleteCache === 'function') {
+      await this.storage.deleteCache(key);
+    }
+  }
+
+  async clearExpiredCache(prefix?: string): Promise<void> {
+    if (typeof this.storage.clearExpiredCache === 'function') {
+      await this.storage.clearExpiredCache(prefix);
+    }
+  }
 }
 
 // 导出默认实例
