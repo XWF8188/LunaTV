@@ -469,6 +469,10 @@ function LivePageClient() {
     // 重置不支持的类型状态
     setUnsupportedType(null);
 
+    // 重置错误计数器
+    keyLoadErrorCount = 0;
+    lastErrorTime = 0;
+
     setCurrentChannel(channel);
     setVideoUrl(channel.url);
 
@@ -835,6 +839,12 @@ function LivePageClient() {
     }
   }
 
+  // 错误重试状态管理
+  let keyLoadErrorCount = 0;
+  let lastErrorTime = 0;
+  const MAX_KEY_ERRORS = 3;
+  const ERROR_TIMEOUT = 10000; // 10秒内超过3次keyLoadError就认为频道不可用
+
   function m3u8Loader(video: HTMLVideoElement, url: string) {
     if (!Hls) {
       console.error('HLS.js 未加载');
@@ -868,15 +878,53 @@ function LivePageClient() {
     hls.on(Hls.Events.ERROR, function (event: any, data: any) {
       console.error('HLS Error:', event, data);
 
+      // 特殊处理keyLoadError - 防止无限重试导致页面卡住
+      if (data.details === 'keyLoadError') {
+        const currentTime = Date.now();
+        
+        // 重置计数器（如果距离上次错误超过10秒）
+        if (currentTime - lastErrorTime > ERROR_TIMEOUT) {
+          keyLoadErrorCount = 0;
+        }
+        
+        keyLoadErrorCount++;
+        lastErrorTime = currentTime;
+        
+        console.warn(`KeyLoadError count: ${keyLoadErrorCount}/${MAX_KEY_ERRORS}`);
+        
+        // 如果短时间内keyLoadError次数过多，认为这个频道不可用
+        if (keyLoadErrorCount >= MAX_KEY_ERRORS) {
+          console.error('Too many keyLoadErrors, marking channel as unavailable');
+          setUnsupportedType('channel-unavailable');
+          setIsVideoLoading(false);
+          hls.destroy();
+          return;
+        }
+        
+        // 前几次错误仍然尝试重新加载，但不做fatal处理
+        return;
+      }
+
       if (data.fatal) {
         switch (data.type) {
           case Hls.ErrorTypes.NETWORK_ERROR:
-            hls.startLoad();
+            console.log('Network error, attempting to recover...');
+            try {
+              hls.startLoad();
+            } catch (e) {
+              console.error('Failed to restart after network error:', e);
+            }
             break;
           case Hls.ErrorTypes.MEDIA_ERROR:
-            // hls.recoverMediaError();
+            console.log('Media error, attempting to recover...');
+            try {
+              hls.recoverMediaError();
+            } catch (e) {
+              console.error('Failed to recover from media error:', e);
+            }
             break;
           default:
+            console.log('Fatal error, destroying HLS instance');
             hls.destroy();
             break;
         }
@@ -1298,14 +1346,20 @@ function LivePageClient() {
                       </div>
                       <div className='space-y-4'>
                         <h3 className='text-xl font-semibold text-white'>
-                          暂不支持的直播流类型
+                          {unsupportedType === 'channel-unavailable' ? '该频道暂时不可用' : '暂不支持的直播流类型'}
                         </h3>
                         <div className='bg-orange-500/20 border border-orange-500/30 rounded-lg p-4'>
                           <p className='text-orange-300 font-medium'>
-                            当前频道直播流类型：<span className='text-white font-bold'>{unsupportedType.toUpperCase()}</span>
+                            {unsupportedType === 'channel-unavailable' 
+                              ? '频道可能需要特殊访问权限或链接已过期'
+                              : `当前频道直播流类型：${unsupportedType.toUpperCase()}`
+                            }
                           </p>
                           <p className='text-sm text-orange-200 mt-2'>
-                            目前仅支持 M3U8 格式的直播流
+                            {unsupportedType === 'channel-unavailable'
+                              ? '请联系IPTV提供商或尝试其他频道'
+                              : '目前仅支持 M3U8 格式的直播流'
+                            }
                           </p>
                         </div>
                         <p className='text-sm text-gray-300'>
