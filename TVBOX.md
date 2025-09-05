@@ -223,12 +223,12 @@ GET /api/parse?url=https://v.qq.com/x/cover/xxx&format=iframe
 1. 检查上述故障排除方案
 2. 查看 LunaTV 和 TVBox 的日志信息
 3. 确认服务器配置是否正确
-4. 向项目仓库提交 Issue
+4. 参考项目文档和社区讨论
 
 ## 🔗 相关链接
 
 - [LunaTV 主项目](https://github.com/SzeMeng76/LunaTV)
-- [TVBox 官方](https://github.com/CatVodTVOfficial/TVBoxOSC)
+- [TVBox 开源版本](https://github.com/o0HalfLife0o/TVBoxOSC)
 - [配置示例](./examples/tvbox-config.json)
 
 ## 🙏 致谢
