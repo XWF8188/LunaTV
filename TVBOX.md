@@ -161,7 +161,7 @@ GET /api/parse?url=https://v.qq.com/x/cover/xxx&format=iframe
 1. TVBox 配置会自动同步最新的源站信息
 2. 在 TVBox 中刷新配置即可获取最新源站
 3. 无需手动更新配置链接
-4. 配置缓存 1 小时，确保性能与实时性平衡
+4. 配置无缓存设计，修改后即时生效
 
 ## 🎬 功能特色
 
@@ -185,7 +185,7 @@ GET /api/parse?url=https://v.qq.com/x/cover/xxx&format=iframe
 
 1. **网络要求**：确保 TVBox 设备能够访问您的 LunaTV 服务器
 2. **HTTPS 支持**：建议使用 HTTPS 协议确保安全性
-3. **缓存设置**：配置会缓存 1 小时，如需立即更新请刷新 TVBox 配置
+3. **缓存设置**：配置无缓存设计，修改后即时生效
 4. **兼容性**：支持 TVBox 及其衍生应用
 5. **源站限制**：解析效果取决于原始视频源的可用性
 6. **权限控制**：继承 LunaTV 的用户权限系统
@@ -230,6 +230,10 @@ GET /api/parse?url=https://v.qq.com/x/cover/xxx&format=iframe
 - [LunaTV 主项目](https://github.com/SzeMeng76/LunaTV)
 - [TVBox 官方](https://github.com/CatVodTVOfficial/TVBoxOSC)
 - [配置示例](./examples/tvbox-config.json)
+
+## 🙏 致谢
+
+TVBox 功能的设计思路参考了 [KatelyaTV](https://github.com/katelya77/KatelyaTV) 项目。感谢开源社区的贡献。
 
 ---
 

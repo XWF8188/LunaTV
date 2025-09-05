@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
           searchable: 1, // 可搜索
           quickSearch: 1, // 支持快速搜索
           filterable: 1, // 支持分类筛选
-          ext: source.detail || '', // 详情页地址作为扩展参数
+          ext: source.detail || source.api, // 如果没有详情地址，使用API地址作为详情地址
           timeout: 30, // 30秒超时
           categories: [
             "电影", "电视剧", "综艺", "动漫", "纪录片", "短剧"
@@ -128,16 +128,31 @@ export async function GET(request: NextRequest) {
         "芒果", "华数", "哔哩", "1905"
       ],
 
-      // 直播源（从LunaTV的直播配置中读取）
-      lives: (config.LiveConfig || [])
-        .filter(live => !live.disabled)
-        .map(live => ({
-          name: live.name,
+      // 直播源（合并所有启用的直播源为一个，解决TVBox多源限制）
+      lives: (() => {
+        const enabledLives = (config.LiveConfig || []).filter(live => !live.disabled);
+        if (enabledLives.length === 0) return [];
+        
+        // 如果只有一个源，直接返回
+        if (enabledLives.length === 1) {
+          return enabledLives.map(live => ({
+            name: live.name,
+            type: 0,
+            url: live.url,
+            epg: live.epg || "",
+            logo: ""
+          }));
+        }
+        
+        // 多个源时，创建一个聚合源
+        return [{
+          name: "LunaTV聚合直播",
           type: 0,
-          url: live.url,
-          epg: live.epg || "",
+          url: `${baseUrl}/api/live/merged`, // 新的聚合端点
+          epg: enabledLives.find(live => live.epg)?.epg || "",
           logo: ""
-        })),
+        }];
+      })(),
 
       // 广告过滤规则
       ads: [
