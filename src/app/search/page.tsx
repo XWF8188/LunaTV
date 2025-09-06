@@ -19,6 +19,7 @@ import SearchResultFilter, { SearchFilterCategory } from '@/components/SearchRes
 import SearchSuggestions from '@/components/SearchSuggestions';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
 import VirtualSearchGrid from '@/components/VirtualSearchGrid';
+import NetDiskSearchResults from '@/components/NetDiskSearchResults';
 
 function SearchPageClient() {
   // 搜索历史
@@ -48,6 +49,13 @@ function SearchPageClient() {
     }
     return true;
   });
+
+  // 网盘搜索相关状态
+  const [searchType, setSearchType] = useState<'video' | 'netdisk'>('video');
+  const [netdiskResults, setNetdiskResults] = useState<{ [key: string]: any[] } | null>(null);
+  const [netdiskLoading, setNetdiskLoading] = useState(false);
+  const [netdiskError, setNetdiskError] = useState<string | null>(null);
+  const [netdiskTotal, setNetdiskTotal] = useState(0);
   // 聚合卡片 refs 与聚合统计缓存
   const groupRefs = useRef<Map<string, React.RefObject<VideoCardHandle>>>(new Map());
   const groupStatsRef = useRef<Map<string, { douban_id?: number; episodes?: number; source_names: string[] }>>(new Map());
@@ -360,6 +368,17 @@ function SearchPageClient() {
     // 初始加载搜索历史
     getSearchHistory().then(setSearchHistory);
 
+    // 检查URL参数并处理初始搜索
+    const initialQuery = searchParams.get('q');
+    if (initialQuery) {
+      setSearchQuery(initialQuery);
+      setShowResults(true);
+      // 如果当前是网盘搜索模式，触发网盘搜索
+      if (searchType === 'netdisk') {
+        handleNetDiskSearch(initialQuery);
+      }
+    }
+
     // 读取流式搜索设置
     if (typeof window !== 'undefined') {
       const savedFluidSearch = localStorage.getItem('fluidSearch');
@@ -417,6 +436,16 @@ function SearchPageClient() {
       document.body.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  // 监听搜索类型变化，如果切换到网盘搜索且有搜索词，立即搜索
+  useEffect(() => {
+    if (searchType === 'netdisk' && showResults) {
+      const currentQuery = searchQuery.trim() || searchParams.get('q');
+      if (currentQuery && !netdiskLoading && !netdiskResults) {
+        handleNetDiskSearch(currentQuery);
+      }
+    }
+  }, [searchType, showResults, searchQuery, searchParams, netdiskLoading, netdiskResults]);
 
   useEffect(() => {
     // 当搜索参数变化时更新搜索状态
@@ -614,6 +643,33 @@ function SearchPageClient() {
   };
 
   // 搜索表单提交时触发，处理搜索逻辑
+  // 网盘搜索函数
+  const handleNetDiskSearch = async (query: string) => {
+    if (!query.trim()) return;
+
+    setNetdiskLoading(true);
+    setNetdiskError(null);
+    setNetdiskResults(null);
+    setNetdiskTotal(0);
+
+    try {
+      const response = await fetch(`/api/netdisk/search?q=${encodeURIComponent(query.trim())}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setNetdiskResults(data.data.merged_by_type || {});
+        setNetdiskTotal(data.data.total || 0);
+      } else {
+        setNetdiskError(data.error || '网盘搜索失败');
+      }
+    } catch (error: any) {
+      console.error('网盘搜索请求失败:', error);
+      setNetdiskError('网盘搜索请求失败，请稍后重试');
+    } finally {
+      setNetdiskLoading(false);
+    }
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = searchQuery.trim().replace(/\s+/g, ' ');
@@ -621,12 +677,19 @@ function SearchPageClient() {
 
     // 回显搜索框
     setSearchQuery(trimmed);
-    setIsLoading(true);
-    setShowResults(true);
     setShowSuggestions(false);
+    setShowResults(true);
 
-    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
-    // 其余由 searchParams 变化的 effect 处理
+    if (searchType === 'netdisk') {
+      // 网盘搜索 - 也更新URL保持一致性
+      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+      handleNetDiskSearch(trimmed);
+    } else {
+      // 原有的影视搜索逻辑
+      setIsLoading(true);
+      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+      // 其余由 searchParams 变化的 effect 处理
+    }
   };
 
   const handleSuggestionSelect = (suggestion: string) => {
@@ -660,6 +723,57 @@ function SearchPageClient() {
       <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
         {/* 搜索框 */}
         <div className='mb-8'>
+          {/* 搜索类型选项卡 */}
+          <div className='max-w-2xl mx-auto mb-4'>
+            <div className='flex items-center justify-center'>
+              <div className='inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 space-x-1'>
+                <button
+                  type='button'
+                  onClick={() => {
+                    setSearchType('video');
+                    // 如果当前有结果且是网盘搜索结果，清空结果
+                    if (showResults && netdiskResults) {
+                      setNetdiskResults(null);
+                      setNetdiskError(null);
+                      setNetdiskTotal(0);
+                      // 如果有搜索词，触发影视搜索
+                      const currentQuery = searchQuery.trim() || searchParams?.get('q');
+                      if (currentQuery) {
+                        setIsLoading(true);
+                        router.push(`/search?q=${encodeURIComponent(currentQuery)}`);
+                      }
+                    }
+                  }}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    searchType === 'video'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  🎬 影视资源
+                </button>
+                <button
+                  type='button'
+                  onClick={() => {
+                    setSearchType('netdisk');
+                    // 如果当前有搜索词，立即触发网盘搜索
+                    const currentQuery = searchQuery.trim() || searchParams?.get('q');
+                    if (currentQuery && showResults) {
+                      handleNetDiskSearch(currentQuery);
+                    }
+                  }}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    searchType === 'netdisk'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  💾 网盘资源
+                </button>
+              </div>
+            </div>
+          </div>
+
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
@@ -669,7 +783,7 @@ function SearchPageClient() {
                 value={searchQuery}
                 onChange={handleInputChange}
                 onFocus={handleInputFocus}
-                placeholder='搜索电影、电视剧...'
+                placeholder={searchType === 'video' ? '搜索电影、电视剧...' : '搜索网盘资源...'}
                 autoComplete="off"
                 className='w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-10 pr-12 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:bg-white border border-gray-200/50 shadow-sm dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-500 dark:focus:bg-gray-700 dark:border-gray-700'
               />
@@ -718,22 +832,45 @@ function SearchPageClient() {
         <div className='max-w-[95%] mx-auto mt-12 overflow-visible'>
           {showResults ? (
             <section className='mb-12'>
-              {/* 标题 */}
-              <div className='mb-4'>
-                <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                  搜索结果
-                  {totalSources > 0 && useFluidSearch && (
-                    <span className='ml-2 text-sm font-normal text-gray-500 dark:text-gray-400'>
-                      {completedSources}/{totalSources}
-                    </span>
-                  )}
-                  {isLoading && useFluidSearch && (
-                    <span className='ml-2 inline-block align-middle'>
-                      <span className='inline-block h-3 w-3 border-2 border-gray-300 border-t-green-500 rounded-full animate-spin'></span>
-                    </span>
-                  )}
-                </h2>
-              </div>
+              {searchType === 'netdisk' ? (
+                /* 网盘搜索结果 */
+                <>
+                  <div className='mb-4'>
+                    <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                      网盘搜索结果
+                      {netdiskLoading && (
+                        <span className='ml-2 inline-block align-middle'>
+                          <span className='inline-block h-3 w-3 border-2 border-gray-300 border-t-green-500 rounded-full animate-spin'></span>
+                        </span>
+                      )}
+                    </h2>
+                  </div>
+                  <NetDiskSearchResults
+                    results={netdiskResults}
+                    loading={netdiskLoading}
+                    error={netdiskError}
+                    total={netdiskTotal}
+                  />
+                </>
+              ) : (
+                /* 原有的影视搜索结果 */
+                <>
+                  {/* 标题 */}
+                  <div className='mb-4'>
+                    <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                      搜索结果
+                      {totalSources > 0 && useFluidSearch && (
+                        <span className='ml-2 text-sm font-normal text-gray-500 dark:text-gray-400'>
+                          {completedSources}/{totalSources}
+                        </span>
+                      )}
+                      {isLoading && useFluidSearch && (
+                        <span className='ml-2 inline-block align-middle'>
+                          <span className='inline-block h-3 w-3 border-2 border-gray-300 border-t-green-500 rounded-full animate-spin'></span>
+                        </span>
+                      )}
+                    </h2>
+                  </div>
               {/* 筛选器 + 开关控件 */}
               <div className='mb-8 space-y-4'>
                 {/* 筛选器 */}
@@ -879,6 +1016,8 @@ function SearchPageClient() {
                       ))}
                   </div>
                 )
+              )}
+                </>
               )}
             </section>
           ) : searchHistory.length > 0 ? (

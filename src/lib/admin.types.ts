@@ -56,6 +56,12 @@ export interface AdminConfig {
     channelNumber?: number;
     disabled?: boolean;
   }[];
+  NetDiskConfig?: {
+    enabled: boolean;                    // 是否启用网盘搜索
+    pansouUrl: string;                   // PanSou服务地址
+    timeout: number;                     // 请求超时时间(秒)
+    enabledCloudTypes: string[];         // 启用的网盘类型
+  };
 }
 
 export interface AdminConfigResult {
