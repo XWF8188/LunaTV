@@ -371,8 +371,26 @@ export class UpstashRedisStorage implements IStorage {
   }
 
   async getCache(key: string): Promise<any | null> {
-    const val = await withRetry(() => this.client.get(this.cacheKey(key)));
-    return val ? JSON.parse(val as string) : null;
+    try {
+      const val = await withRetry(() => this.client.get(this.cacheKey(key)));
+      if (!val) return null;
+      
+      // 智能处理返回值：Upstash 可能返回字符串或已解析的对象
+      if (typeof val === 'string') {
+        try {
+          return JSON.parse(val);
+        } catch (parseError) {
+          console.warn(`JSON解析失败，返回原字符串 (key: ${key}):`, parseError);
+          return val; // 解析失败返回原字符串
+        }
+      } else {
+        // Upstash 可能直接返回解析后的对象
+        return val;
+      }
+    } catch (error) {
+      console.error(`Upstash getCache error (key: ${key}):`, error);
+      return null;
+    }
   }
 
   async setCache(key: string, data: any, expireSeconds?: number): Promise<void> {

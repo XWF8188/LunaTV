@@ -33,6 +33,7 @@ import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
 
 import EpisodeSelector from '@/components/EpisodeSelector';
 import PageLayout from '@/components/PageLayout';
+import NetDiskSearchResults from '@/components/NetDiskSearchResults';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
@@ -74,6 +75,12 @@ function PlayPageClient() {
   // bangumi详情状态
   const [bangumiDetails, setBangumiDetails] = useState<any>(null);
   const [loadingBangumiDetails, setLoadingBangumiDetails] = useState(false);
+
+  // 网盘搜索状态
+  const [netdiskResults, setNetdiskResults] = useState<{ [key: string]: any[] } | null>(null);
+  const [netdiskLoading, setNetdiskLoading] = useState(false);
+  const [netdiskError, setNetdiskError] = useState<string | null>(null);
+  const [netdiskTotal, setNetdiskTotal] = useState(0);
 
   // 跳过片头片尾配置
   const [skipConfig, setSkipConfig] = useState<{
@@ -234,6 +241,12 @@ function PlayPageClient() {
 
     loadMovieDetails();
   }, [videoDoubanId, loadingMovieDetails, movieDetails, loadingBangumiDetails, bangumiDetails]);
+
+  // 自动网盘搜索：当有视频标题时可以随时搜索
+  useEffect(() => {
+    // 移除自动搜索，改为用户点击按钮时触发
+    // 这样可以避免不必要的API调用
+  }, []);
 
   // 视频播放地址
   const [videoUrl, setVideoUrl] = useState('');
@@ -461,6 +474,34 @@ function PlayPageClient() {
       console.log('Failed to fetch bangumi details:', error);
     }
     return null;
+  };
+
+  // 网盘搜索函数
+  const handleNetDiskSearch = async (query: string) => {
+    if (!query.trim()) return;
+
+    setNetdiskLoading(true);
+    setNetdiskError(null);
+    setNetdiskResults(null);
+    setNetdiskTotal(0);
+
+    try {
+      const response = await fetch(`/api/netdisk/search?q=${encodeURIComponent(query.trim())}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setNetdiskResults(data.data.merged_by_type || {});
+        setNetdiskTotal(data.data.total || 0);
+        console.log(`网盘搜索完成: "${query}" - ${data.data.total || 0} 个结果`);
+      } else {
+        setNetdiskError(data.error || '网盘搜索失败');
+      }
+    } catch (error: any) {
+      console.error('网盘搜索请求失败:', error);
+      setNetdiskError('网盘搜索请求失败，请稍后重试');
+    } finally {
+      setNetdiskLoading(false);
+    }
   };
 
   // 播放源优选函数（针对旧iPad做极端保守优化）
@@ -3163,6 +3204,39 @@ function PlayPageClient() {
                 >
                   <FavoriteIcon filled={favorited} />
                 </button>
+                
+                {/* 网盘资源提示按钮 */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // 触发网盘搜索（如果还没搜索过）
+                    if (!netdiskResults && !netdiskLoading && videoTitle) {
+                      handleNetDiskSearch(videoTitle);
+                    }
+                    // 滚动到网盘区域
+                    setTimeout(() => {
+                      const element = document.getElementById('netdisk-section');
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }}
+                  className='ml-3 flex-shrink-0 hover:opacity-90 transition-all duration-200 hover:scale-105'
+                >
+                  <div className='flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-md'>
+                    📁
+                    {netdiskLoading ? (
+                      <span className='flex items-center gap-1'>
+                        <span className='inline-block h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin'></span>
+                        搜索中...
+                      </span>
+                    ) : netdiskTotal > 0 ? (
+                      <span>{netdiskTotal}个网盘资源</span>
+                    ) : (
+                      <span>网盘资源</span>
+                    )}
+                  </div>
+                </button>
               </h1>
 
               {/* 关键信息行 */}
@@ -3386,6 +3460,44 @@ function PlayPageClient() {
                   {bangumiDetails?.summary || detail?.desc}
                 </div>
               )}
+              
+              {/* 网盘资源区域 */}
+              <div id="netdisk-section" className='mt-6'>
+                <div className='border-t border-gray-200 dark:border-gray-700 pt-6'>
+                  <div className='mb-4'>
+                    <h3 className='text-xl font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                      📁 网盘资源
+                      {netdiskLoading && (
+                        <span className='inline-block align-middle'>
+                          <span className='inline-block h-4 w-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin'></span>
+                        </span>
+                      )}
+                      {netdiskTotal > 0 && (
+                        <span className='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'>
+                          {netdiskTotal} 个资源
+                        </span>
+                      )}
+                    </h3>
+                    {videoTitle && !netdiskLoading && !netdiskResults && (
+                      <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
+                        点击上方"📁 网盘资源"按钮开始搜索
+                      </p>
+                    )}
+                    {videoTitle && !netdiskLoading && (netdiskResults || netdiskError) && (
+                      <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
+                        搜索关键词：{videoTitle}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <NetDiskSearchResults
+                    results={netdiskResults}
+                    loading={netdiskLoading}
+                    error={netdiskError}
+                    total={netdiskTotal}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

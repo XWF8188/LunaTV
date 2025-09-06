@@ -347,7 +347,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       enabled: true,                                    // 默认启用
       pansouUrl: 'https://so.252035.xyz',               // 默认公益服务
       timeout: 30,                                      // 默认30秒超时
-      enabledCloudTypes: ['baidu', 'aliyun', 'quark', 'tianyi', 'uc', 'mobile', '115', 'pikpak', 'xunlei', '123', 'magnet', 'ed2k'] // 支持的所有网盘类型
+      enabledCloudTypes: ['baidu', 'aliyun', 'quark'] // 默认只启用百度、阿里、夸克三大主流网盘
     };
   }
 

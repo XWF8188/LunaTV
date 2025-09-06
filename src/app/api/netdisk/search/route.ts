@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -28,6 +29,32 @@ export async function GET(request: NextRequest) {
 
   if (!netDiskConfig?.pansouUrl) {
     return NextResponse.json({ error: 'PanSou服务地址未配置' }, { status: 400 });
+  }
+
+  // 网盘搜索缓存：30分钟
+  const NETDISK_CACHE_TIME = 30 * 60; // 30分钟（秒）
+  const enabledCloudTypesStr = (netDiskConfig.enabledCloudTypes || []).sort().join(',');
+  const cacheKey = `netdisk-search-${query}-${enabledCloudTypesStr}`;
+  
+  console.log(`🔍 检查网盘搜索缓存: ${cacheKey}`);
+  
+  // 服务端直接调用数据库（不用ClientCache，避免HTTP循环调用）
+  try {
+    const cached = await db.getCache(cacheKey);
+    if (cached) {
+      console.log(`✅ 网盘搜索缓存命中(数据库): "${query}" (${enabledCloudTypesStr})`);
+      return NextResponse.json({
+        ...cached,
+        fromCache: true,
+        cacheSource: 'database',
+        cacheTimestamp: new Date().toISOString()
+      });
+    }
+    
+    console.log(`❌ 网盘搜索缓存未命中: "${query}" (${enabledCloudTypesStr})`);
+  } catch (cacheError) {
+    console.warn('网盘搜索缓存读取失败:', cacheError);
+    // 缓存失败不影响主流程，继续执行
   }
 
   try {
@@ -58,7 +85,7 @@ export async function GET(request: NextRequest) {
     const result = await pansouResponse.json();
     
     // 统一返回格式
-    return NextResponse.json({
+    const responseData = {
       success: true,
       data: {
         total: result.data?.total || 0,
@@ -67,7 +94,18 @@ export async function GET(request: NextRequest) {
         query: query,
         timestamp: new Date().toISOString()
       }
-    });
+    };
+
+    // 服务端直接保存到数据库（不用ClientCache，避免HTTP循环调用）
+    try {
+      await db.setCache(cacheKey, responseData, NETDISK_CACHE_TIME);
+      console.log(`💾 网盘搜索结果已缓存(数据库): "${query}" - ${responseData.data.total} 个结果, TTL: ${NETDISK_CACHE_TIME}s`);
+    } catch (cacheError) {
+      console.warn('网盘搜索缓存保存失败:', cacheError);
+    }
+
+    console.log(`✅ 网盘搜索完成: "${query}" - ${responseData.data.total} 个结果`);
+    return NextResponse.json(responseData);
 
   } catch (error: any) {
     console.error('网盘搜索失败:', error);
