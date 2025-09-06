@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '没有配置任何视频源' }, { status: 500 });
     }
 
-    // 过滤掉被禁用的源站
-    const enabledSources = sourceConfigs.filter(source => !source.disabled);
+    // 过滤掉被禁用的源站和没有API地址的源站
+    const enabledSources = sourceConfigs.filter(source => !source.disabled && source.api && source.api.trim() !== '');
 
     // 转换为TVBox格式
     const tvboxConfig: TVBoxConfig = {
@@ -77,9 +77,11 @@ export async function GET(request: NextRequest) {
         // 4. 其他情况默认为JSON类型 (type=1)，因为现在大部分都是JSON
         let type = 1; // 默认为JSON类型
 
-        const apiLower = source.api.toLowerCase();
-        if (apiLower.includes('at/xml') || apiLower.endsWith('.xml')) {
-          type = 0; // XML类型
+        if (source.api && typeof source.api === 'string') {
+          const apiLower = source.api.toLowerCase();
+          if (apiLower.includes('at/xml') || apiLower.endsWith('.xml')) {
+            type = 0; // XML类型
+          }
         }
 
         return {
