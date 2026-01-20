@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { NextResponse } from 'next/server';
 
 import { getCacheTime } from '@/lib/config';
+import { fetchWithPuppeteer, isDoubanChallengePage } from '@/lib/puppeteer-helper';
 import { getRandomUserAgentWithInfo, getSecChUaHeaders } from '@/lib/user-agent';
 
 // 请求限制器
@@ -215,11 +216,21 @@ async function _scrapeDoubanDetails(id: string, retryCount = 0): Promise<any> {
     const response = await fetch(target, fetchOptions);
     clearTimeout(timeoutId);
 
+    let html: string;
+
     // 处理不同的HTTP状态码
     if (!response.ok) {
       if (response.status === 429) {
-        // 速率限制
-        throw new DoubanError('请求过于频繁，请稍后再试', 'RATE_LIMIT', 429);
+        // 速率限制 - 直接使用 Puppeteer 绕过
+        console.log(`[Douban] 遇到 429 速率限制，使用 Puppeteer 绕过...`);
+
+        try {
+          html = await fetchWithPuppeteer(target);
+          console.log(`[Douban] Puppeteer 成功绕过 429 限制`);
+        } catch (puppeteerError) {
+          console.error(`[Douban] Puppeteer 获取失败:`, puppeteerError);
+          throw new DoubanError('请求过于频繁，请稍后再试', 'RATE_LIMIT', 429);
+        }
       } else if (response.status >= 500) {
         // 服务器错误
         throw new DoubanError(`豆瓣服务器错误: ${response.status}`, 'SERVER_ERROR', response.status);
@@ -229,9 +240,26 @@ async function _scrapeDoubanDetails(id: string, retryCount = 0): Promise<any> {
       } else {
         throw new DoubanError(`HTTP错误: ${response.status}`, 'NETWORK_ERROR', response.status);
       }
-    }
+    } else {
+      html = await response.text();
 
-    const html = await response.text();
+      // 检测并处理豆瓣反爬虫 challenge 页面
+      if (isDoubanChallengePage(html)) {
+        console.log(`[Douban] 检测到反爬虫 challenge 页面，使用 Puppeteer 重新获取...`);
+
+        try {
+          html = await fetchWithPuppeteer(target);
+          console.log(`[Douban] Puppeteer 成功获取页面内容`);
+        } catch (puppeteerError) {
+          console.error(`[Douban] Puppeteer 获取失败:`, puppeteerError);
+          throw new DoubanError(
+            '豆瓣触发了反爬虫验证且自动解决失败，请稍后再试',
+            'RATE_LIMIT',
+            429
+          );
+        }
+      }
+    }
 
     // 解析详细信息
     return parseDoubanDetails(html, id);
