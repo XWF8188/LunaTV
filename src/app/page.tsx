@@ -4,7 +4,7 @@
 
 import { ChevronRight, Film, Tv, Calendar, Sparkles, Play, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 
 import {
   BangumiCalendarData,
@@ -53,6 +53,9 @@ function HomeClient() {
   const [username, setUsername] = useState<string>('');
 
   const [showAnnouncement, setShowAnnouncement] = useState(false);
+
+  // 🚀 Web Worker引用
+  const workerRef = useRef<Worker | null>(null);
 
   // 合并初始化逻辑 - 优化性能，减少重渲染
   useEffect(() => {
@@ -390,195 +393,53 @@ function HomeClient() {
             setBangumiCalendarData([]);
           }
 
-          // 处理即将上映数据
+          // 🚀 优化方案1：使用Web Worker处理即将上映数据，避免阻塞主线程
           if (upcomingReleasesData.status === 'fulfilled' && upcomingReleasesData.value?.items) {
           const releases = upcomingReleasesData.value.items;
           console.log('📅 获取到的即将上映数据:', releases.length, '条');
 
-          // 过滤出即将上映和刚上映的作品（过去7天到未来90天）
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const sevenDaysAgo = new Date(today);
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          const ninetyDaysLater = new Date(today);
-          ninetyDaysLater.setDate(ninetyDaysLater.getDate() + 90);
+          // 初始化Web Worker
+          if (!workerRef.current && typeof window !== 'undefined' && window.Worker) {
+            try {
+              workerRef.current = new Worker(new URL('../workers/releaseCalendar.worker.ts', import.meta.url));
 
-          console.log('📅 7天前日期:', sevenDaysAgo.toISOString().split('T')[0]);
-          console.log('📅 今天日期:', today.toISOString().split('T')[0]);
-          console.log('📅 90天后日期:', ninetyDaysLater.toISOString().split('T')[0]);
+              workerRef.current.onmessage = (e: MessageEvent) => {
+                const { selectedItems, stats, error } = e.data;
 
-          const upcoming = releases.filter((item: ReleaseCalendarItem) => {
-            // 修复时区问题：使用字符串比较而不是Date对象比较
-            const releaseDateStr = item.releaseDate; // 格式: "2025-11-07"
-            const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-            const ninetyDaysStr = ninetyDaysLater.toISOString().split('T')[0];
-            const isUpcoming = releaseDateStr >= sevenDaysAgoStr && releaseDateStr <= ninetyDaysStr;
-            return isUpcoming;
-          });
-
-          console.log('📅 日期过滤后的数据:', upcoming.length, '条');
-          console.log('📅 过滤后的标题:', upcoming.map((i: ReleaseCalendarItem) => `${i.title} (${i.releaseDate})`));
-
-          // 🚀 优化方案5：简化标题归一化逻辑，使用Map提升去重性能
-          // 缓存正则表达式
-          const seasonRegex = /第[一二三四五六七八九十\d]+季|Season\s*\d+|S\d+/gi;
-
-          const normalizeTitle = (title: string): string => {
-            // 合并多个replace操作，减少字符串创建
-            let normalized = title.replace(/[：:]/g, ':').trim();
-
-            // 处理副标题
-            const colonIndex = normalized.lastIndexOf(':');
-            if (colonIndex !== -1) {
-              normalized = normalized.substring(colonIndex + 1).trim();
-            }
-
-            // 一次性移除季数标记和空格
-            return normalized.replace(seasonRegex, '').replace(/\s+/g, '').trim();
-          };
-
-          // 🚀 使用Map替代reduce+find，O(n)复杂度替代O(n²)
-          const uniqueMap = new Map<string, ReleaseCalendarItem>();
-          const normalizedCache = new Map<string, string>();
-          const seasonCache = new Map<string, boolean>();
-
-          for (const item of upcoming) {
-            const exactKey = item.title;
-
-            // 检查精确匹配
-            if (uniqueMap.has(exactKey)) {
-              const existing = uniqueMap.get(exactKey)!;
-              if (item.releaseDate < existing.releaseDate) {
-                uniqueMap.set(exactKey, item);
-              }
-              continue;
-            }
-
-            // 检查归一化匹配
-            const normalizedKey = normalizeTitle(item.title);
-            normalizedCache.set(item.title, normalizedKey);
-
-            let foundSimilar = false;
-            for (const [key, existing] of uniqueMap.entries()) {
-              const existingNormalized = normalizedCache.get(key) || normalizeTitle(key);
-              if (!normalizedCache.has(key)) {
-                normalizedCache.set(key, existingNormalized);
-              }
-
-              if (normalizedKey === existingNormalized) {
-                foundSimilar = true;
-
-                // 缓存季数检测结果
-                const itemHasSeason = seasonCache.get(item.title) ?? seasonRegex.test(item.title);
-                const existingHasSeason = seasonCache.get(key) ?? seasonRegex.test(key);
-                seasonCache.set(item.title, itemHasSeason);
-                seasonCache.set(key, existingHasSeason);
-
-                // 优先保留无季数标记的，其次保留日期更早的
-                if (!itemHasSeason && existingHasSeason) {
-                  uniqueMap.delete(key);
-                  uniqueMap.set(item.title, item);
-                } else if (itemHasSeason === existingHasSeason && item.releaseDate < existing.releaseDate) {
-                  uniqueMap.delete(key);
-                  uniqueMap.set(item.title, item);
+                if (error) {
+                  console.error('📅 [Worker] 处理失败:', error);
+                  setUpcomingReleases([]);
+                  return;
                 }
-                break;
-              }
-            }
 
-            if (!foundSimilar) {
-              uniqueMap.set(exactKey, item);
-            }
-          }
+                console.log('📅 [Main] Worker处理完成，分配结果:', stats);
+                setUpcomingReleases(selectedItems);
+              };
 
-          const uniqueUpcoming = Array.from(uniqueMap.values());
-          console.log('📅 去重后的即将上映数据:', uniqueUpcoming.length, '条');
-
-          // 智能分配：按更细的时间段分类，确保时间分散
-          const todayStr = today.toISOString().split('T')[0];
-          const sevenDaysLaterStr = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-          const thirtyDaysLaterStr = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-          // 更细致的时间段划分
-          const recentlyReleased = uniqueUpcoming.filter((i: ReleaseCalendarItem) => i.releaseDate < todayStr); // 已上映
-          const releasingToday = uniqueUpcoming.filter((i: ReleaseCalendarItem) => i.releaseDate === todayStr); // 今日上映
-          const nextSevenDays = uniqueUpcoming.filter((i: ReleaseCalendarItem) => i.releaseDate > todayStr && i.releaseDate <= sevenDaysLaterStr); // 未来7天
-          const nextThirtyDays = uniqueUpcoming.filter((i: ReleaseCalendarItem) => i.releaseDate > sevenDaysLaterStr && i.releaseDate <= thirtyDaysLaterStr); // 8-30天
-          const laterReleasing = uniqueUpcoming.filter((i: ReleaseCalendarItem) => i.releaseDate > thirtyDaysLaterStr); // 30天后
-
-          // 智能分配：总共10个，按时间段分散选取
-          const maxTotal = 10;
-          let selectedItems: ReleaseCalendarItem[] = [];
-
-          // 配额分配策略：2已上映 + 1今日(限制) + 4近期(7天) + 2中期(30天) + 1远期
-          // 今日上映限制最多3个，避免全是今天的
-          const maxTodayLimit = 3;
-          const recentQuota = Math.min(2, recentlyReleased.length);
-          const todayQuota = Math.min(1, releasingToday.length);
-          const sevenDayQuota = Math.min(4, nextSevenDays.length);
-          const thirtyDayQuota = Math.min(2, nextThirtyDays.length);
-          const laterQuota = Math.min(1, laterReleasing.length);
-
-          selectedItems = [
-            ...recentlyReleased.slice(0, recentQuota),
-            ...releasingToday.slice(0, todayQuota),
-            ...nextSevenDays.slice(0, sevenDayQuota),
-            ...nextThirtyDays.slice(0, thirtyDayQuota),
-            ...laterReleasing.slice(0, laterQuota),
-          ];
-
-          // 如果没填满10个，按优先级补充（但限制今日上映总数）
-          if (selectedItems.length < maxTotal) {
-            const remaining = maxTotal - selectedItems.length;
-            const currentTodayCount = selectedItems.filter((i: ReleaseCalendarItem) => i.releaseDate === todayStr).length;
-
-            // 优先从近期7天补充
-            const additionalSeven = nextSevenDays.slice(sevenDayQuota, sevenDayQuota + remaining);
-            selectedItems = [...selectedItems, ...additionalSeven];
-
-            // 还不够就从30天内补充
-            if (selectedItems.length < maxTotal) {
-              const stillRemaining = maxTotal - selectedItems.length;
-              const additionalThirty = nextThirtyDays.slice(thirtyDayQuota, thirtyDayQuota + stillRemaining);
-              selectedItems = [...selectedItems, ...additionalThirty];
-            }
-
-            // 还不够就从远期补充
-            if (selectedItems.length < maxTotal) {
-              const stillRemaining = maxTotal - selectedItems.length;
-              const additionalLater = laterReleasing.slice(laterQuota, laterQuota + stillRemaining);
-              selectedItems = [...selectedItems, ...additionalLater];
-            }
-
-            // 还不够就从已上映补充
-            if (selectedItems.length < maxTotal) {
-              const stillRemaining = maxTotal - selectedItems.length;
-              const additionalRecent = recentlyReleased.slice(recentQuota, recentQuota + stillRemaining);
-              selectedItems = [...selectedItems, ...additionalRecent];
-            }
-
-            // 最后实在不够才从今日上映补充（但限制总数不超过maxTodayLimit）
-            if (selectedItems.length < maxTotal) {
-              const currentTodayCount = selectedItems.filter((i: ReleaseCalendarItem) => i.releaseDate === todayStr).length;
-              const todayRemaining = maxTodayLimit - currentTodayCount;
-              if (todayRemaining > 0) {
-                const stillRemaining = Math.min(maxTotal - selectedItems.length, todayRemaining);
-                const additionalToday = releasingToday.slice(todayQuota, todayQuota + stillRemaining);
-                selectedItems = [...selectedItems, ...additionalToday];
-              }
+              workerRef.current.onerror = (error) => {
+                console.error('📅 [Worker] 错误:', error);
+                setUpcomingReleases([]);
+              };
+            } catch (error) {
+              console.error('📅 [Worker] 初始化失败:', error);
+              // Fallback: 如果Worker创建失败，直接设置空数组
+              setUpcomingReleases([]);
             }
           }
 
-          console.log('📅 分配结果:', {
-            已上映: recentlyReleased.length,
-            今日上映: releasingToday.length,
-            '7天内': nextSevenDays.length,
-            '8-30天': nextThirtyDays.length,
-            '30天后': laterReleasing.length,
-            最终显示: selectedItems.length
-          });
-
-          setUpcomingReleases(selectedItems);
+          // 发送数据到Worker处理
+          if (workerRef.current) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            workerRef.current.postMessage({
+              releases,
+              today: today.toISOString().split('T')[0],
+            });
+          } else {
+            // Fallback: Worker不可用时的处理
+            console.warn('📅 Web Worker不可用，跳过即将上映数据处理');
+            setUpcomingReleases([]);
+          }
         } else {
           console.warn('获取即将上映数据失败:', upcomingReleasesData.status === 'rejected' ? upcomingReleasesData.reason : '数据格式错误');
           setUpcomingReleases([]);
@@ -591,6 +452,15 @@ function HomeClient() {
     };
 
     fetchRecommendData();
+
+    // 🚀 清理Web Worker
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+        console.log('📅 [Main] Web Worker已清理');
+      }
+    };
   }, []);
 
   // 处理收藏数据更新的函数
@@ -1406,7 +1276,7 @@ function HomeClient() {
       </div>
       {announcement && showAnnouncement && (
         <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-black/70 p-4 transition-opacity duration-300 ${showAnnouncement ? '' : 'opacity-0 pointer-events-none'
+          className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-black/70 p-4 transition-opacity duration-300 ${showAnnouncement ? '' : 'opacity-0 pointer-events-none'
             }`}
           onTouchStart={(e) => {
             // 如果点击的是背景区域，阻止触摸事件冒泡，防止背景滚动
@@ -1441,15 +1311,10 @@ function HomeClient() {
               touchAction: 'auto', // 允许内容区域的正常触摸操作
             }}
           >
-            <div className='flex justify-between items-start mb-4'>
+            <div className='mb-4'>
               <h3 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-white border-b border-green-500 pb-1'>
                 提示
               </h3>
-              <button
-                onClick={() => handleCloseAnnouncement(announcement)}
-                className='text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-white transition-colors'
-                aria-label='关闭'
-              ></button>
             </div>
             <div className='mb-6'>
               <div className='relative overflow-hidden rounded-lg mb-4 bg-green-50 dark:bg-green-900/20'>
