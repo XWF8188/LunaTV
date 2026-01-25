@@ -170,6 +170,7 @@ export interface AdminConfig {
   };
   DoubanConfig?: {
     enablePuppeteer: boolean;            // 是否启用 Puppeteer 绕过 Challenge（默认 false）
+    cookies?: string;                    // 豆瓣认证 Cookies（包含 dbcl2, frodotk_db, ck 等）
   };
   CronConfig?: {
     enableAutoRefresh: boolean;          // 是否启用自动刷新播放记录和收藏（默认 true）

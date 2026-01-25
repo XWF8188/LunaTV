@@ -18,9 +18,14 @@ import VideoCard from '@/components/VideoCard';
 import CommentSection from '@/components/play/CommentSection';
 import DownloadButtons from '@/components/play/DownloadButtons';
 import FavoriteButton from '@/components/play/FavoriteButton';
+import NetDiskButton from '@/components/play/NetDiskButton';
+import CollapseButton from '@/components/play/CollapseButton';
 import BackToTopButton from '@/components/play/BackToTopButton';
 import LoadingScreen from '@/components/play/LoadingScreen';
 import VideoInfoSection from '@/components/play/VideoInfoSection';
+import VideoLoadingOverlay from '@/components/play/VideoLoadingOverlay';
+import WatchRoomSyncBanner from '@/components/play/WatchRoomSyncBanner';
+import SourceSwitchDialog from '@/components/play/SourceSwitchDialog';
 import artplayerPluginChromecast from '@/lib/artplayer-plugin-chromecast';
 import artplayerPluginLiquidGlass from '@/lib/artplayer-plugin-liquid-glass';
 import { ClientCache } from '@/lib/client-cache';
@@ -5400,44 +5405,14 @@ function PlayPageClient() {
           {/* 折叠控制 */}
           <div className='flex justify-end items-center gap-2 sm:gap-3'>
             {/* 网盘资源按钮 */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                // 触发网盘搜索（如果还没搜索过）
-                if (!netdiskResults && !netdiskLoading && videoTitle) {
-                  handleNetDiskSearch(videoTitle);
-                }
-                // 打开网盘模态框
-                setShowNetdiskModal(true);
-              }}
-              className='flex group relative items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 min-h-[40px] sm:min-h-[44px] rounded-2xl bg-linear-to-br from-white/90 via-white/80 to-white/70 hover:from-white hover:via-white/95 hover:to-white/90 dark:from-gray-800/90 dark:via-gray-800/80 dark:to-gray-800/70 dark:hover:from-gray-800 dark:hover:via-gray-800/95 dark:hover:to-gray-800/90 backdrop-blur-md border border-white/60 dark:border-gray-700/60 shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.25)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.3)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 transition-all duration-300 overflow-hidden'
-              title='网盘资源'
-            >
-              <div className='absolute inset-0 bg-linear-to-r from-transparent via-white/0 to-transparent group-hover:via-white/30 dark:group-hover:via-white/10 transition-all duration-500'></div>
-              <span className='relative z-10 text-sm sm:text-base'>📁</span>
-              <span className='relative z-10 hidden sm:inline text-xs font-medium text-gray-600 dark:text-gray-300'>
-                {netdiskLoading ? (
-                  <span className='flex items-center gap-1'>
-                    <span className='inline-block h-3 w-3 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin'></span>
-                    搜索中
-                  </span>
-                ) : netdiskTotal > 0 ? (
-                  `网盘 (${netdiskTotal})`
-                ) : (
-                  '网盘'
-                )}
-              </span>
-
-              {/* 状态指示点 */}
-              {netdiskTotal > 0 && (
-                <div className='absolute -top-0.5 -right-0.5 z-20'>
-                  <div className='relative'>
-                    <div className='absolute inset-0 bg-blue-400 rounded-full blur-sm opacity-75 animate-pulse'></div>
-                    <div className='relative w-2 h-2 rounded-full bg-linear-to-br from-blue-400 to-blue-500 shadow-lg'></div>
-                  </div>
-                </div>
-              )}
-            </button>
+            <NetDiskButton
+              videoTitle={videoTitle}
+              netdiskLoading={netdiskLoading}
+              netdiskTotal={netdiskTotal}
+              netdiskResults={netdiskResults}
+              onSearch={handleNetDiskSearch}
+              onOpenModal={() => setShowNetdiskModal(true)}
+            />
 
             {/* 下载按钮 - 使用独立组件优化性能 */}
             <DownloadButtons
@@ -5447,42 +5422,10 @@ function PlayPageClient() {
             />
 
             {/* 折叠控制按钮 - 仅在 lg 及以上屏幕显示 */}
-            <button
-              onClick={() =>
-                setIsEpisodeSelectorCollapsed(!isEpisodeSelectorCollapsed)
-              }
-              className='hidden lg:flex group relative items-center gap-2 px-4 py-2 min-h-[44px] rounded-2xl bg-linear-to-br from-white/90 via-white/80 to-white/70 hover:from-white hover:via-white/95 hover:to-white/90 dark:from-gray-800/90 dark:via-gray-800/80 dark:to-gray-800/70 dark:hover:from-gray-800 dark:hover:via-gray-800/95 dark:hover:to-gray-800/90 backdrop-blur-md border border-white/60 dark:border-gray-700/60 shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.25)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.3)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 transition-all duration-300 overflow-hidden'
-              title={
-                isEpisodeSelectorCollapsed ? '显示选集面板' : '隐藏选集面板'
-              }
-            >
-              <div className='absolute inset-0 bg-linear-to-r from-transparent via-white/0 to-transparent group-hover:via-white/30 dark:group-hover:via-white/10 transition-all duration-500'></div>
-              <svg
-                className={`relative z-10 w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isEpisodeSelectorCollapsed ? 'rotate-180' : 'rotate-0'
-                  }`}
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  d='M9 5l7 7-7 7'
-                />
-              </svg>
-              <span className='relative z-10 text-xs font-medium text-gray-600 dark:text-gray-300'>
-                {isEpisodeSelectorCollapsed ? '显示' : '隐藏'}
-              </span>
-
-              {/* 精致的状态指示点 */}
-              <div className='absolute -top-0.5 -right-0.5 z-20'>
-                <div className='relative'>
-                  <div className={`absolute inset-0 rounded-full blur-sm opacity-75 ${isEpisodeSelectorCollapsed ? 'bg-orange-400 animate-pulse' : 'bg-green-400'}`}></div>
-                  <div className={`relative w-2 h-2 rounded-full shadow-lg ${isEpisodeSelectorCollapsed ? 'bg-linear-to-br from-orange-400 to-orange-500' : 'bg-linear-to-br from-green-400 to-green-500'}`}></div>
-                </div>
-              </div>
-            </button>
+            <CollapseButton
+              isCollapsed={isEpisodeSelectorCollapsed}
+              onToggle={() => setIsEpisodeSelectorCollapsed(!isEpisodeSelectorCollapsed)}
+            />
           </div>
 
           <div
@@ -5505,32 +5448,7 @@ function PlayPageClient() {
                 {/* 跳过设置按钮 - 播放器内右上角 */}
                 {currentSource && currentId && (
                   <div className='absolute top-4 right-4 z-10'>
-                    <button
-                      onClick={() => setIsSkipSettingOpen(true)}
-                      className='group flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-xl border border-white/30 hover:border-white/50 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] hover:shadow-[0_8px_32px_0_rgba(255,255,255,0.18)] hover:scale-105 transition-all duration-300 ease-out'
-                      title='跳过设置'
-                      style={{
-                        backdropFilter: 'blur(20px) saturate(180%)',
-                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                      }}
-                    >
-                      <svg
-                        className='w-5 h-5 text-white drop-shadow-lg group-hover:rotate-90 transition-all duration-300'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4'
-                        />
-                      </svg>
-                      <span className='text-sm font-medium text-white drop-shadow-lg transition-all duration-300 hidden sm:inline'>
-                        跳过设置
-                      </span>
-                    </button>
+                    <SkipSettingsButton onClick={() => setIsSkipSettingOpen(true)} />
                   </div>
                 )}
 
@@ -5551,42 +5469,10 @@ function PlayPageClient() {
                 )}
 
                 {/* 换源加载蒙层 */}
-                {isVideoLoading && (
-                  <div className='absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex items-center justify-center z-500 transition-all duration-300'>
-                    <div className='text-center max-w-md mx-auto px-6'>
-                      {/* 动画影院图标 */}
-                      <div className='relative mb-8'>
-                        <div className='relative mx-auto w-24 h-24 bg-linear-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                          <div className='text-white text-4xl'>🎬</div>
-                          {/* 旋转光环 */}
-                          <div className='absolute -inset-2 bg-linear-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 animate-spin'></div>
-                        </div>
-
-                        {/* 浮动粒子效果 */}
-                        <div className='absolute top-0 left-0 w-full h-full pointer-events-none'>
-                          <div className='absolute top-2 left-2 w-2 h-2 bg-green-400 rounded-full animate-bounce'></div>
-                          <div
-                            className='absolute top-4 right-4 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce'
-                            style={{ animationDelay: '0.5s' }}
-                          ></div>
-                          <div
-                            className='absolute bottom-3 left-6 w-1 h-1 bg-lime-400 rounded-full animate-bounce'
-                            style={{ animationDelay: '1s' }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* 换源消息 */}
-                      <div className='space-y-2'>
-                        <p className='text-xl font-semibold text-white animate-pulse'>
-                          {videoLoadingStage === 'sourceChanging'
-                            ? '🔄 切换播放源...'
-                            : '🔄 视频加载中...'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <VideoLoadingOverlay
+                  isVisible={isVideoLoading}
+                  loadingStage={videoLoadingStage}
+                />
               </div>
             </div>
 
@@ -5736,63 +5622,18 @@ function PlayPageClient() {
       <BackToTopButton show={showBackToTop} onClick={scrollToTop} />
 
       {/* 观影室同步暂停提示条 */}
-      {isInWatchRoom && !isWatchRoomOwner && syncPaused && !pendingOwnerChange && (
-        <div className='fixed bottom-20 left-1/2 -translate-x-1/2 z-9998 animate-fade-in'>
-          <div className='flex items-center gap-3 px-4 py-2.5 rounded-full bg-orange-500/90 backdrop-blur-sm shadow-lg'>
-            <span className='text-sm text-white font-medium'>已退出同步，自由观看中</span>
-            <button
-              onClick={resumeSync}
-              className='px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-colors'
-            >
-              重新同步
-            </button>
-          </div>
-        </div>
-      )}
+      <WatchRoomSyncBanner
+        show={isInWatchRoom && !isWatchRoomOwner && syncPaused && !pendingOwnerChange}
+        onResumeSync={resumeSync}
+      />
 
       {/* 源切换确认对话框 */}
-      {showSourceSwitchDialog && pendingOwnerState && (
-        <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-9999'>
-          <div className='bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm mx-4 shadow-2xl'>
-            <div className='text-center'>
-              <div className='w-12 h-12 mx-auto mb-4 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center'>
-                <svg className='w-6 h-6 text-yellow-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
-                </svg>
-              </div>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-2'>
-                播放源不同
-              </h3>
-              <p className='text-sm text-gray-500 dark:text-gray-400 mb-3'>
-                房主使用的播放源与您不同，是否切换到房主的播放源？
-              </p>
-              <p className='text-base font-medium text-gray-900 dark:text-white mb-1'>
-                房主播放源
-              </p>
-              <p className='text-sm text-blue-500 dark:text-blue-400 mb-3 font-mono'>
-                {pendingOwnerState.source}
-              </p>
-              <p className='text-xs text-orange-500 dark:text-orange-400 mb-6'>
-                ⚠️ 保持当前源将无法与房主同步进度
-              </p>
-              <div className='flex gap-3'>
-                <button
-                  onClick={handleCancelSourceSwitch}
-                  className='flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium'
-                >
-                  保持当前源
-                </button>
-                <button
-                  onClick={handleConfirmSourceSwitch}
-                  className='flex-1 px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white transition-colors font-medium'
-                >
-                  切换源
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <SourceSwitchDialog
+        show={showSourceSwitchDialog && !!pendingOwnerState}
+        ownerSource={pendingOwnerState?.source || ''}
+        onConfirm={handleConfirmSourceSwitch}
+        onCancel={handleCancelSourceSwitch}
+      />
 
       {/* 房主切换视频/集数确认框 */}
       {pendingOwnerChange && (

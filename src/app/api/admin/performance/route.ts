@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     // 获取最近 N 小时的数据
     const metrics = getRecentMetrics(hours);
-    const currentStatus = getCurrentStatus();
+    const currentStatus = await getCurrentStatus();
     const recentRequests = await getRecentRequests(limit);
 
     return NextResponse.json({
@@ -74,7 +74,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 清空缓存
-    clearCache();
+    await clearCache();
 
     return NextResponse.json({
       ok: true,

@@ -265,8 +265,8 @@ function HomeClient() {
       try {
         dispatch({ type: 'SET_LOADING', payload: true });
 
-        // 🚀 优化：并行加载所有数据，避免分批导致的页面跳动
-        const [moviesData, tvShowsData, varietyShowsData, animeData, shortDramasData] = await Promise.allSettled([
+        // 🚀 优化：并行加载所有数据（包括 bangumi），避免分批导致的页面跳动
+        const [moviesData, tvShowsData, varietyShowsData, animeData, shortDramasData, bangumiData, upcomingData] = await Promise.allSettled([
           getDoubanCategories({
             kind: 'movie',
             category: '热门',
@@ -276,6 +276,14 @@ function HomeClient() {
           getDoubanCategories({ kind: 'tv', category: 'show', type: 'show' }),
           getDoubanCategories({ kind: 'tv', category: 'tv', type: 'tv_animation' }),
           getRecommendedShortDramas(undefined, 8),
+          GetBangumiCalendarData(),
+          fetch('/api/release-calendar?limit=100').then(res => {
+            if (!res.ok) {
+              console.error('获取即将上映数据失败，状态码:', res.status);
+              return { items: [] };
+            }
+            return res.json();
+          }),
         ]);
 
         // 处理电影数据
@@ -434,29 +442,17 @@ function HomeClient() {
             }, 3000);
         }
 
-        // 🚀 所有主要数据加载完成，关闭loading
-        dispatch({ type: 'SET_LOADING', payload: false });
-
-        // 并行加载补充数据（番剧+即将上映）
-        const [bangumiCalendarData, upcomingReleasesData] = await Promise.allSettled([
-            GetBangumiCalendarData(),
-            fetch('/api/release-calendar?limit=100').then(res => {
-              if (!res.ok) {
-                console.error('获取即将上映数据失败，状态码:', res.status);
-                return { items: [] };
-              }
-              return res.json();
-            }),
-        ]);
-
-        // 处理bangumi数据
-        if (bangumiCalendarData.status === 'fulfilled' && Array.isArray(bangumiCalendarData.value)) {
-          dispatch({ type: 'SET_BANGUMI_CALENDAR_DATA', payload: bangumiCalendarData.value });
+        // 处理 bangumi 数据
+        if (bangumiData.status === 'fulfilled' && Array.isArray(bangumiData.value)) {
+          dispatch({ type: 'SET_BANGUMI_CALENDAR_DATA', payload: bangumiData.value });
         }
 
-        // 处理即将上映数据
-        if (upcomingReleasesData.status === 'fulfilled' && upcomingReleasesData.value?.items) {
-          const releases = upcomingReleasesData.value.items;
+        // 🚀 所有主要数据加载完成，关闭 loading（包括 bangumi）
+        dispatch({ type: 'SET_LOADING', payload: false });
+
+        // 🔄 异步处理即将上映数据（不阻塞页面显示）
+        if (upcomingData.status === 'fulfilled' && upcomingData.value?.items) {
+          const releases = upcomingData.value.items;
           console.log('📅 获取到的即将上映数据:', releases.length, '条');
 
           // 初始化Web Worker
@@ -483,7 +479,6 @@ function HomeClient() {
               };
             } catch (error) {
               console.error('📅 [Worker] 初始化失败:', error);
-              // Fallback: 如果Worker创建失败，直接设置空数组
               dispatch({ type: 'SET_UPCOMING_RELEASES', payload: [] });
             }
           }
@@ -502,7 +497,7 @@ function HomeClient() {
             dispatch({ type: 'SET_UPCOMING_RELEASES', payload: [] });
           }
         } else {
-          console.warn('获取即将上映数据失败:', upcomingReleasesData.status === 'rejected' ? upcomingReleasesData.reason : '数据格式错误');
+          console.warn('获取即将上映数据失败:', upcomingData.status === 'rejected' ? upcomingData.reason : '数据格式错误');
           dispatch({ type: 'SET_UPCOMING_RELEASES', payload: [] });
         }
       } catch (error) {

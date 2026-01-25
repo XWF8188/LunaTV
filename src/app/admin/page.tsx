@@ -288,6 +288,7 @@ interface SiteConfig {
   ShowAdultContent: boolean;
   FluidSearch: boolean;
   EnablePuppeteer: boolean; // 豆瓣 Puppeteer 开关
+  DoubanCookies?: string; // 豆瓣认证 Cookies
   // TMDB配置
   TMDBApiKey?: string;
   TMDBLanguage?: string;
@@ -4724,6 +4725,7 @@ const SiteConfigComponent = ({ config, refreshConfig }: { config: AdminConfig | 
     DoubanImageProxyType: 'direct',
     DoubanImageProxy: '',
     EnablePuppeteer: false, // 默认关闭 Puppeteer
+    DoubanCookies: '', // 默认无 Cookies
     DisableYellowFilter: false,
     ShowAdultContent: false,
     FluidSearch: true,
@@ -4802,6 +4804,7 @@ const SiteConfigComponent = ({ config, refreshConfig }: { config: AdminConfig | 
           config.SiteConfig.DoubanImageProxyType || 'direct',
         DoubanImageProxy: config.SiteConfig.DoubanImageProxy || '',
         EnablePuppeteer: config.DoubanConfig?.enablePuppeteer || false,
+        DoubanCookies: config.DoubanConfig?.cookies || '',
         DisableYellowFilter: config.SiteConfig.DisableYellowFilter || false,
         ShowAdultContent: config.SiteConfig.ShowAdultContent || false,
         FluidSearch: config.SiteConfig.FluidSearch || true,
@@ -5210,6 +5213,28 @@ const SiteConfigComponent = ({ config, refreshConfig }: { config: AdminConfig | 
         </label>
         <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
           开启后可获取完整数据（演员图片、相关推荐、评论），但会增加服务器 CPU 占用。默认关闭以节省资源。
+        </p>
+      </div>
+
+      {/* 豆瓣 Cookies 设置 */}
+      <div>
+        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          豆瓣认证 Cookies（推荐）
+        </label>
+        <textarea
+          value={siteSettings.DoubanCookies || ''}
+          onChange={(e) =>
+            setSiteSettings((prev) => ({
+              ...prev,
+              DoubanCookies: e.target.value,
+            }))
+          }
+          placeholder='bid=xxx; dbcl2="xxx"; ck=xxx; frodotk_db="xxx"; ...'
+          rows={3}
+          className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 font-mono'
+        />
+        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          配置豆瓣认证 Cookies 后可直接访问 Web 页面，无需 Puppeteer。需包含 <code className='px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded'>dbcl2</code>、<code className='px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded'>frodotk_db</code>、<code className='px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded'>ck</code> 等关键字段。
         </p>
       </div>
 
@@ -6690,7 +6715,7 @@ function AdminPageClient() {
   return (
     <PageLayout activePath='/admin'>
       <div className='-mt-6 md:mt-0'>
-        <div className='max-w-[95%] mx-auto'>
+        <div className='max-w-[95%] mx-auto pb-32 md:pb-safe-bottom'>
           {/* 标题 + 重置配置按钮 */}
           <div className='flex items-center gap-2 mb-8'>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
@@ -6706,39 +6731,40 @@ function AdminPageClient() {
             )}
           </div>
 
-          {/* 配置文件标签 - 仅站长可见 */}
-          {role === 'owner' && (
+          {/* 所有配置标签容器 */}
+          <div className='space-y-6'>
+            {/* 配置文件标签 - 仅站长可见 */}
+            {role === 'owner' && (
+              <CollapsibleTab
+                title='配置文件'
+                icon={
+                  <FileText
+                    size={20}
+                    className='text-gray-600 dark:text-gray-400'
+                  />
+                }
+                isExpanded={expandedTabs.configFile}
+                onToggle={() => toggleTab('configFile')}
+              >
+                <ConfigFileComponent config={config} refreshConfig={fetchConfig} />
+              </CollapsibleTab>
+            )}
+
+            {/* 站点配置标签 */}
             <CollapsibleTab
-              title='配置文件'
+              title='站点配置'
               icon={
-                <FileText
+                <Settings
                   size={20}
                   className='text-gray-600 dark:text-gray-400'
                 />
               }
-              isExpanded={expandedTabs.configFile}
-              onToggle={() => toggleTab('configFile')}
+              isExpanded={expandedTabs.siteConfig}
+              onToggle={() => toggleTab('siteConfig')}
             >
-              <ConfigFileComponent config={config} refreshConfig={fetchConfig} />
+              <SiteConfigComponent config={config} refreshConfig={fetchConfig} />
             </CollapsibleTab>
-          )}
 
-          {/* 站点配置标签 */}
-          <CollapsibleTab
-            title='站点配置'
-            icon={
-              <Settings
-                size={20}
-                className='text-gray-600 dark:text-gray-400'
-              />
-            }
-            isExpanded={expandedTabs.siteConfig}
-            onToggle={() => toggleTab('siteConfig')}
-          >
-            <SiteConfigComponent config={config} refreshConfig={fetchConfig} />
-          </CollapsibleTab>
-
-          <div className='space-y-4'>
             {/* 用户配置标签 */}
             <CollapsibleTab
               title='用户配置'

@@ -5,6 +5,19 @@ import { bypassDoubanChallenge } from '@/lib/puppeteer';
 import { getRandomUserAgent } from '@/lib/user-agent';
 import { recordRequest } from '@/lib/performance-monitor';
 
+/**
+ * 从配置中获取豆瓣 Cookies
+ */
+async function getDoubanCookies(): Promise<string | null> {
+  try {
+    const config = await getConfig();
+    return config.DoubanConfig?.cookies || null;
+  } catch (error) {
+    console.warn('[Douban Comments] 获取 cookies 配置失败:', error);
+    return null;
+  }
+}
+
 // 请求限制器
 let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 2000; // 2秒最小间隔
@@ -114,6 +127,9 @@ export async function GET(request: Request) {
     // 添加随机延时
     await randomDelay(500, 1500);
 
+    // 🍪 获取豆瓣 Cookies（如果配置了）
+    const doubanCookies = await getDoubanCookies();
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -133,8 +149,15 @@ export async function GET(request: Request) {
         'Cache-Control': 'max-age=0',
         // 随机添加Referer
         ...(Math.random() > 0.5 ? { 'Referer': 'https://movie.douban.com/' } : {}),
+        // 🍪 如果配置了 Cookies，则添加到请求头
+        ...(doubanCookies ? { 'Cookie': doubanCookies } : {}),
       },
     };
+
+    // 如果使用了 Cookies，记录日志
+    if (doubanCookies) {
+      console.log(`[Douban Comments] 使用配置的 Cookies 请求: ${id}`);
+    }
 
     const response = await fetch(target, fetchOptions);
     clearTimeout(timeoutId);
@@ -148,6 +171,11 @@ export async function GET(request: Request) {
     // 检测 challenge 页面 - 根据配置决定是否使用 Puppeteer
     if (isDoubanChallengePage(html)) {
       console.log(`[Douban Comments] 检测到 challenge 页面`);
+
+      // 🍪 如果使用了 Cookies 但仍然遇到 challenge，说明 cookies 可能失效
+      if (doubanCookies) {
+        console.warn(`[Douban Comments] ⚠️ 使用 Cookies 仍遇到 Challenge，Cookies 可能已失效`);
+      }
 
       // 获取配置，检查是否启用 Puppeteer
       const config = await getConfig();
@@ -176,6 +204,11 @@ export async function GET(request: Request) {
         console.log(`[Douban Comments] Puppeteer 未启用，无法绕过 Challenge`);
         throw new Error('豆瓣反爬虫激活，请在管理后台启用 Puppeteer');
       }
+    }
+
+    // 🍪 如果使用了 Cookies 且成功获取页面，记录成功日志
+    if (doubanCookies) {
+      console.log(`[Douban Comments] ✅ 使用 Cookies 成功获取短评: ${id}`);
     }
 
     // 解析短评列表

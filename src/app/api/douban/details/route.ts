@@ -6,6 +6,19 @@ import { bypassDoubanChallenge } from '@/lib/puppeteer';
 import { getRandomUserAgent, getRandomUserAgentWithInfo, getSecChUaHeaders } from '@/lib/user-agent';
 import { recordRequest } from '@/lib/performance-monitor';
 
+/**
+ * 从配置中获取豆瓣 Cookies
+ */
+async function getDoubanCookies(): Promise<string | null> {
+  try {
+    const config = await getConfig();
+    return config.DoubanConfig?.cookies || null;
+  } catch (error) {
+    console.warn('[Douban] 获取 cookies 配置失败:', error);
+    return null;
+  }
+}
+
 // 请求限制器
 let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 2000; // 2秒最小间隔
@@ -352,6 +365,9 @@ async function _scrapeDoubanDetails(id: string, retryCount = 0): Promise<any> {
     const { ua, browser, platform } = getRandomUserAgentWithInfo();
     const secChHeaders = getSecChUaHeaders(browser, platform);
 
+    // 🍪 获取豆瓣 Cookies（如果配置了）
+    const doubanCookies = await getDoubanCookies();
+
     // 🎯 2025 最佳实践：按照真实浏览器的头部顺序发送
     const fetchOptions = {
       signal: controller.signal,
@@ -371,8 +387,15 @@ async function _scrapeDoubanDetails(id: string, retryCount = 0): Promise<any> {
         'User-Agent': ua,
         // 随机添加 Referer（50% 概率）
         ...(Math.random() > 0.5 ? { 'Referer': 'https://www.douban.com/' } : {}),
+        // 🍪 如果配置了 Cookies，则添加到请求头
+        ...(doubanCookies ? { 'Cookie': doubanCookies } : {}),
       },
     };
+
+    // 如果使用了 Cookies，记录日志
+    if (doubanCookies) {
+      console.log(`[Douban] 使用配置的 Cookies 请求: ${id}`);
+    }
 
     const response = await fetch(target, fetchOptions);
     clearTimeout(timeoutId);
@@ -406,9 +429,14 @@ async function _scrapeDoubanDetails(id: string, retryCount = 0): Promise<any> {
     html = await response.text();
     console.log(`[Douban] 页面长度: ${html.length}`);
 
-    // 检测 challenge 页面 - 根据配置决定是否使用 Puppeteer
+    // 检测 challenge 页面
     if (isDoubanChallengePage(html)) {
       console.log(`[Douban] 检测到 challenge 页面`);
+
+      // 🍪 如果使用了 Cookies 但仍然遇到 challenge，说明 cookies 可能失效
+      if (doubanCookies) {
+        console.warn(`[Douban] ⚠️ 使用 Cookies 仍遇到 Challenge，Cookies 可能已失效`);
+      }
 
       // 获取配置，检查是否启用 Puppeteer
       const config = await getConfig();
@@ -443,6 +471,11 @@ async function _scrapeDoubanDetails(id: string, retryCount = 0): Promise<any> {
         console.log(`[Douban] Puppeteer 未启用，直接使用 Mobile API fallback...`);
         return await fetchFromMobileAPI(id);
       }
+    }
+
+    // 🍪 如果使用了 Cookies 且成功获取页面，记录成功日志
+    if (doubanCookies) {
+      console.log(`[Douban] ✅ 使用 Cookies 成功获取页面: ${id}`);
     }
 
     console.log(`[Douban] 开始解析页面内容...`);
