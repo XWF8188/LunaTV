@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: 'Unauthorized' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/source-browser/list',
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: '缺少 source 或 type_id 参数' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/source-browser/list',
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       const errorResponse = { error: '你没有权限访问该资源源' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'GET',
         path: '/api/source-browser/list',
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       const errorResponse = { error: `上游返回错误: ${res.status}` };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'GET',
         path: '/api/source-browser/list',
@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
     };
     const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/source-browser/list',
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
       const errorResponse = { error: '请求超时' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'GET',
         path: '/api/source-browser/list',
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: '获取列表失败' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/source-browser/list',

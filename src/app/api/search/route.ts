@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: 'Unauthorized' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/search',
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const successResponse = { results: [] };
     const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/search',
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       const emptyResponse = { results: [] };
       const responseSize = Buffer.byteLength(JSON.stringify(emptyResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'GET',
         path: '/api/search',
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
     const successResponse = { results: flattenedResults };
     const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/search',
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: '搜索失败' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/search',

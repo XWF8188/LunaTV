@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       const errorResponse = { error: 'Unauthorized' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'GET',
         path: '/api/favorites',
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         const errorResponse = { error: '用户不存在' };
         const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'GET',
           path: '/api/favorites',
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
         const errorResponse = { error: '用户已被封禁' };
         const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'GET',
           path: '/api/favorites',
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         const errorResponse = { error: 'Invalid key format' };
         const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'GET',
           path: '/api/favorites',
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
       const fav = await db.getFavorite(authInfo.username, source, id);
       const responseSize = Buffer.byteLength(JSON.stringify(fav), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'GET',
         path: '/api/favorites',
@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/favorites',
@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: 'Internal Server Error' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/favorites',
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
       const errorResponse = { error: 'Unauthorized' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'POST',
         path: '/api/favorites',
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
         const errorResponse = { error: '用户不存在' };
         const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'POST',
           path: '/api/favorites',
@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
         const errorResponse = { error: '用户已被封禁' };
         const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'POST',
           path: '/api/favorites',
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
       const errorResponse = { error: 'Missing key or favorite' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'POST',
         path: '/api/favorites',
@@ -298,7 +298,7 @@ export async function POST(request: NextRequest) {
       const errorResponse = { error: 'Invalid favorite data' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'POST',
         path: '/api/favorites',
@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
       const errorResponse = { error: 'Invalid key format' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'POST',
         path: '/api/favorites',
@@ -343,7 +343,7 @@ export async function POST(request: NextRequest) {
     const successResponse = { success: true };
     const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'POST',
       path: '/api/favorites',
@@ -361,7 +361,7 @@ export async function POST(request: NextRequest) {
     const errorResponse = { error: 'Internal Server Error' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'POST',
       path: '/api/favorites',
@@ -395,7 +395,7 @@ export async function DELETE(request: NextRequest) {
       const errorResponse = { error: 'Unauthorized' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'DELETE',
         path: '/api/favorites',
@@ -420,7 +420,7 @@ export async function DELETE(request: NextRequest) {
         const errorResponse = { error: '用户不存在' };
         const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'DELETE',
           path: '/api/favorites',
@@ -438,7 +438,7 @@ export async function DELETE(request: NextRequest) {
         const errorResponse = { error: '用户已被封禁' };
         const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'DELETE',
           path: '/api/favorites',
@@ -465,7 +465,7 @@ export async function DELETE(request: NextRequest) {
         const errorResponse = { error: 'Invalid key format' };
         const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'DELETE',
           path: '/api/favorites',
@@ -500,7 +500,7 @@ export async function DELETE(request: NextRequest) {
     const successResponse = { success: true };
     const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'DELETE',
       path: '/api/favorites',
@@ -518,7 +518,7 @@ export async function DELETE(request: NextRequest) {
     const errorResponse = { error: 'Internal Server Error' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'DELETE',
       path: '/api/favorites',

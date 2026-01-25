@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: 'Unauthorized' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/detail',
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: '缺少必要参数' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/detail',
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: '无效的视频ID格式' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/detail',
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       const errorResponse = { error: '无效的API来源' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'GET',
         path: '/api/detail',
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
 
     const responseSize = Buffer.byteLength(JSON.stringify(result), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/detail',
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
     const errorResponse = { error: (error as Error).message };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'GET',
       path: '/api/detail',

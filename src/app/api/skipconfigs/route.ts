@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       const errorResponse = { error: '缺少操作类型' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'POST',
         path: '/api/skipconfigs',
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       const errorResponse = { error: '用户未登录' };
       const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-      await recordRequest({
+      recordRequest({
         timestamp: startTime,
         method: 'POST',
         path: '/api/skipconfigs',
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
           const errorResponse = { error: '缺少配置键' };
           const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-          await recordRequest({
+          recordRequest({
             timestamp: startTime,
             method: 'POST',
             path: '/api/skipconfigs',
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
           const errorResponse = { error: '无效的key格式' };
           const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-          await recordRequest({
+          recordRequest({
             timestamp: startTime,
             method: 'POST',
             path: '/api/skipconfigs',
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
         const successResponse = { config: skipConfig };
         const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'POST',
           path: '/api/skipconfigs',
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
           const errorResponse = { error: '缺少配置键或配置数据' };
           const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-          await recordRequest({
+          recordRequest({
             timestamp: startTime,
             method: 'POST',
             path: '/api/skipconfigs',
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
           const errorResponse = { error: '无效的key格式' };
           const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-          await recordRequest({
+          recordRequest({
             timestamp: startTime,
             method: 'POST',
             path: '/api/skipconfigs',
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
           const errorResponse = { error: '配置数据格式错误' };
           const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-          await recordRequest({
+          recordRequest({
             timestamp: startTime,
             method: 'POST',
             path: '/api/skipconfigs',
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
             const errorResponse = { error: '片段数据格式错误' };
             const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-            await recordRequest({
+            recordRequest({
               timestamp: startTime,
               method: 'POST',
               path: '/api/skipconfigs',
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
         const successResponse = { success: true };
         const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'POST',
           path: '/api/skipconfigs',
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
         const successResponse = { configs: allConfigs };
         const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'POST',
           path: '/api/skipconfigs',
@@ -256,7 +256,7 @@ export async function POST(request: NextRequest) {
           const errorResponse = { error: '缺少配置键' };
           const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-          await recordRequest({
+          recordRequest({
             timestamp: startTime,
             method: 'POST',
             path: '/api/skipconfigs',
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
           const errorResponse = { error: '无效的key格式' };
           const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-          await recordRequest({
+          recordRequest({
             timestamp: startTime,
             method: 'POST',
             path: '/api/skipconfigs',
@@ -296,7 +296,7 @@ export async function POST(request: NextRequest) {
         const successResponse = { success: true };
         const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'POST',
           path: '/api/skipconfigs',
@@ -315,7 +315,7 @@ export async function POST(request: NextRequest) {
         const errorResponse = { error: '不支持的操作类型' };
         const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-        await recordRequest({
+        recordRequest({
           timestamp: startTime,
           method: 'POST',
           path: '/api/skipconfigs',
@@ -336,7 +336,7 @@ export async function POST(request: NextRequest) {
     const errorResponse = { error: '服务器内部错误' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
 
-    await recordRequest({
+    recordRequest({
       timestamp: startTime,
       method: 'POST',
       path: '/api/skipconfigs',
