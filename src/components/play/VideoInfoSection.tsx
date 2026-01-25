@@ -342,8 +342,8 @@ function VideoInfoSection(props: VideoInfoSectionProps) {
                 </div>
               )}
 
-              {/* 演员阵容 */}
-              {movieDetails?.celebrities && movieDetails.celebrities.length > 0 && (
+              {/* 演员阵容 - 只有当演员有头像时才显示 */}
+              {movieDetails?.celebrities && movieDetails.celebrities.length > 0 && movieDetails.celebrities.some((c: any) => c.avatar) && (
                 <div className='mt-6 border-t border-gray-200 dark:border-gray-700 pt-6'>
                   <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2'>
                     <span>🎭</span>
