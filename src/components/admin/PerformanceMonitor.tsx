@@ -385,10 +385,10 @@ export default function PerformanceMonitor() {
             <HardDrive className='w-5 h-5 text-blue-500' />
           </div>
           <div className='text-2xl font-bold text-gray-800 dark:text-gray-200'>
-            {data.currentStatus.system.memoryUsage.systemUsed.toFixed(0)} MB
+            {formatTraffic(data.currentStatus.system.memoryUsage.systemUsed * 1024 * 1024)}
           </div>
           <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            已用 / 总共 {data.currentStatus.system.memoryUsage.systemTotal.toFixed(0)} MB
+            已用 / 总共 {formatTraffic(data.currentStatus.system.memoryUsage.systemTotal * 1024 * 1024)}
             <span className='ml-2 text-blue-600 dark:text-blue-400'>
               ({((data.currentStatus.system.memoryUsage.systemUsed / data.currentStatus.system.memoryUsage.systemTotal) * 100).toFixed(1)}%)
             </span>
@@ -461,9 +461,9 @@ export default function PerformanceMonitor() {
           </div>
           <div className='text-2xl font-bold text-gray-800 dark:text-gray-200'>
             {data?.externalTraffic ?
-              ((data.externalTraffic.totalTraffic / parseInt(timeRange) / 60) / 1024).toFixed(2) :
-              '0.00'
-            } KB
+              formatTraffic(data.externalTraffic.totalTraffic / parseInt(timeRange) / 60) :
+              '0.00 B'
+            }
           </div>
           <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
             {data?.externalTraffic && data.externalTraffic.totalRequests > 0 ? (
@@ -482,13 +482,14 @@ export default function PerformanceMonitor() {
 
       {/* 外部流量详情（按域名分组） */}
       {data?.externalTraffic && data.externalTraffic.totalRequests > 0 && (
-        <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden mt-6'>
-          <div className='px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
-            <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-200'>
+        <details className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden mt-6'>
+          <summary className='px-4 sm:px-6 py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
+            <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-200 inline'>
               外部流量详情（按域名）
             </h3>
-          </div>
-          <div className='overflow-x-auto'>
+          </summary>
+          <div className='border-t border-gray-200 dark:border-gray-700'>
+            <div className='overflow-x-auto'>
             <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
               <thead className='bg-gray-50 dark:bg-gray-700'>
                 <tr>
@@ -527,17 +528,19 @@ export default function PerformanceMonitor() {
                   ))}
               </tbody>
             </table>
+            </div>
           </div>
-        </div>
+        </details>
       )}
 
       {/* 最近请求列表 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
-        <div className='px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
-          <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-200'>
+      <details className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
+        <summary className='px-4 sm:px-6 py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
+          <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-200 inline'>
             最近请求（最新 100 条）
           </h3>
-        </div>
+        </summary>
+        <div className='border-t border-gray-200 dark:border-gray-700'>
         <div className='overflow-x-auto -mx-4 sm:mx-0'>
           <div className='inline-block min-w-full align-middle'>
             <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
@@ -616,7 +619,8 @@ export default function PerformanceMonitor() {
           </table>
           </div>
         </div>
-      </div>
+        </div>
+      </details>
     </div>
   );
 }

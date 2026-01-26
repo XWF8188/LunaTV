@@ -111,6 +111,12 @@ export async function getExternalTrafficStats(hours: number = 1) {
       externalTrafficCache.push(...validData);
 
       console.log(`✅ 从 Kvrocks 加载了 ${validData.length} 条外部流量数据`);
+
+      // 🔑 关键修复：如果过滤后数据量减少，说明有旧数据被清理，需要更新 Kvrocks
+      if (validData.length < cached.length) {
+        console.log(`🧹 清理 Kvrocks 中的旧数据: ${cached.length} -> ${validData.length} 条`);
+        await saveToKvrocks(validData);
+      }
     }
   } catch (error) {
     console.error('❌ 从 Kvrocks 加载外部流量数据失败:', error);
