@@ -876,6 +876,14 @@ You can also enter specific content like "Harry Potter", which works the same as
 | `UPSTASH_URL`     | Upstash endpoint       | `https://xxx.upstash.io`       |
 | `UPSTASH_TOKEN`   | Upstash Token          | `AxxxxxxxxxxxxxxxxxxxxxxxxxxxQ==` |
 
+> 💡 **Redis-Compatible Services**: `REDIS_URL` supports all Redis protocol compatible services, including:
+> - Self-hosted Redis / KVRocks
+> - [Redis Cloud](https://redis.io/cloud/) - Official cloud service, free 30MB
+> - [Aiven Valkey](https://aiven.io/valkey) - Free 1GB, Redis 7.2 compatible
+> - [Northflank](https://northflank.com/dbaas/managed-redis) - Free 256MB
+>
+> ⚠️ **Use Upstash for Vercel deployments**: Vercel Serverless functions are stateless and may cold-start new instances on each request. TCP-based Redis services (Redis Cloud, Aiven, Northflank, etc.) will experience connection pool failures, high cold-start latency, and connection exhaustion in this environment. Upstash uses HTTP REST API, which is naturally suited for Serverless environments and is the only recommended storage for Vercel deployments.
+
 ### Optional Configuration
 
 | Variable                                | Description              | Default     | Options                    |
@@ -890,6 +898,12 @@ You can also enter specific content like "Harry Potter", which works the same as
 | `NEXT_PUBLIC_DOUBAN_IMAGE_PROXY`        | Custom image proxy       | Empty       | URL prefix                 |
 | `NEXT_PUBLIC_DISABLE_YELLOW_FILTER`     | Disable adult filter     | `false`     | `true` / `false`           |
 | `NEXT_PUBLIC_FLUID_SEARCH`              | Streaming search output  | `true`      | `true` / `false`           |
+| `DISABLE_HERO_TRAILER`                  | Disable hero trailer     | `false`     | `true` / `false`           |
+
+> 💡 **DISABLE_HERO_TRAILER**: Hero banner trailers consume significant bandwidth.
+> - **Vercel**: Automatically disabled (no configuration needed)
+> - **Docker/VPS (with persistent volumes)**: No need to disable, videos are cached locally (`VIDEO_CACHE_DIR`), only downloaded once
+> - **ClawCloud and other non-persistent platforms**: Recommend setting `DISABLE_HERO_TRAILER=true`, otherwise trailers must be re-downloaded after each restart
 
 ### Douban Proxy Options
 
