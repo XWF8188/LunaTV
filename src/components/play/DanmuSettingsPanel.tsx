@@ -9,6 +9,7 @@ import {
   Shield,
   Type,
   X,
+  Info,
 } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
@@ -32,6 +33,13 @@ interface DanmuMatchInfo {
   episodeTitle: string;
 }
 
+/** 弹幕加载元数据 */
+interface DanmuLoadMeta {
+  source: 'init' | 'cache' | 'network' | 'network-retry' | 'empty' | 'error';
+  loadedAt: number | null;
+  count: number;
+}
+
 interface DanmuSettingsPanelProps {
   /** 是否显示面板 */
   isOpen: boolean;
@@ -45,10 +53,12 @@ interface DanmuSettingsPanelProps {
   danmuCount?: number;
   /** 是否正在加载 */
   loading?: boolean;
-  /** 重新加载回调 */
-  onReload?: () => void;
+  /** 重新加载回调，返回加载的弹幕数量 */
+  onReload?: () => Promise<number>;
   /** 匹配信息（显示片名） */
   matchInfo?: DanmuMatchInfo | null;
+  /** 加载元数据 */
+  loadMeta?: DanmuLoadMeta;
 }
 
 // ============================================================================
@@ -103,12 +113,15 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
   loading = false,
   onReload,
   matchInfo,
+  loadMeta,
 }: DanmuSettingsPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [sliderFontSize, setSliderFontSize] = useState(settings.fontSize);
   const [sliderSpeed, setSliderSpeed] = useState(settings.speed);
   const [sliderOpacity, setSliderOpacity] = useState(settings.opacity);
+  const [showLoadMeta, setShowLoadMeta] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
 
   // ♿ 检测用户是否偏好减少动画
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -272,11 +285,39 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
           </span>
         </div>
         <div className='relative flex items-center gap-1'>
+          {/* 加载详情按钮 */}
+          {loadMeta && (
+            <button
+              onClick={() => setShowLoadMeta(!showLoadMeta)}
+              className={`p-2 hover:bg-white/10 rounded-xl transition-all duration-200 group active:scale-95 ${
+                showLoadMeta ? 'bg-white/10' : ''
+              }`}
+              style={{
+                transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}
+              title='查看加载详情'
+            >
+              <Info
+                className={`w-4 h-4 transition-colors ${
+                  showLoadMeta ? 'text-green-400' : 'text-gray-400 group-hover:text-gray-200'
+                }`}
+              />
+            </button>
+          )}
           {/* 刷新按钮 - 移到顶部 */}
           {onReload && (
             <button
-              onClick={onReload}
-              disabled={loading}
+              onClick={async () => {
+                if (isReloading || loading) return;
+                setIsReloading(true);
+                try {
+                  const count = await onReload();
+                  console.log(`✅ 弹幕刷新完成: ${count} 条`);
+                } finally {
+                  setIsReloading(false);
+                }
+              }}
+              disabled={loading || isReloading}
               className='p-2 hover:bg-white/10 rounded-xl transition-all duration-200 group active:scale-95'
               style={{
                 transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -285,7 +326,7 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
             >
               <RefreshCw
                 className={`w-4 h-4 text-gray-400 transition-all duration-300 ${
-                  loading
+                  loading || isReloading
                     ? 'animate-spin text-green-400'
                     : 'group-hover:text-gray-200 group-hover:rotate-180'
                 }`}
@@ -303,6 +344,48 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
           </button>
         </div>
       </div>
+
+      {/* 加载元数据详情面板 */}
+      {showLoadMeta && loadMeta && (
+        <div
+          className='px-5 py-3 border-b border-white/10'
+          style={{
+            background: 'rgba(0, 0, 0, 0.2)',
+          }}
+        >
+          <div className='space-y-2 text-xs'>
+            <div className='flex items-center justify-between'>
+              <span className='text-gray-400'>数据来源</span>
+              <span className={`font-medium ${
+                loadMeta.source === 'cache' ? 'text-blue-400' :
+                loadMeta.source === 'network' ? 'text-green-400' :
+                loadMeta.source === 'network-retry' ? 'text-yellow-400' :
+                loadMeta.source === 'error' ? 'text-red-400' :
+                'text-gray-300'
+              }`}>
+                {loadMeta.source === 'cache' && '📦 会话缓存'}
+                {loadMeta.source === 'network' && '🌐 网络请求'}
+                {loadMeta.source === 'network-retry' && '🔄 网络重试'}
+                {loadMeta.source === 'empty' && '📭 空结果'}
+                {loadMeta.source === 'error' && '❌ 请求失败'}
+                {loadMeta.source === 'init' && '⏳ 初始化'}
+              </span>
+            </div>
+            <div className='flex items-center justify-between'>
+              <span className='text-gray-400'>弹幕数量</span>
+              <span className='text-white font-medium'>{loadMeta.count} 条</span>
+            </div>
+            <div className='flex items-center justify-between'>
+              <span className='text-gray-400'>加载时间</span>
+              <span className='text-gray-300'>
+                {loadMeta.loadedAt
+                  ? new Date(loadMeta.loadedAt).toLocaleTimeString('zh-CN', { hour12: false })
+                  : '尚未加载'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 内容区域 - 零滚动设计 */}
       <div className='px-5 py-4 space-y-4 overflow-hidden'>
