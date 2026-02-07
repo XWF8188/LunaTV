@@ -44,6 +44,7 @@ export interface UseDanmuReturn {
   danmuList: any[]; // 弹幕列表state（用于显示弹幕数量）
   loading: boolean; // 加载状态（state，便于UI响应）
   loadMeta: DanmuLoadMeta; // 加载元数据
+  error: Error | null; // 错误状态
 
   // 方法
   loadExternalDanmu: (options?: { force?: boolean }) => Promise<{ count: number; data: any[] }>;
@@ -164,6 +165,9 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
   // 加载状态（state，便于UI响应）
   const [loading, setLoading] = useState(false);
 
+  // 错误状态
+  const [error, setError] = useState<Error | null>(null);
+
   // 加载元数据追踪
   const [loadMeta, setLoadMeta] = useState<DanmuLoadMeta>({
     source: 'init',
@@ -236,6 +240,7 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
     } as any;
     lastDanmuLoadKeyRef.current = requestKey;
     setLoading(true);
+    setError(null); // 清除之前的错误
 
     try {
       // 构建请求参数
@@ -292,6 +297,8 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('弹幕API请求失败:', response.status, errorText);
+        const apiError = new Error(`弹幕加载失败: ${response.status}`);
+        setError(apiError);
         danmuLoadingRef.current = false;
         setLoading(false);
         setLoadMeta({ source: 'error', loadedAt: Date.now(), count: 0 });
@@ -318,6 +325,8 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
       return { count: finalDanmu.length, data: finalDanmu };
     } catch (error) {
       console.error('加载外部弹幕失败:', error);
+      const loadError = error instanceof Error ? error : new Error('弹幕加载失败');
+      setError(loadError);
       setLoadMeta({ source: 'error', loadedAt: Date.now(), count: 0 });
       return emptyResult;
     } finally {
@@ -429,6 +438,7 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
     danmuList, // 弹幕列表state（用于显示弹幕数量）
     loading, // 加载状态（state）
     loadMeta, // 加载元数据
+    error, // 错误状态
 
     // 方法
     loadExternalDanmu,

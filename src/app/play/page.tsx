@@ -351,6 +351,7 @@ function PlayPageClient() {
     danmuList, // 弹幕列表state（用于显示弹幕数量）
     loading: danmuLoading, // 加载状态（state）
     loadMeta: danmuLoadMeta, // 加载元数据
+    error: danmuError, // 错误状态
     loadExternalDanmu,
     handleDanmuOperationOptimized,
     externalDanmuEnabledRef,
@@ -460,6 +461,39 @@ function PlayPageClient() {
       }
 
       try {
+        // 修复anime4k-webgpu库的buffer size限制问题
+        // 在全局层面patch requestAdapter，确保所有adapter都有正确的limits
+        const originalRequestAdapter = (navigator as any).gpu.requestAdapter.bind((navigator as any).gpu);
+
+        (navigator as any).gpu.requestAdapter = async (options?: any) => {
+          const adapter = await originalRequestAdapter(options);
+          if (!adapter) return adapter;
+
+          // 保存原始的requestDevice方法
+          const originalRequestDevice = adapter.requestDevice.bind(adapter);
+
+          // 重写requestDevice方法，添加必要的buffer size限制
+          adapter.requestDevice = async (descriptor?: any) => {
+            const adapterLimits = adapter.limits;
+
+            // 合并用户提供的descriptor和我们需要的limits
+            const enhancedDescriptor = {
+              ...descriptor,
+              requiredLimits: {
+                ...descriptor?.requiredLimits,
+                // 使用adapter支持的最大值，但不超过2GB
+                maxBufferSize: Math.min(adapterLimits.maxBufferSize || 2147483648, 2147483648),
+                maxStorageBufferBindingSize: Math.min(adapterLimits.maxStorageBufferBindingSize || 1073741824, 1073741824),
+              }
+            };
+
+            console.log('WebGPU设备请求配置:', enhancedDescriptor.requiredLimits);
+            return originalRequestDevice(enhancedDescriptor);
+          };
+
+          return adapter;
+        };
+
         const adapter = await (navigator as any).gpu.requestAdapter();
         if (!adapter) {
           setWebGPUSupported(false);
@@ -469,6 +503,10 @@ function PlayPageClient() {
 
         setWebGPUSupported(true);
         console.log('WebGPU支持检测：✅ 支持');
+        console.log('Adapter limits:', {
+          maxBufferSize: adapter.limits.maxBufferSize,
+          maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize
+        });
       } catch (err) {
         setWebGPUSupported(false);
         console.log('WebGPU不支持：检测失败', err);
@@ -1080,27 +1118,16 @@ function PlayPageClient() {
 
       console.log('搜索演员作品:', celebrityName);
 
-      // 使用豆瓣搜索API（通过cmliussss CDN）
-      const searchUrl = `https://movie.douban.cmliussss.net/j/search_subjects?type=movie&tag=${encodeURIComponent(celebrityName)}&sort=recommend&page_limit=20&page_start=0`;
-
-      const response = await fetch(searchUrl);
+      // 使用后端 API（带反爬虫保护）
+      const response = await fetch(`/api/douban/celebrity-works?name=${encodeURIComponent(celebrityName)}&limit=20`);
       const data = await response.json();
 
-      if (data.subjects && data.subjects.length > 0) {
-        const works = data.subjects.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          poster: item.cover,
-          rate: item.rate,
-          year: item.url?.match(/\/subject\/(\d+)\//)?.[1] || '',
-          source: 'douban'
-        }));
-
+      if (data.success && data.works && data.works.length > 0) {
         // 保存到缓存（2小时）
-        await ClientCache.set(cacheKey, works, 2 * 60 * 60);
+        await ClientCache.set(cacheKey, data.works, 2 * 60 * 60);
 
-        setCelebrityWorks(works);
-        console.log(`找到 ${works.length} 部 ${celebrityName} 的作品（豆瓣，已缓存）`);
+        setCelebrityWorks(data.works);
+        console.log(`找到 ${data.works.length} 部 ${celebrityName} 的作品（豆瓣，已缓存）`);
       } else {
         // 豆瓣没有结果，尝试TMDB fallback
         console.log('豆瓣未找到相关作品，尝试TMDB...');
@@ -5393,6 +5420,7 @@ function PlayPageClient() {
         danmuCount={danmuList.length} // 使用state而不是ref，确保React能追踪变化
         loading={danmuLoading}
         loadMeta={danmuLoadMeta}
+        error={danmuError}
         onReload={async () => {
           // 重新加载外部弹幕（强制刷新）
           const result = await loadExternalDanmu({ force: true });
