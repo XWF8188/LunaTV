@@ -29,6 +29,7 @@ export interface UseDanmuReturn {
   // 状态
   externalDanmuEnabled: boolean;
   setExternalDanmuEnabled: (enabled: boolean) => void;
+  danmuList: any[]; // 弹幕列表state（用于显示弹幕数量）
 
   // 方法
   loadExternalDanmu: () => Promise<any[]>;
@@ -143,6 +144,9 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
     return false;
   });
 
+  // 弹幕列表state（用于React追踪弹幕数量变化）
+  const [danmuList, setDanmuList] = useState<any[]>([]);
+
   // Refs
   const externalDanmuEnabledRef = useRef(externalDanmuEnabled);
   const danmuLoadingRef = useRef<any>(false);
@@ -230,6 +234,7 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
         console.log('✅ 使用弹幕缓存数据，缓存键:', cacheKey);
         console.log('📊 缓存弹幕数量:', cached.data.length);
         danmuLoadingRef.current = false;
+        setDanmuList(cached.data); // 更新state，触发React重新渲染
         return cached.data;
       }
 
@@ -256,6 +261,7 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
       console.log('💾 保存弹幕到缓存:', cacheKey);
       await setDanmuCacheItem(cacheKey, finalDanmu);
 
+      setDanmuList(finalDanmu); // 更新state，触发React重新渲染
       return finalDanmu;
     } catch (error) {
       console.error('加载外部弹幕失败:', error);
@@ -324,6 +330,7 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
     // 状态
     externalDanmuEnabled,
     setExternalDanmuEnabled,
+    danmuList, // 弹幕列表state（用于显示弹幕数量）
 
     // 方法
     loadExternalDanmu,
