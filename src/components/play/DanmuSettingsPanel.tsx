@@ -12,6 +12,7 @@ import {
   Info,
 } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 // ============================================================================
 // Types
@@ -61,6 +62,10 @@ interface DanmuSettingsPanelProps {
   loadMeta?: DanmuLoadMeta;
   /** 错误信息 */
   error?: Error | null;
+  /** 播放器容器元素（用于全屏时渲染） */
+  playerContainer?: HTMLElement | null;
+  /** 是否处于全屏模式 */
+  isFullscreen?: boolean;
 }
 
 // ============================================================================
@@ -117,6 +122,8 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
   matchInfo,
   loadMeta,
   error,
+  playerContainer,
+  isFullscreen = false,
 }: DanmuSettingsPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -220,7 +227,8 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
 
   if (!isOpen) return null;
 
-  return (
+  // 面板内容
+  const panelContent = (
     <div
       ref={panelRef}
       className={`fixed right-4 bottom-20 z-[9999] w-80 overflow-hidden transition-all ${
@@ -231,6 +239,15 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
         isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2'
       }`}
       style={{
+        // 🔧 重置 ArtPlayer 继承的样式
+        fontSize: 'initial',
+        lineHeight: 'initial',
+        textShadow: 'none',
+        fontFamily: 'inherit',
+        // 🔧 强制创建独立渲染层，避免色彩断层
+        transform: 'translateZ(0)',
+        willChange: 'transform',
+        isolation: 'isolate',
         // 🎨 多层深度阴影（Apple风格）
         boxShadow: `
           0 2px 8px rgba(0, 0, 0, 0.1),
@@ -242,7 +259,7 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
         transitionTimingFunction: prefersReducedMotion
           ? 'linear'
           : 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-        // 🔥 背景毛玻璃 + 渐变
+        // 🔥 背景渐变（全屏时也可以使用毛玻璃效果）
         background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.9) 100%)',
         backdropFilter: 'blur(24px) saturate(180%)',
         WebkitBackdropFilter: 'blur(24px) saturate(180%)',
@@ -764,6 +781,11 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
 
       {/* CSS样式 - 自定义滑块样式 */}
       <style jsx>{`
+        /* 重置 ArtPlayer 强制设置的 svg fill: #fff，恢复 Lucide 图标的原始样式 */
+        svg {
+          fill: none;
+        }
+
         input[type='range']::-webkit-slider-thumb {
           appearance: none;
           width: 16px;
@@ -811,6 +833,14 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
       `}</style>
     </div>
   );
+
+  // 只在全屏模式下使用 Portal 渲染到播放器容器内
+  // 非全屏时渲染到普通位置（可以使用 backdrop-filter）
+  if (isFullscreen && playerContainer) {
+    return createPortal(panelContent, playerContainer);
+  }
+
+  return panelContent;
 });
 
 export default DanmuSettingsPanel;

@@ -139,6 +139,9 @@ function PlayPageClient() {
   // 弹幕设置面板状态
   const [isDanmuSettingsPanelOpen, setIsDanmuSettingsPanelOpen] = useState(false);
 
+  // 全屏状态
+  const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
+
   // 下载选集面板状态
   const [showDownloadEpisodeSelector, setShowDownloadEpisodeSelector] = useState(false);
 
@@ -4811,6 +4814,9 @@ function PlayPageClient() {
 
       // 监听全屏事件，进入全屏后自动隐藏控制栏
       artPlayerRef.current.on('fullscreen', (isFullscreen: boolean) => {
+        // 更新全屏状态
+        setIsPlayerFullscreen(isFullscreen);
+
         if (isFullscreen) {
           // 进入全屏后，延迟100ms触发控制栏自动隐藏
           setTimeout(() => {
@@ -5445,6 +5451,8 @@ function PlayPageClient() {
         loading={danmuLoading}
         loadMeta={danmuLoadMeta}
         error={danmuError}
+        playerContainer={artPlayerRef.current?.template?.$player || artRef.current}
+        isFullscreen={isPlayerFullscreen}
         onReload={async () => {
           // 重新加载外部弹幕（强制刷新）
           const result = await loadExternalDanmu({ force: true });
