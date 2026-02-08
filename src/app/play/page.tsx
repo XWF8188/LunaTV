@@ -1118,41 +1118,65 @@ function PlayPageClient() {
 
       console.log('搜索演员作品:', celebrityName);
 
-      // 使用后端 API（带反爬虫保护）
-      const response = await fetch(`/api/douban/celebrity-works?name=${encodeURIComponent(celebrityName)}&limit=20`);
-      const data = await response.json();
+      // 三级 fallback：豆瓣通用搜索 -> 豆瓣API -> TMDB
+      let works: any[] = [];
+      let source = '';
 
-      if (data.success && data.works && data.works.length > 0) {
-        // 保存到缓存（2小时）
-        await ClientCache.set(cacheKey, data.works, 2 * 60 * 60);
+      // 1. 豆瓣通用搜索（主用，数据最全）
+      try {
+        const response = await fetch(`/api/douban/celebrity-works?name=${encodeURIComponent(celebrityName)}&limit=20`);
+        const data = await response.json();
+        if (data.success && data.works && data.works.length > 0) {
+          works = data.works;
+          source = 'douban-search';
+          console.log(`找到 ${works.length} 部 ${celebrityName} 的作品（豆瓣通用搜索）`);
+        }
+      } catch (e) {
+        console.warn('豆瓣通用搜索失败:', e);
+      }
 
-        setCelebrityWorks(data.works);
-        console.log(`找到 ${data.works.length} 部 ${celebrityName} 的作品（豆瓣，已缓存）`);
-      } else {
-        // 豆瓣没有结果，尝试TMDB fallback
-        console.log('豆瓣未找到相关作品，尝试TMDB...');
+      // 2. 豆瓣 API（备用）
+      if (works.length === 0) {
+        console.log('豆瓣通用搜索无结果，尝试豆瓣API...');
+        try {
+          const apiResponse = await fetch(`/api/douban/celebrity-works?name=${encodeURIComponent(celebrityName)}&limit=20&mode=api`);
+          const apiData = await apiResponse.json();
+          if (apiData.success && apiData.works && apiData.works.length > 0) {
+            works = apiData.works;
+            source = 'douban-api';
+            console.log(`找到 ${works.length} 部 ${celebrityName} 的作品（豆瓣API）`);
+          }
+        } catch (e) {
+          console.warn('豆瓣API搜索失败:', e);
+        }
+      }
+
+      // 3. TMDB（最后 fallback）
+      if (works.length === 0) {
+        console.log('豆瓣无结果，尝试TMDB...');
         try {
           const tmdbResponse = await fetch(`/api/tmdb/actor?actor=${encodeURIComponent(celebrityName)}&type=movie&limit=20`);
           const tmdbResult = await tmdbResponse.json();
-
           if (tmdbResult.code === 200 && tmdbResult.list && tmdbResult.list.length > 0) {
-            // 给TMDB作品添加source标记
-            const worksWithSource = tmdbResult.list.map((work: any) => ({
+            works = tmdbResult.list.map((work: any) => ({
               ...work,
               source: 'tmdb'
             }));
-            // 保存到缓存（2小时）
-            await ClientCache.set(cacheKey, worksWithSource, 2 * 60 * 60);
-            setCelebrityWorks(worksWithSource);
-            console.log(`找到 ${tmdbResult.list.length} 部 ${celebrityName} 的作品（TMDB，已缓存）`);
-          } else {
-            console.log('TMDB也未找到相关作品');
-            setCelebrityWorks([]);
+            source = 'tmdb';
+            console.log(`找到 ${works.length} 部 ${celebrityName} 的作品（TMDB）`);
           }
-        } catch (tmdbError) {
-          console.error('TMDB搜索失败:', tmdbError);
-          setCelebrityWorks([]);
+        } catch (e) {
+          console.warn('TMDB搜索失败:', e);
         }
+      }
+
+      if (works.length > 0) {
+        await ClientCache.set(cacheKey, works, 2 * 60 * 60);
+        setCelebrityWorks(works);
+        console.log(`演员作品已缓存: ${celebrityName} (${source})`);
+      } else {
+        console.log('所有源均未找到相关作品');
+        setCelebrityWorks([]);
       }
     } catch (error) {
       console.error('获取演员作品出错:', error);

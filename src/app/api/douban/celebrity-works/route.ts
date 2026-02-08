@@ -17,6 +17,78 @@ function randomDelay(min = 500, max = 1500): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, delay));
 }
 
+/**
+ * 从豆瓣通用搜索 HTML 解析影视作品
+ */
+function parseDoubanSearchHtml(html: string): Array<{
+  id: string;
+  title: string;
+  poster: string;
+  rate: string;
+  url: string;
+  source: string;
+}> {
+  const results: Array<{
+    id: string;
+    title: string;
+    poster: string;
+    rate: string;
+    url: string;
+    source: string;
+  }> = [];
+
+  // 使用 split 方式分割每个 result div（比正则更可靠）
+  const blocks = html.split('<div class="result">').slice(1);
+
+  for (const block of blocks) {
+    // 提取 ID - 从 URL 中获取
+    const idMatch = block.match(/movie\.douban\.com%2Fsubject%2F(\d+)/);
+    if (!idMatch) continue;
+    const id = idMatch[1];
+
+    // 提取海报
+    const posterMatch = block.match(/<img[^>]*src="([^"]+)"/);
+    const poster = posterMatch ? posterMatch[1] : '';
+
+    // 提取评分
+    const rateMatch = block.match(/<span class="rating_nums">([^<]*)<\/span>/);
+    const rate = rateMatch ? rateMatch[1] : '';
+
+    // 提取标题 - 从 subject-cast 中获取原名
+    const castMatch = block.match(/<span class="subject-cast">([^<]*)<\/span>/);
+    let title = '';
+    if (castMatch) {
+      // 格式：原名:不眠日 / 刘璋牧 / 白敬亭 / 2025
+      const castText = castMatch[1];
+      const titleMatch = castText.match(/原名:([^/]+)/);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
+      }
+    }
+
+    // 如果没有从 subject-cast 获取到标题，尝试从链接文本获取
+    if (!title) {
+      const titleMatch = block.match(/class="title-text">([^<]+)<\/a>/);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
+      }
+    }
+
+    if (id && title) {
+      results.push({
+        id,
+        title,
+        poster,
+        rate,
+        url: `https://movie.douban.com/subject/${id}/`,
+        source: 'douban'
+      });
+    }
+  }
+
+  return results;
+}
+
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
@@ -24,8 +96,8 @@ export async function GET(request: NextRequest) {
 
   // 获取参数
   const celebrityName = searchParams.get('name');
-  const pageLimit = parseInt(searchParams.get('limit') || '20');
-  const pageStart = parseInt(searchParams.get('start') || '0');
+  const limit = parseInt(searchParams.get('limit') || '20');
+  const mode = searchParams.get('mode') || 'search'; // 'search' = 通用搜索, 'api' = 豆瓣API
 
   // 验证参数
   if (!celebrityName?.trim()) {
@@ -35,7 +107,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (pageLimit < 1 || pageLimit > 50) {
+  if (limit < 1 || limit > 50) {
     return NextResponse.json(
       { error: 'limit 必须在 1-50 之间' },
       { status: 400 }
@@ -43,10 +115,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 生成缓存 key
-    const cacheKey = `douban-celebrity-works-${celebrityName.trim()}-${pageLimit}-${pageStart}`;
+    // 生成缓存 key（包含 mode）
+    const cacheKey = `douban-celebrity-works-${mode}-${celebrityName.trim()}-${limit}`;
 
-    console.log(`🔍 [豆瓣演员作品API] 检查缓存: ${cacheKey}`);
+    console.log(`🔍 [豆瓣演员作品API] 检查缓存: ${cacheKey} (mode: ${mode})`);
 
     // 检查缓存
     try {
@@ -73,55 +145,89 @@ export async function GET(request: NextRequest) {
     // 添加随机延时
     await randomDelay(500, 1500);
 
-    // 构建豆瓣搜索 URL（固定使用 movie 类型）
-    const searchUrl = `https://movie.douban.com/j/search_subjects?type=movie&tag=${encodeURIComponent(celebrityName.trim())}&sort=recommend&page_limit=${pageLimit}&page_start=${pageStart}`;
-
-    console.log(`[豆瓣演员作品API] 请求: ${searchUrl}`);
-
     // 获取随机浏览器指纹
     const { ua, browser, platform } = getRandomUserAgentWithInfo();
     const secChHeaders = getSecChUaHeaders(browser, platform);
 
-    // 使用反爬虫请求
-    const response = await fetchDoubanWithVerification(searchUrl, {
-      headers: {
-        'User-Agent': ua,
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Referer': 'https://movie.douban.com/explore',
-        'Origin': 'https://movie.douban.com',
-        ...secChHeaders,
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-      },
-    });
+    let works: Array<{
+      id: string;
+      title: string;
+      poster: string;
+      rate: string;
+      url: string;
+      source: string;
+    }> = [];
 
-    if (!response.ok) {
-      throw new Error(`豆瓣 API 请求失败: ${response.status}`);
+    if (mode === 'api') {
+      // 使用豆瓣 API（/j/search_subjects）
+      const apiUrl = `https://movie.douban.com/j/search_subjects?type=movie&tag=${encodeURIComponent(celebrityName.trim())}&page_limit=${limit}&page_start=0`;
+      console.log(`[豆瓣演员作品API] API模式请求: ${apiUrl}`);
+
+      const response = await fetchDoubanWithVerification(apiUrl, {
+        headers: {
+          'User-Agent': ua,
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Referer': 'https://movie.douban.com/',
+          ...secChHeaders,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`豆瓣API请求失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.subjects && Array.isArray(data.subjects)) {
+        works = data.subjects.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          poster: item.cover,
+          rate: item.rate || '',
+          url: item.url,
+          source: 'douban-api'
+        }));
+      }
+    } else {
+      // 使用豆瓣通用搜索 URL（cat=1002 表示影视）
+      const searchUrl = `https://www.douban.com/search?cat=1002&q=${encodeURIComponent(celebrityName.trim())}`;
+      console.log(`[豆瓣演员作品API] 搜索模式请求: ${searchUrl}`);
+
+      const response = await fetchDoubanWithVerification(searchUrl, {
+        headers: {
+          'User-Agent': ua,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Referer': 'https://www.douban.com/',
+          ...secChHeaders,
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'same-origin',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`豆瓣搜索请求失败: ${response.status}`);
+      }
+
+      const html = await response.text();
+      console.log(`[豆瓣演员作品API] 获取 HTML 长度: ${html.length}`);
+
+      // 解析 HTML 提取影视作品
+      const allWorks = parseDoubanSearchHtml(html);
+      works = allWorks.slice(0, limit);
     }
-
-    const data = await response.json();
-
-    // 转换数据格式
-    const works = (data.subjects || []).map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      poster: item.cover,
-      rate: item.rate || '',
-      url: item.url,
-      source: 'douban'
-    }));
 
     const result = {
       success: true,
       celebrityName: celebrityName.trim(),
+      mode,
       works,
       total: works.length,
     };
 
-    console.log(`[豆瓣演员作品API] 找到 ${works.length} 部作品`);
+    console.log(`[豆瓣演员作品API] 找到 ${works.length} 部作品 (mode: ${mode})`);
 
     // 缓存结果
     try {
