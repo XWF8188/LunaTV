@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { UserExpirationService } from '@/lib/user-expiration-service';
 
 export const runtime = 'nodejs';
 
@@ -18,7 +19,7 @@ const STORAGE_TYPE =
 // 生成签名
 async function generateSignature(
   data: string,
-  secret: string
+  secret: string,
 ): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -30,7 +31,7 @@ async function generateSignature(
     keyData,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   // 生成签名
@@ -47,7 +48,7 @@ async function generateAuthCookie(
   username?: string,
   password?: string,
   role?: 'owner' | 'admin' | 'user',
-  includePassword = false
+  includePassword = false,
 ): Promise<string> {
   const authData: any = { role: role || 'user' };
 
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
       if (password !== envPassword) {
         return NextResponse.json(
           { ok: false, error: '密码错误' },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
         undefined,
         password,
         'user',
-        true
+        true,
       ); // localstorage 模式包含 password
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest) {
         username,
         password,
         'owner',
-        false
+        false,
       ); // 数据库模式不包含 password
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
@@ -169,6 +170,64 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '用户被封禁' }, { status: 401 });
     }
 
+    const userRole = user?.role || 'user';
+
+    try {
+      const pass = await db.verifyUser(username, password);
+
+      if (!pass) {
+        return NextResponse.json(
+          { error: '用户名或密码错误' },
+          { status: 401 },
+        );
+      }
+
+      const canBypassExpiration =
+        await UserExpirationService.canBypassExpirationCheck(username);
+
+      if (!canBypassExpiration) {
+        const isExpired =
+          await UserExpirationService.isAccountExpired(username);
+        if (isExpired) {
+          return NextResponse.json(
+            { error: '账号已过期，请联系管理员或使用新卡密续期' },
+            { status: 401 },
+          );
+        }
+      }
+
+      const expirationInfo = canBypassExpiration
+        ? null
+        : await UserExpirationService.checkExpiration(username);
+
+      const response = NextResponse.json({
+        ok: true,
+        ...(expirationInfo && { expirationInfo }),
+      });
+
+      const cookieValue = await generateAuthCookie(
+        username,
+        password,
+        userRole,
+        false,
+      );
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 7);
+
+      response.cookies.set('user_auth', cookieValue, {
+        path: '/',
+        expires,
+        sameSite: 'lax',
+        httpOnly: false,
+        secure: false,
+      });
+
+      return response;
+    } catch (err) {
+      console.error('数据库验证失败', err);
+      return NextResponse.json({ error: '数据库错误' }, { status: 500 });
+    }
+
     // 校验用户密码（V1）
     try {
       const pass = await db.verifyUser(username, password);
@@ -176,7 +235,7 @@ export async function POST(req: NextRequest) {
       if (!pass) {
         return NextResponse.json(
           { error: '用户名或密码错误' },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -186,7 +245,7 @@ export async function POST(req: NextRequest) {
         username,
         password,
         user?.role || 'user',
-        false
+        false,
       );
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
