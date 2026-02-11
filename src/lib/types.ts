@@ -48,10 +48,10 @@ export interface ShortDramaItem {
   score: number;
   episode_count: number;
   description?: string;
-  author?: string;        // 演员/导演信息
-  backdrop?: string;      // 高清背景图
-  vote_average?: number;  // 用户评分 (0-10)
-  tmdb_id?: number;       // TMDB ID
+  author?: string; // 演员/导演信息
+  backdrop?: string; // 高清背景图
+  vote_average?: number; // 用户评分 (0-10)
+  tmdb_id?: number; // TMDB ID
 }
 
 // 短剧解析结果数据结构
@@ -97,14 +97,14 @@ export interface IStorage {
   setPlayRecord(
     userName: string,
     key: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void>;
   getAllPlayRecords(userName: string): Promise<{ [key: string]: PlayRecord }>;
   deletePlayRecord(userName: string, key: string): Promise<void>;
   // 🚀 批量写入播放记录（Upstash 优化，使用 mset 只算1条命令）
   setPlayRecordsBatch?(
     userName: string,
-    records: { [key: string]: PlayRecord }
+    records: { [key: string]: PlayRecord },
   ): Promise<void>;
 
   // 收藏相关
@@ -115,7 +115,7 @@ export interface IStorage {
   // 🚀 批量写入收藏（Upstash 优化，使用 mset 只算1条命令）
   setFavoritesBatch?(
     userName: string,
-    favorites: { [key: string]: Favorite }
+    favorites: { [key: string]: Favorite },
   ): Promise<void>;
 
   // 用户相关
@@ -144,16 +144,18 @@ export interface IStorage {
   getSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<EpisodeSkipConfig | null>;
   setSkipConfig(
     userName: string,
     source: string,
     id: string,
-    config: EpisodeSkipConfig
+    config: EpisodeSkipConfig,
   ): Promise<void>;
   deleteSkipConfig(userName: string, source: string, id: string): Promise<void>;
-  getAllSkipConfigs(userName: string): Promise<{ [key: string]: EpisodeSkipConfig }>;
+  getAllSkipConfigs(
+    userName: string,
+  ): Promise<{ [key: string]: EpisodeSkipConfig }>;
 
   // 数据清理相关
   clearAllData(): Promise<void>;
@@ -172,14 +174,14 @@ export interface IStorage {
     userName: string,
     source: string,
     id: string,
-    watchTime: number
+    watchTime: number,
   ): Promise<void>;
 
   // 登入统计相关
   updateUserLoginStats(
     userName: string,
     loginTime: number,
-    isFirstLogin?: boolean
+    isFirstLogin?: boolean,
   ): Promise<void>;
 }
 
@@ -228,8 +230,8 @@ export interface DoubanItem {
   first_aired?: string;
   plot_summary?: string;
   // 🎬 Netflix风格字段
-  backdrop?: string;      // 高清背景图（用于HeroBanner）
-  trailerUrl?: string;    // 预告片视频URL
+  backdrop?: string; // 高清背景图（用于HeroBanner）
+  trailerUrl?: string; // 预告片视频URL
 }
 
 export interface DoubanResult {
@@ -407,9 +409,145 @@ export interface PersonalizedReleaseRecommendation {
   userId: string;
   recommendations: Array<{
     item: ReleaseCalendarItem;
-    reason: string; // 推荐理由
-    score: number; // 推荐分数 0-100
-    matchedPreferences: string[]; // 匹配的用户偏好
+    reason: string;
+    score: number;
+    matchedPreferences: string[];
   }>;
-  generatedAt: number; // 生成时间戳
+  generatedAt: number;
+}
+
+// 卡密数据结构
+export interface ActivationCode {
+  code: string;
+  status: 'unused' | 'used';
+  createdAt: string;
+  usedAt?: string;
+  usedBy?: string;
+  createdBy: string;
+}
+
+// 续期历史数据结构
+export interface RenewalHistory {
+  id: string;
+  username: string;
+  renewedAt: Date;
+  previousExpiration: Date;
+  newExpiration: Date;
+  codeUsed: string;
+  renewedBy: string;
+}
+
+// 用户到期信息
+export interface UserExpirationInfo {
+  expirationDate?: string;
+  daysRemaining?: number;
+  needReminder: boolean;
+}
+
+// 卡密系统配置
+export interface ActivationCodeConfig {
+  enabled: boolean;
+  defaultValidityDays: number;
+  reminderDays: number;
+}
+
+// 存储接口扩展
+export interface IStorage {
+  // 播放记录相关
+  getPlayRecord(userName: string, key: string): Promise<PlayRecord | null>;
+  setPlayRecord(
+    userName: string,
+    key: string,
+    record: PlayRecord,
+  ): Promise<void>;
+  getAllPlayRecords(userName: string): Promise<{ [key: string]: PlayRecord }>;
+  deletePlayRecord(userName: string, key: string): Promise<void>;
+  setPlayRecordsBatch?(
+    userName: string,
+    records: { [key: string]: PlayRecord },
+  ): Promise<void>;
+
+  // 收藏相关
+  getFavorite(userName: string, key: string): Promise<Favorite | null>;
+  setFavorite(userName: string, key: string, favorite: Favorite): Promise<void>;
+  getAllFavorites(userName: string): Promise<{ [key: string]: Favorite }>;
+  deleteFavorite(userName: string, key: string): Promise<void>;
+  setFavoritesBatch?(
+    userName: string,
+    favorites: { [key: string]: Favorite },
+  ): Promise<void>;
+
+  // 用户相关
+  registerUser(userName: string, password: string): Promise<void>;
+  verifyUser(userName: string, password: string): Promise<boolean>;
+  checkUserExist(userName: string): Promise<boolean>;
+  changePassword(userName: string, newPassword: string): Promise<void>;
+  deleteUser(userName: string): Promise<void>;
+
+  // 搜索历史相关
+  getSearchHistory(userName: string): Promise<string[]>;
+  addSearchHistory(userName: string, keyword: string): Promise<void>;
+  deleteSearchHistory(userName: string, keyword?: string): Promise<void>;
+
+  // 用户列表
+  getAllUsers(): Promise<string[]>;
+
+  // 管理员配置相关
+  getAdminConfig(): Promise<AdminConfig | null>;
+  setAdminConfig(config: AdminConfig): Promise<void>;
+
+  // 跳过片头片尾配置相关
+  getSkipConfig(
+    userName: string,
+    source: string,
+    id: string,
+  ): Promise<EpisodeSkipConfig | null>;
+  setSkipConfig(
+    userName: string,
+    source: string,
+    id: string,
+    config: EpisodeSkipConfig,
+  ): Promise<void>;
+  deleteSkipConfig(userName: string, source: string, id: string): Promise<void>;
+  getAllSkipConfigs(
+    userName: string,
+  ): Promise<{ [key: string]: EpisodeSkipConfig }>;
+
+  // 数据清理相关
+  clearAllData(): Promise<void>;
+
+  // 通用缓存相关（新增）
+  getCache(key: string): Promise<any | null>;
+  setCache(key: string, data: any, expireSeconds?: number): Promise<void>;
+  deleteCache(key: string): Promise<void>;
+  clearExpiredCache(prefix?: string): Promise<void>;
+
+  // 播放统计相关
+  getPlayStats(): Promise<PlayStatsResult>;
+  getUserPlayStat(userName: string): Promise<UserPlayStat>;
+  getContentStats(limit?: number): Promise<ContentStat[]>;
+  updatePlayStatistics(
+    userName: string,
+    source: string,
+    id: string,
+    watchTime: number,
+  ): Promise<void>;
+
+  // 登入统计相关
+  updateUserLoginStats(
+    userName: string,
+    loginTime: number,
+    isFirstLogin?: boolean,
+  ): Promise<void>;
+
+  // 卡密系统相关
+  createActivationCode(code: string, createdBy: string): Promise<void>;
+  getActivationCode(code: string): Promise<ActivationCode | null>;
+  updateActivationCodeUsed(code: string, usedBy: string): Promise<void>;
+  deleteActivationCode(code: string): Promise<void>;
+  getAllActivationCodes(): Promise<ActivationCode[]>;
+  addRenewalHistory(history: RenewalHistory): Promise<void>;
+  getRenewalHistory(username: string): Promise<RenewalHistory[]>;
+  setUserExpirationDate(username: string, expirationDate: Date): Promise<void>;
+  getUserExpirationDate(username: string): Promise<Date | null>;
 }
