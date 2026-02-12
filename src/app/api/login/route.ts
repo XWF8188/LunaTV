@@ -1,6 +1,7 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { cardKeyService } from '@/lib/cardkey';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
@@ -18,7 +19,7 @@ const STORAGE_TYPE =
 // 生成签名
 async function generateSignature(
   data: string,
-  secret: string
+  secret: string,
 ): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -30,7 +31,7 @@ async function generateSignature(
     keyData,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   // 生成签名
@@ -47,7 +48,7 @@ async function generateAuthCookie(
   username?: string,
   password?: string,
   role?: 'owner' | 'admin' | 'user',
-  includePassword = false
+  includePassword = false,
 ): Promise<string> {
   const authData: any = { role: role || 'user' };
 
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
       if (password !== envPassword) {
         return NextResponse.json(
           { ok: false, error: '密码错误' },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
         undefined,
         password,
         'user',
-        true
+        true,
       ); // localstorage 模式包含 password
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest) {
         username,
         password,
         'owner',
-        false
+        false,
       ); // 数据库模式不包含 password
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
@@ -176,8 +177,20 @@ export async function POST(req: NextRequest) {
       if (!pass) {
         return NextResponse.json(
           { error: '用户名或密码错误' },
-          { status: 401 }
+          { status: 401 },
         );
+      }
+
+      // 检查卡密是否过期（管理员除外）
+      const userRole = user?.role || 'user';
+      if (userRole !== 'owner' && userRole !== 'admin') {
+        const isExpired = await cardKeyService.isUserCardKeyExpired(username);
+        if (isExpired) {
+          return NextResponse.json(
+            { error: '卡密已过期，请在设置页面重新绑定新卡密' },
+            { status: 401 },
+          );
+        }
       }
 
       // 验证成功，设置认证cookie
@@ -186,7 +199,7 @@ export async function POST(req: NextRequest) {
         username,
         password,
         user?.role || 'user',
-        false
+        false,
       );
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
