@@ -1,11 +1,11 @@
 name: Upstream Sync
 
-on:
+于:
   schedule:
     - cron: '0 */6 * * *' # 每 6 小时运行一次
   workflow_dispatch:       # 手动触发
   push:
-    branches:
+    分支:
       - main               # 当 main 分支有更新时触发
 
 permissions:
