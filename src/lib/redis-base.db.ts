@@ -1521,10 +1521,13 @@ export abstract class BaseRedisStorage implements IStorage {
 
   async createCardKey(cardKey: CardKey): Promise<void> {
     await this.withRetry(() =>
-      this.client.set(this.cardKeyKey(cardKey.key), JSON.stringify(cardKey)),
+      this.client.set(
+        this.cardKeyKey(cardKey.keyHash),
+        JSON.stringify(cardKey),
+      ),
     );
     await this.withRetry(() =>
-      this.client.sAdd(this.cardKeyStatusKey(cardKey.status), cardKey.key),
+      this.client.sAdd(this.cardKeyStatusKey(cardKey.status), cardKey.keyHash),
     );
   }
 

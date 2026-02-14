@@ -442,7 +442,8 @@ export type CardKeyStatus = 'unused' | 'used' | 'expired';
 
 // 卡密数据结构
 export interface CardKey {
-  key: string; // 卡密密钥（哈希值）
+  key: string; // 卡密密钥（明文）
+  keyHash: string; // 卡密哈希（用于验证）
   keyType: CardKeyType; // 卡密类型
   status: CardKeyStatus; // 卡密状态
   createdAt: number; // 创建时间戳

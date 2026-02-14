@@ -33,7 +33,8 @@ export class CardKeyService {
       const hashedKey = await this.hashCardKey(plainKey);
 
       const cardKey: CardKey = {
-        key: hashedKey,
+        key: plainKey, // 保存明文卡密
+        keyHash: hashedKey, // 保存哈希用于验证
         keyType: type,
         status: 'unused',
         createdAt: Date.now(),
@@ -54,7 +55,11 @@ export class CardKeyService {
   // 验证卡密有效性
   async validateCardKey(cardKey: string): Promise<CardKeyValidationResult> {
     const hashedKey = await this.hashCardKey(cardKey);
-    const storedCardKey = await db.getCardKey(hashedKey);
+
+    // 由于我们现在使用 keyHash 作为查找键，需要查找所有卡密
+    // 先获取所有卡密，然后匹配 keyHash
+    const allCardKeys = await db.getAllCardKeys();
+    const storedCardKey = allCardKeys.find((ck) => ck.keyHash === hashedKey);
 
     if (!storedCardKey) {
       return {
@@ -80,7 +85,7 @@ export class CardKeyService {
     const now = Date.now();
     if (storedCardKey.expiresAt < now) {
       // 自动标记为已过期
-      await db.updateCardKey(hashedKey, { status: 'expired' });
+      await db.updateCardKey(storedCardKey.keyHash, { status: 'expired' });
       return {
         valid: false,
         error: '卡密已过期',
@@ -107,7 +112,7 @@ export class CardKeyService {
       };
     }
 
-    const hashedKey = await this.hashCardKey(cardKey);
+    const hashedKey = validation.cardKey.keyHash;
 
     // 获取用户当前卡密信息
     const currentCardKeyInfo = await db.getUserCardKeyInfo(username);

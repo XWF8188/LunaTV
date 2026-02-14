@@ -1358,10 +1358,10 @@ export class UpstashRedisStorage implements IStorage {
 
   async createCardKey(cardKey: CardKey): Promise<void> {
     await withRetry(() =>
-      this.client.set(this.cardKeyKey(cardKey.key), cardKey),
+      this.client.set(this.cardKeyKey(cardKey.keyHash), cardKey),
     );
     await withRetry(() =>
-      this.client.sadd(this.cardKeyStatusKey(cardKey.status), cardKey.key),
+      this.client.sadd(this.cardKeyStatusKey(cardKey.status), cardKey.keyHash),
     );
   }
 

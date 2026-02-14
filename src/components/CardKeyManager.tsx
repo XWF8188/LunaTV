@@ -280,17 +280,11 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
 
       {/* 卡密列表 */}
       <div className='bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden'>
-        <div className='px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800'>
-          <p className='text-sm text-yellow-800 dark:text-yellow-200'>
-            ⚠️
-            注意：明文卡密仅在创建时显示一次，请及时保存。列表中显示的是卡密哈希值。
-          </p>
-        </div>
         <table className='w-full'>
           <thead>
             <tr className='bg-gray-200 dark:bg-gray-700'>
               <th className='px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200'>
-                卡密哈希
+                卡密
               </th>
               <th className='px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200'>
                 类型
@@ -334,11 +328,23 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
             ) : (
               cardKeys.map((cardKey) => (
                 <tr
-                  key={cardKey.key}
+                  key={cardKey.keyHash}
                   className='border-b border-gray-200 dark:border-gray-700'
                 >
-                  <td className='px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300'>
-                    {cardKey.key.substring(0, 20)}...
+                  <td className='px-4 py-3'>
+                    <div className='flex items-center gap-2'>
+                      <code className='font-mono text-sm bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded'>
+                        {cardKey.key}
+                      </code>
+                      <button
+                        type='button'
+                        onClick={() => copyCardKey(cardKey.key)}
+                        className='p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors'
+                        title='复制卡密'
+                      >
+                        <Copy className='w-4 h-4 text-gray-600 dark:text-gray-400' />
+                      </button>
+                    </div>
                   </td>
                   <td className='px-4 py-3 text-sm text-gray-700 dark:text-gray-300'>
                     {CARD_KEY_TYPE_LABELS[cardKey.keyType] || cardKey.keyType}
@@ -373,7 +379,7 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
                     {cardKey.status === 'unused' && (
                       <button
                         type='button'
-                        onClick={() => handleDeleteCardKey(cardKey.key)}
+                        onClick={() => handleDeleteCardKey(cardKey.keyHash)}
                         className='inline-flex items-center px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors'
                       >
                         <Trash2 className='w-4 h-4' />
@@ -464,7 +470,7 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
               </button>
             </div>
             <p className='text-sm text-gray-500 dark:text-gray-400 mb-4'>
-              ⚠️ 请保存这些卡密，关闭后将无法再次查看明文
+              💡 这些卡密已保存到数据库，您可以随时在卡密列表中查看和复制。
             </p>
 
             {/* 复制全部按钮 */}
