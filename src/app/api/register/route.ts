@@ -157,9 +157,9 @@ export async function POST(req: NextRequest) {
           ? config.SiteConfig.DefaultUserTags
           : undefined;
 
-      // 如果有默认用户组，使用 V2 注册；否则使用 V1 注册（保持兼容性）
-      if (defaultTags) {
-        // V2 注册（支持 tags）
+      // 如果有卡密或有默认用户组，使用 V2 注册；否则使用 V1 注册（保持兼容性）
+      if (cardKey || defaultTags) {
+        // V2 注册（支持卡密和 tags）
         await db.createUserV2(
           username,
           password,
@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
           cardKey, // 注册卡密
         );
       } else {
-        // V1 注册（无 tags，保持现有行为）
+        // V1 注册（无卡密和无tags，保持现有行为）
         await db.registerUser(username, password);
       }
 

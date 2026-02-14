@@ -1621,6 +1621,7 @@ export abstract class BaseRedisStorage implements IStorage {
     userName: string,
     info: UserCardKeyData,
   ): Promise<void> {
+    console.log('updateUserCardKeyInfo - userName:', userName, 'info:', info);
     const config = await this.getAdminConfig();
     if (!config) {
       throw new Error('Admin config not found');
@@ -1629,26 +1630,40 @@ export abstract class BaseRedisStorage implements IStorage {
     const userIndex = config.UserConfig.Users.findIndex(
       (u) => u.username === userName,
     );
+    console.log(
+      'updateUserCardKeyInfo - userIndex:',
+      userIndex,
+      'total users:',
+      config.UserConfig.Users.length,
+    );
     if (userIndex === -1) {
       throw new Error('User not found');
     }
 
     config.UserConfig.Users[userIndex].cardKey = info;
+    console.log(
+      'updateUserCardKeyInfo - updated config:',
+      config.UserConfig.Users[userIndex].cardKey,
+    );
 
     await this.setAdminConfig(config);
   }
 
   async getFullUserCardKey(userName: string): Promise<UserCardKeyInfo | null> {
+    console.log('getFullUserCardKey - userName:', userName);
     const userCardKeyInfo = await this.getUserCardKeyInfo(userName);
+    console.log('getFullUserCardKey - userCardKeyInfo:', userCardKeyInfo);
     if (!userCardKeyInfo) {
       return null;
     }
 
     // 获取卡密详细信息
     const allCardKeys = await this.getAllCardKeys();
+    console.log('getFullUserCardKey - allCardKeys count:', allCardKeys.length);
     const cardKey = allCardKeys.find(
       (ck) => ck.keyHash === userCardKeyInfo.boundKey,
     );
+    console.log('getFullUserCardKey - found cardKey:', cardKey);
 
     if (!cardKey) {
       return null;
