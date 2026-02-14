@@ -128,15 +128,22 @@ export class CardKeyService {
       const newCardKeyCreatedAt = validation.cardKey.createdAt;
 
       // 计算新卡密的有效期（天数）
-      const newCardKeyDuration = Math.round((newCardKeyExpiryDate - newCardKeyCreatedAt) / (1000 * 60 * 60 * 24));
+      const newCardKeyDuration = Math.round(
+        (newCardKeyExpiryDate - newCardKeyCreatedAt) / (1000 * 60 * 60 * 24),
+      );
 
       // 如果当前卡密已过期，从现在开始累加；否则从当前过期时间开始累加
-      const baseTime = currentExpiryDate < Date.now() ? Date.now() : currentExpiryDate;
+      const baseTime =
+        currentExpiryDate < Date.now() ? Date.now() : currentExpiryDate;
       newExpiresAt = baseTime + newCardKeyDuration * 24 * 60 * 60 * 1000;
 
-      console.log(`绑定卡密 - 用户已有卡密，累加时间: ${newCardKeyDuration}天，新过期时间: ${new Date(newExpiresAt).toLocaleString('zh-CN')}`);
+      console.log(
+        `绑定卡密 - 用户已有卡密，累加时间: ${newCardKeyDuration}天，新过期时间: ${new Date(newExpiresAt).toLocaleString('zh-CN')}`,
+      );
     } else {
-      console.log(`绑定卡密 - 用户新绑定，过期时间: ${new Date(newExpiresAt).toLocaleString('zh-CN')}`);
+      console.log(
+        `绑定卡密 - 用户新绑定，过期时间: ${new Date(newExpiresAt).toLocaleString('zh-CN')}`,
+      );
     }
 
     // 更新卡密状态为已使用
@@ -152,45 +159,6 @@ export class CardKeyService {
       expiresAt: newExpiresAt,
       boundAt: Date.now(),
     };
-    await db.updateUserCardKeyInfo(username, userCardKeyInfo);
-
-    return { success: true };
-  }
-
-    const hashedKey = validation.cardKey.keyHash;
-    console.log('绑定卡密 - keyHash:', hashedKey, 'username:', username);
-
-    // 获取用户当前卡密信息
-    const currentCardKeyInfo = await db.getUserCardKeyInfo(username);
-
-    // 检查新卡密的过期时间是否晚于当前卡密
-    if (currentCardKeyInfo) {
-      const newExpiryDate = validation.cardKey.expiresAt;
-      const currentExpiryDate = currentCardKeyInfo.expiresAt;
-
-      if (newExpiryDate <= currentExpiryDate) {
-        return {
-          success: false,
-          error: '新卡密的过期时间不能早于或等于当前卡密',
-        };
-      }
-    }
-
-    // 更新卡密状态为已使用
-    console.log('更新卡密状态为已使用，keyHash:', hashedKey);
-    await db.updateCardKey(hashedKey, {
-      status: 'used',
-      boundTo: username,
-      boundAt: Date.now(),
-    });
-
-    // 更新用户卡密信息
-    const userCardKeyInfo: import('./admin.types').UserCardKeyData = {
-      boundKey: hashedKey,
-      expiresAt: validation.cardKey.expiresAt,
-      boundAt: Date.now(),
-    };
-    console.log('更新用户卡密信息，username:', username);
     await db.updateUserCardKeyInfo(username, userCardKeyInfo);
 
     return { success: true };

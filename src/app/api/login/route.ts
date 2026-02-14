@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
     // 校验用户密码（V1 和 V2）
     let pass = false;
     let userRole = 'user';
-    
+
     try {
       // 先尝试 V1 验证
       pass = await db.verifyUser(username, password);
@@ -184,10 +184,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!pass) {
-      return NextResponse.json(
-        { error: '用户名或密码错误' },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
     }
 
     // 检查卡密是否过期（管理员除外）
@@ -201,6 +198,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    try {
       // 验证成功，设置认证cookie
       const response = NextResponse.json({ ok: true });
       const cookieValue = await generateAuthCookie(
