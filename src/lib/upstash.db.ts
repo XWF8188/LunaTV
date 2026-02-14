@@ -385,6 +385,47 @@ export class UpstashRedisStorage implements IStorage {
       }),
     );
 
+    // 将用户添加到 AdminConfig.Users 数组
+    try {
+      const config = await this.getAdminConfig();
+      if (config) {
+        // 检查用户是否已存在
+        const existingUserIndex = config.UserConfig.Users.findIndex(
+          (u) => u.username === userName,
+        );
+
+        if (existingUserIndex === -1) {
+          // 新用户，添加到数组
+          const newUser = {
+            username: userName,
+            password: hashedPassword, // 注意：这里存储的是哈希密码
+            role: role,
+            banned: false,
+            created_at: createdAt,
+          };
+
+          if (tags && tags.length > 0) {
+            (newUser as any).tags = tags;
+          }
+
+          if (oidcSub) {
+            (newUser as any).oidcSub = oidcSub;
+          }
+
+          if (enabledApis && enabledApis.length > 0) {
+            (newUser as any).enabledApis = enabledApis;
+          }
+
+          config.UserConfig.Users.push(newUser);
+          await this.setAdminConfig(config);
+          console.log('用户已添加到 AdminConfig.Users:', userName);
+        }
+      }
+    } catch (error) {
+      console.error('添加用户到 AdminConfig.Users 失败:', error);
+      // 不抛出错误，因为用户信息已经保存成功
+    }
+
     // 如果提供了卡密，绑定卡密（在用户创建成功后）
     if (cardKey) {
       try {
