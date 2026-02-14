@@ -106,6 +106,7 @@ export class CardKeyService {
     // 验证卡密
     const validation = await this.validateCardKey(cardKey);
     if (!validation.valid || !validation.cardKey) {
+      console.error('卡密验证失败:', validation.error);
       return {
         success: false,
         error: validation.error || '卡密验证失败',
@@ -113,6 +114,7 @@ export class CardKeyService {
     }
 
     const hashedKey = validation.cardKey.keyHash;
+    console.log('绑定卡密 - keyHash:', hashedKey, 'username:', username);
 
     // 获取用户当前卡密信息
     const currentCardKeyInfo = await db.getUserCardKeyInfo(username);
@@ -131,6 +133,7 @@ export class CardKeyService {
     }
 
     // 更新卡密状态为已使用
+    console.log('更新卡密状态为已使用，keyHash:', hashedKey);
     await db.updateCardKey(hashedKey, {
       status: 'used',
       boundTo: username,
@@ -143,6 +146,7 @@ export class CardKeyService {
       expiresAt: validation.cardKey.expiresAt,
       boundAt: Date.now(),
     };
+    console.log('更新用户卡密信息，username:', username);
     await db.updateUserCardKeyInfo(username, userCardKeyInfo);
 
     return { success: true };

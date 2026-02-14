@@ -1571,6 +1571,13 @@ export abstract class BaseRedisStorage implements IStorage {
     );
 
     if (updates.status && updates.status !== existing.status) {
+      console.log(
+        '更新卡密状态:',
+        keyHash,
+        existing.status,
+        '->',
+        updates.status,
+      );
       await this.withRetry(() =>
         this.client.sRem(this.cardKeyStatusKey(existing.status), keyHash),
       );
