@@ -7,7 +7,7 @@ import UserCardKeyBinding from '@/components/UserCardKeyBinding';
 
 export default function SettingsPage() {
   return (
-    <PageLayout title='设置'>
+    <PageLayout>
       <div className='max-w-4xl mx-auto p-6'>
         <UserCardKeyBinding />
       </div>
