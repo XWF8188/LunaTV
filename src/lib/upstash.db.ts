@@ -11,6 +11,7 @@ import {
   IStorage,
   PlayRecord,
   PlayStatsResult,
+  UserCardKeyInfo,
   UserPlayStat,
 } from './types';
 
