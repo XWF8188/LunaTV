@@ -1710,13 +1710,13 @@ export abstract class BaseRedisStorage implements IStorage {
       return null;
     }
 
-    // 计算剩余天数
+    // 使用 userCardKeyInfo.expiresAt 计算剩余天数（这是延期后的实际过期时间）
     const now = Date.now();
     const daysRemaining = Math.max(
       0,
-      Math.ceil((cardKey.expiresAt - now) / (1000 * 60 * 60 * 24)),
+      Math.ceil((userCardKeyInfo.expiresAt - now) / (1000 * 60 * 60 * 24)),
     );
-    const isExpired = cardKey.expiresAt < now;
+    const isExpired = userCardKeyInfo.expiresAt < now;
     const isExpiring = !isExpired && daysRemaining <= 30;
 
     return {
