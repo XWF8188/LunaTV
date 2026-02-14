@@ -150,7 +150,7 @@ export class CardKeyService {
 
   // 获取用户卡密信息
   async getUserCardKey(username: string): Promise<UserCardKeyInfo | null> {
-    return await db.getUserCardKey(username);
+    return await db.getFullUserCardKey(username);
   }
 
   // 检查用户卡密是否过期

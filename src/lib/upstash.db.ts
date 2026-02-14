@@ -371,7 +371,20 @@ export class UpstashRedisStorage implements IStorage {
       );
     }
 
-    // 如果提供了卡密，绑定卡密
+    // 先保存用户信息
+    await withRetry(() =>
+      this.client.hset(this.userInfoKey(userName), userInfo),
+    );
+
+    // 添加到用户列表（Sorted Set，按注册时间排序）
+    await withRetry(() =>
+      this.client.zadd(this.userListKey(), {
+        score: createdAt,
+        member: userName,
+      }),
+    );
+
+    // 如果提供了卡密，绑定卡密（在用户创建成功后）
     if (cardKey) {
       try {
         const { cardKeyService } = await import('./cardkey');
@@ -387,18 +400,6 @@ export class UpstashRedisStorage implements IStorage {
         throw new Error('卡密绑定失败: ' + (error as Error).message);
       }
     }
-
-    await withRetry(() =>
-      this.client.hset(this.userInfoKey(userName), userInfo),
-    );
-
-    // 添加到用户列表（Sorted Set，按注册时间排序）
-    await withRetry(() =>
-      this.client.zadd(this.userListKey(), {
-        score: createdAt,
-        member: userName,
-      }),
-    );
   }
 
   // 验证用户密码（新版本）
@@ -1459,6 +1460,42 @@ export class UpstashRedisStorage implements IStorage {
     config.UserConfig.Users[userIndex].cardKey = info;
 
     await this.setAdminConfig(config);
+  }
+
+  async getFullUserCardKey(userName: string): Promise<UserCardKeyInfo | null> {
+    const userCardKeyInfo = await this.getUserCardKeyInfo(userName);
+    if (!userCardKeyInfo) {
+      return null;
+    }
+
+    // 获取卡密详细信息
+    const allCardKeys = await this.getAllCardKeys();
+    const cardKey = allCardKeys.find(
+      (ck) => ck.keyHash === userCardKeyInfo.boundKey,
+    );
+
+    if (!cardKey) {
+      return null;
+    }
+
+    // 计算剩余天数
+    const now = Date.now();
+    const daysRemaining = Math.max(
+      0,
+      Math.ceil((cardKey.expiresAt - now) / (1000 * 60 * 60 * 24)),
+    );
+    const isExpired = cardKey.expiresAt < now;
+    const isExpiring = !isExpired && daysRemaining <= 30;
+
+    return {
+      plainKey: cardKey.key,
+      boundKey: userCardKeyInfo.boundKey,
+      expiresAt: userCardKeyInfo.expiresAt,
+      boundAt: userCardKeyInfo.boundAt,
+      daysRemaining,
+      isExpiring,
+      isExpired,
+    };
   }
 }
 

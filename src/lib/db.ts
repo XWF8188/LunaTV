@@ -641,6 +641,9 @@ export class DbManager {
 
   async getUserCardKey(userName: string): Promise<UserCardKeyInfo | null> {
     incrementDbQuery();
+    if (typeof (this.storage as any).getFullUserCardKey === 'function') {
+      return (this.storage as any).getFullUserCardKey(userName);
+    }
     const cardKeyInfo = await this.getUserCardKeyInfo(userName);
     if (!cardKeyInfo) {
       return null;

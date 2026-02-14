@@ -2,7 +2,13 @@
 
 'use client';
 
-import { AlertCircle, CheckCircle, RefreshCw, XCircle } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle,
+  Copy,
+  RefreshCw,
+  XCircle,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { UserCardKeyInfo } from '@/lib/types';
@@ -51,12 +57,12 @@ export default function UserCardKeyBinding() {
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `绑定卡密失败: ${res.status}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || '绑定卡密失败');
       }
 
-      const data = await res.json();
       setCardKeyInfo(data.cardKeyInfo);
       setHasCardKey(true);
       setNewCardKey('');
@@ -71,6 +77,26 @@ export default function UserCardKeyBinding() {
   // 格式化日期
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString('zh-CN');
+  };
+
+  // 复制卡密
+  const copyCardKey = async (key: string) => {
+    try {
+      await navigator.clipboard.writeText(key);
+      alert('卡密已复制到剪贴板');
+    } catch (err) {
+      const textarea = document.createElement('textarea');
+      textarea.value = key;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        alert('卡密已复制到剪贴板');
+      } catch (err) {
+        alert('复制失败，请手动复制');
+      }
+      document.body.removeChild(textarea);
+    }
   };
 
   useEffect(() => {
@@ -188,6 +214,26 @@ export default function UserCardKeyBinding() {
               </h3>
             </div>
             <div className='space-y-3'>
+              {cardKeyInfo?.plainKey && (
+                <div className='flex justify-between items-center py-2 border-b border-green-200 dark:border-green-800'>
+                  <span className='text-sm font-medium text-green-700 dark:text-green-300'>
+                    卡密
+                  </span>
+                  <div className='flex items-center gap-2'>
+                    <code className='text-sm text-green-800 dark:text-green-200 font-mono bg-green-100 dark:bg-green-900/40 px-2 py-1 rounded'>
+                      {cardKeyInfo.plainKey}
+                    </code>
+                    <button
+                      type='button'
+                      onClick={() => copyCardKey(cardKeyInfo.plainKey!)}
+                      className='p-1 hover:bg-green-100 dark:hover:bg-green-900/40 rounded transition-colors'
+                      title='复制卡密'
+                    >
+                      <Copy className='w-4 h-4 text-green-600 dark:text-green-400' />
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className='flex justify-between items-center py-2 border-b border-green-200 dark:border-green-800'>
                 <span className='text-sm font-medium text-green-700 dark:text-green-300'>
                   过期时间

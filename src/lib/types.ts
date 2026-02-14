@@ -461,6 +461,7 @@ export interface CardKeyExpiryWarning {
 
 // 用户卡密信息
 export interface UserCardKeyInfo {
+  plainKey?: string; // 卡密明文（可选，用于显示）
   boundKey: string; // 绑定的卡密（哈希值）
   expiresAt: number; // 卡密过期时间戳
   boundAt: number; // 绑定时间戳
