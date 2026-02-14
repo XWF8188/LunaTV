@@ -4,6 +4,7 @@
 
 import {
   CheckCircle,
+  Copy,
   Download,
   Plus,
   RefreshCw,
@@ -176,9 +177,45 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
   };
 
   // 复制卡密
-  const copyCardKey = (key: string) => {
-    navigator.clipboard.writeText(key);
-    alert('卡密已复制到剪贴板');
+  const copyCardKey = async (key: string) => {
+    try {
+      await navigator.clipboard.writeText(key);
+      alert('卡密已复制到剪贴板');
+    } catch (err) {
+      // 如果 clipboard API 失败，使用备用方法
+      const textarea = document.createElement('textarea');
+      textarea.value = key;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        alert('卡密已复制到剪贴板');
+      } catch (err) {
+        alert('复制失败，请手动复制');
+      }
+      document.body.removeChild(textarea);
+    }
+  };
+
+  // 复制全部卡密
+  const copyAllCardKeys = async () => {
+    const allKeys = createdKeys.join('\n');
+    try {
+      await navigator.clipboard.writeText(allKeys);
+      alert(`已复制 ${createdKeys.length} 个卡密到剪贴板`);
+    } catch (err) {
+      const textarea = document.createElement('textarea');
+      textarea.value = allKeys;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        alert(`已复制 ${createdKeys.length} 个卡密到剪贴板`);
+      } catch (err) {
+        alert('复制失败，请手动复制');
+      }
+      document.body.removeChild(textarea);
+    }
   };
 
   useEffect(() => {
@@ -243,6 +280,12 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
 
       {/* 卡密列表 */}
       <div className='bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden'>
+        <div className='px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800'>
+          <p className='text-sm text-yellow-800 dark:text-yellow-200'>
+            ⚠️
+            注意：明文卡密仅在创建时显示一次，请及时保存。列表中显示的是卡密哈希值。
+          </p>
+        </div>
         <table className='w-full'>
           <thead>
             <tr className='bg-gray-200 dark:bg-gray-700'>
@@ -421,20 +464,36 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
               </button>
             </div>
             <p className='text-sm text-gray-500 dark:text-gray-400 mb-4'>
-              请保存这些卡密，关闭后将无法再次查看
+              ⚠️ 请保存这些卡密，关闭后将无法再次查看明文
             </p>
+
+            {/* 复制全部按钮 */}
+            <div className='mb-4'>
+              <button
+                type='button'
+                onClick={copyAllCardKeys}
+                className='inline-flex items-center w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors'
+              >
+                <Copy className='w-4 h-4 mr-2' />
+                复制全部卡密 ({createdKeys.length} 个)
+              </button>
+            </div>
+
             <div className='space-y-2'>
               {createdKeys.map((key, index) => (
                 <div
                   key={index}
-                  className='flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg'
+                  className='flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors'
                 >
-                  <span className='font-mono text-sm'>{key}</span>
+                  <span className='font-mono text-sm flex-1 mr-4 break-all'>
+                    {key}
+                  </span>
                   <button
                     type='button'
                     onClick={() => copyCardKey(key)}
-                    className='px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors'
+                    className='inline-flex items-center px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors shrink-0'
                   >
+                    <Copy className='w-4 h-4 mr-1' />
                     复制
                   </button>
                 </div>
