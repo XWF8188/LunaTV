@@ -641,10 +641,27 @@ export class DbManager {
 
   async getUserCardKey(userName: string): Promise<UserCardKeyInfo | null> {
     incrementDbQuery();
+    console.log('db.getUserCardKey - userName:', userName);
+    console.log(
+      'db.getUserCardKey - has getFullUserCardKey:',
+      typeof (this.storage as any).getFullUserCardKey === 'function',
+    );
+
     if (typeof (this.storage as any).getFullUserCardKey === 'function') {
-      return (this.storage as any).getFullUserCardKey(userName);
+      const result = (this.storage as any).getFullUserCardKey(userName);
+      console.log(
+        'db.getUserCardKey - result from getFullUserCardKey:',
+        result,
+      );
+      return result;
     }
+
     const cardKeyInfo = await this.getUserCardKeyInfo(userName);
+    console.log(
+      'db.getUserCardKey - cardKeyInfo from getUserCardKeyInfo:',
+      cardKeyInfo,
+    );
+
     if (!cardKeyInfo) {
       return null;
     }
@@ -653,7 +670,7 @@ export class DbManager {
     const msPerDay = 1000 * 60 * 60 * 24;
     const daysRemaining = Math.ceil((cardKeyInfo.expiresAt - now) / msPerDay);
 
-    return {
+    const result = {
       boundKey: cardKeyInfo.boundKey,
       expiresAt: cardKeyInfo.expiresAt,
       boundAt: cardKeyInfo.boundAt,
@@ -661,6 +678,9 @@ export class DbManager {
       isExpiring: daysRemaining <= 30,
       isExpired: daysRemaining <= 0,
     };
+    console.log('db.getUserCardKey - fallback result:', result);
+
+    return result;
   }
 
   async isUserCardKeyExpired(userName: string): Promise<boolean> {
