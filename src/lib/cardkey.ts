@@ -103,9 +103,16 @@ export class CardKeyService {
     cardKey: string,
     username: string,
   ): Promise<{ success: boolean; error?: string }> {
+    console.log('=== 开始绑定卡密 ===');
+    console.log('username:', username);
+    console.log('cardKey:', cardKey);
+
     // 验证卡密
     const validation = await this.validateCardKey(cardKey);
+    console.log('验证结果:', validation);
+
     if (!validation.valid || !validation.cardKey) {
+      console.log('卡密验证失败');
       return {
         success: false,
         error: validation.error || '卡密验证失败',
@@ -113,9 +120,11 @@ export class CardKeyService {
     }
 
     const hashedKey = validation.cardKey.keyHash;
+    console.log('keyHash:', hashedKey);
 
     // 获取用户当前卡密信息
     const currentCardKeyInfo = await db.getUserCardKeyInfo(username);
+    console.log('用户当前卡密信息:', currentCardKeyInfo);
 
     // 计算新的过期时间
     let newExpiresAt = validation.cardKey.expiresAt;
@@ -127,16 +136,31 @@ export class CardKeyService {
       const newCardKeyExpiryDate = validation.cardKey.expiresAt;
       const newCardKeyCreatedAt = validation.cardKey.createdAt;
 
+      console.log(
+        '当前过期时间:',
+        new Date(currentExpiryDate).toLocaleString('zh-CN'),
+      );
+      console.log(
+        '新卡密过期时间:',
+        new Date(newCardKeyExpiryDate).toLocaleString('zh-CN'),
+      );
+      console.log(
+        '新卡密创建时间:',
+        new Date(newCardKeyCreatedAt).toLocaleString('zh-CN'),
+      );
+
       // 计算新卡密的有效期（天数）
       const newCardKeyDuration = Math.round(
         (newCardKeyExpiryDate - newCardKeyCreatedAt) / (1000 * 60 * 60 * 24),
       );
+      console.log('新卡密有效期（天）:', newCardKeyDuration);
 
       // 如果当前卡密已过期，从现在开始累加；否则从当前过期时间开始累加
       const baseTime =
         currentExpiryDate < Date.now() ? Date.now() : currentExpiryDate;
       newExpiresAt = baseTime + newCardKeyDuration * 24 * 60 * 60 * 1000;
 
+      console.log('累加基数:', new Date(baseTime).toLocaleString('zh-CN'));
       console.log(
         `绑定卡密 - 用户已有卡密，累加时间: ${newCardKeyDuration}天，新过期时间: ${new Date(newExpiresAt).toLocaleString('zh-CN')}`,
       );
@@ -147,6 +171,7 @@ export class CardKeyService {
     }
 
     // 更新卡密状态为已使用
+    console.log('更新卡密状态为已使用，keyHash:', hashedKey);
     await db.updateCardKey(hashedKey, {
       status: 'used',
       boundTo: username,
@@ -159,8 +184,10 @@ export class CardKeyService {
       expiresAt: newExpiresAt,
       boundAt: Date.now(),
     };
+    console.log('准备更新用户卡密信息:', userCardKeyInfo);
     await db.updateUserCardKeyInfo(username, userCardKeyInfo);
 
+    console.log('=== 卡密绑定完成 ===');
     return { success: true };
   }
 
