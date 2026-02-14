@@ -279,7 +279,7 @@ export default function UserCardKeyBinding() {
               重新绑定卡密
             </h3>
             <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
-              绑定新卡密可以延长您的账户有效期。新卡密的过期时间必须晚于当前卡密。
+              绑定新卡密可以延长您的账户有效期。新卡密的有效期将累加到当前过期时间。
             </p>
             <div className='space-y-3'>
               <div>

@@ -170,28 +170,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '用户被封禁' }, { status: 401 });
     }
 
-    // 校验用户密码（V1）
+    // 校验用户密码（V1 和 V2）
+    let pass = false;
+    let userRole = 'user';
+    
     try {
-      const pass = await db.verifyUser(username, password);
+      // 先尝试 V1 验证
+      pass = await db.verifyUser(username, password);
+    } catch (err) {
+      // 如果 V1 验证失败，尝试 V2 验证
+      console.log('V1 验证失败，尝试 V2 验证');
+      pass = await db.verifyUserV2(username, password);
+    }
 
-      if (!pass) {
+    if (!pass) {
+      return NextResponse.json(
+        { error: '用户名或密码错误' },
+        { status: 401 },
+      );
+    }
+
+    // 检查卡密是否过期（管理员除外）
+    if (userRole !== 'owner' && userRole !== 'admin') {
+      const isExpired = await cardKeyService.isUserCardKeyExpired(username);
+      if (isExpired) {
         return NextResponse.json(
-          { error: '用户名或密码错误' },
+          { error: '卡密已过期，请在设置页面重新绑定新卡密' },
           { status: 401 },
         );
       }
-
-      // 检查卡密是否过期（管理员除外）
-      const userRole = user?.role || 'user';
-      if (userRole !== 'owner' && userRole !== 'admin') {
-        const isExpired = await cardKeyService.isUserCardKeyExpired(username);
-        if (isExpired) {
-          return NextResponse.json(
-            { error: '卡密已过期，请在设置页面重新绑定新卡密' },
-            { status: 401 },
-          );
-        }
-      }
+    }
 
       // 验证成功，设置认证cookie
       const response = NextResponse.json({ ok: true });
