@@ -235,6 +235,7 @@ export class DbManager {
     tags?: string[],
     oidcSub?: string,
     enabledApis?: string[],
+    cardKey?: string,
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).createUserV2 === 'function') {
@@ -245,6 +246,7 @@ export class DbManager {
         tags,
         oidcSub,
         enabledApis,
+        cardKey,
       );
     }
   }

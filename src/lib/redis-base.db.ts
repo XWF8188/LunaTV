@@ -463,6 +463,7 @@ export abstract class BaseRedisStorage implements IStorage {
     tags?: string[],
     oidcSub?: string,
     enabledApis?: string[],
+    cardKey?: string,
   ): Promise<void> {
     const hashedPassword = await this.hashPassword(password);
     const createdAt = Date.now();
@@ -489,6 +490,23 @@ export abstract class BaseRedisStorage implements IStorage {
       await this.withRetry(() =>
         this.client.set(this.oidcSubKey(oidcSub), userName),
       );
+    }
+
+    // 如果提供了卡密,绑定卡密
+    if (cardKey) {
+      try {
+        const { cardKeyService } = await import('./cardkey');
+        const bindingResult = await cardKeyService.bindCardKeyToUser(
+          cardKey,
+          userName,
+        );
+        if (!bindingResult.success) {
+          throw new Error(bindingResult.error || '卡密绑定失败');
+        }
+      } catch (error) {
+        console.error('绑定卡密失败:', error);
+        throw new Error('卡密绑定失败: ' + (error as Error).message);
+      }
     }
 
     await this.withRetry(() =>

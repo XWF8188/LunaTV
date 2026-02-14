@@ -18,7 +18,7 @@ const STORAGE_TYPE =
 // 生成签名
 async function generateSignature(
   data: string,
-  secret: string
+  secret: string,
 ): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -30,7 +30,7 @@ async function generateSignature(
     keyData,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   // 生成签名
@@ -47,7 +47,7 @@ async function generateAuthCookie(
   username?: string,
   password?: string,
   role?: 'owner' | 'admin' | 'user',
-  includePassword = false
+  includePassword = false,
 ): Promise<string> {
   const authData: any = { role: role || 'user' };
 
@@ -73,11 +73,16 @@ export async function POST(req: NextRequest) {
     if (STORAGE_TYPE === 'localstorage') {
       return NextResponse.json(
         { error: 'localStorage 模式不支持用户注册' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const { username, password, confirmPassword } = await req.json();
+    const { username, password, confirmPassword, cardKey } = await req.json();
+
+    // 验证卡密
+    if (!cardKey || typeof cardKey !== 'string' || cardKey.trim() === '') {
+      return NextResponse.json({ error: '卡密不能为空' }, { status: 400 });
+    }
 
     // 先检查配置中是否允许注册（在验证输入之前）
     let config: any;
@@ -88,25 +93,31 @@ export async function POST(req: NextRequest) {
       if (!allowRegister) {
         return NextResponse.json(
           { error: '管理员已关闭用户注册功能' },
-          { status: 403 }
+          { status: 403 },
         );
       }
     } catch (err) {
       console.error('检查注册配置失败', err);
-      return NextResponse.json({ error: '注册失败，请稍后重试' }, { status: 500 });
+      return NextResponse.json(
+        { error: '注册失败，请稍后重试' },
+        { status: 500 },
+      );
     }
 
     // 验证输入
     if (!username || typeof username !== 'string' || username.trim() === '') {
       return NextResponse.json({ error: '用户名不能为空' }, { status: 400 });
     }
-    
+
     if (!password || typeof password !== 'string') {
       return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
     }
 
     if (password !== confirmPassword) {
-      return NextResponse.json({ error: '两次输入的密码不一致' }, { status: 400 });
+      return NextResponse.json(
+        { error: '两次输入的密码不一致' },
+        { status: 400 },
+      );
     }
 
     if (password.length < 6) {
@@ -122,7 +133,7 @@ export async function POST(req: NextRequest) {
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
       return NextResponse.json(
         { error: '用户名只能包含字母、数字和下划线，长度3-20位' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -130,16 +141,21 @@ export async function POST(req: NextRequest) {
       // 检查用户是否已存在
       const userExists = await db.checkUserExist(username);
       if (userExists) {
-        return NextResponse.json({ error: '该用户名已被注册' }, { status: 400 });
+        return NextResponse.json(
+          { error: '该用户名已被注册' },
+          { status: 400 },
+        );
       }
 
       // 清除缓存（在注册前清除，避免读到旧缓存）
       clearConfigCache();
 
       // 获取默认用户组
-      const defaultTags = config.SiteConfig.DefaultUserTags && config.SiteConfig.DefaultUserTags.length > 0
-        ? config.SiteConfig.DefaultUserTags
-        : undefined;
+      const defaultTags =
+        config.SiteConfig.DefaultUserTags &&
+        config.SiteConfig.DefaultUserTags.length > 0
+          ? config.SiteConfig.DefaultUserTags
+          : undefined;
 
       // 如果有默认用户组，使用 V2 注册；否则使用 V1 注册（保持兼容性）
       if (defaultTags) {
@@ -148,9 +164,10 @@ export async function POST(req: NextRequest) {
           username,
           password,
           'user',
-          defaultTags,  // 默认分组
-          undefined,    // oidcSub
-          undefined     // enabledApis
+          defaultTags, // 默认分组
+          undefined, // oidcSub
+          undefined, // enabledApis
+          cardKey, // 注册卡密
         );
       } else {
         // V1 注册（无 tags，保持现有行为）
@@ -170,18 +187,19 @@ export async function POST(req: NextRequest) {
       }
 
       // 注册成功后自动登录
-      const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+      const storageType =
+        process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
       const response = NextResponse.json({
         ok: true,
         message: '注册成功，已自动登录',
-        needDelay: storageType === 'upstash' // Upstash 需要延迟等待数据同步
+        needDelay: storageType === 'upstash', // Upstash 需要延迟等待数据同步
       });
-      
+
       const cookieValue = await generateAuthCookie(
         username,
         password,
         'user',
-        false
+        false,
       );
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
@@ -197,7 +215,10 @@ export async function POST(req: NextRequest) {
       return response;
     } catch (err) {
       console.error('注册用户失败', err);
-      return NextResponse.json({ error: '注册失败，请稍后重试' }, { status: 500 });
+      return NextResponse.json(
+        { error: '注册失败，请稍后重试' },
+        { status: 500 },
+      );
     }
   } catch (error) {
     console.error('注册接口异常', error);
