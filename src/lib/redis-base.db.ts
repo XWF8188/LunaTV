@@ -1849,10 +1849,10 @@ export abstract class BaseRedisStorage implements IStorage {
     inviter: string,
   ): Promise<import('./types').Invitation[]> {
     const pattern = `invitation:inviter:${inviter}:*`;
-    const keys = await this.client.keys(pattern);
+    const keys = await this.client.keys(pattern) as string[];
     if (keys.length === 0) return [];
 
-    const values = await this.client.mGet(keys);
+    const values = await this.client.mGet(keys) as (string | null)[];
     return values.filter((v) => v !== null).map((v) => JSON.parse(v));
   }
 
@@ -1875,7 +1875,7 @@ export abstract class BaseRedisStorage implements IStorage {
     // 由于我们不知道inviter，这里需要从所有invitation中查找
     // 这是一个简化实现，实际生产中可能需要更好的索引
     const pattern = `invitation:*:*${id}`;
-    const keys = await this.client.keys(pattern);
+    const keys = await this.client.keys(pattern) as string[];
     if (keys.length === 0) return;
 
     const data = await this.client.get(keys[0]);
@@ -1923,10 +1923,10 @@ export abstract class BaseRedisStorage implements IStorage {
     userName: string,
   ): Promise<import('./types').UserCardKey[]> {
     const pattern = `user:cardkey:${userName}:*`;
-    const keys = await this.client.keys(pattern);
+    const keys = await this.client.keys(pattern) as string[];
     if (keys.length === 0) return [];
 
-    const values = await this.client.mGet(keys);
+    const values = await this.client.mGet(keys) as (string | null)[];
     return values.filter((v) => v !== null).map((v) => JSON.parse(v));
   }
 
@@ -1942,7 +1942,7 @@ export abstract class BaseRedisStorage implements IStorage {
     // 由于我们不知道username，这里需要遍历查找
     // 这是一个简化实现，实际生产中可能需要更好的索引
     const pattern = `user:cardkey:*:${id}`;
-    const keys = await this.client.keys(pattern);
+    const keys = await this.client.keys(pattern) as string[];
     if (keys.length === 0) return;
 
     const data = await this.client.get(keys[0]);
