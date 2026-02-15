@@ -3,14 +3,16 @@
 'use client';
 
 import {
-  AlertCircle,
-  CheckCircle,
-  User,
-  Lock,
-  Sparkles,
   UserPlus,
+  Mail,
+  Lock,
   Shield,
   KeyRound,
+  ArrowRight,
+  Film,
+  Sparkles,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -18,7 +20,6 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-// 版本显示组件 - 已隐藏
 function VersionDisplay() {
   return null;
 }
@@ -29,39 +30,19 @@ function RegisterPageClient() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [cardKey, setCardKey] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [shouldShowRegister, setShouldShowRegister] = useState(false);
   const [registrationDisabled, setRegistrationDisabled] = useState(false);
   const [disabledReason, setDisabledReason] = useState('');
-  const [bingWallpaper, setBingWallpaper] = useState<string>('');
-  const [cardKey, setCardKey] = useState('');
 
   const { siteName } = useSite();
 
-  // 获取 Bing 每日壁纸（通过代理 API）
-  useEffect(() => {
-    const fetchBingWallpaper = async () => {
-      try {
-        const response = await fetch('/api/bing-wallpaper');
-        const data = await response.json();
-        if (data.url) {
-          setBingWallpaper(data.url);
-        }
-      } catch (error) {
-        console.log('Failed to fetch Bing wallpaper:', error);
-      }
-    };
-
-    fetchBingWallpaper();
-  }, []);
-
-  // 检查注册是否可用
   useEffect(() => {
     const checkRegistrationAvailable = async () => {
       try {
-        // 用空数据检测，这样不会创建用户但能得到正确的错误信息
         const res = await fetch('/api/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -74,13 +55,11 @@ function RegisterPageClient() {
 
         const data = await res.json();
 
-        // 如果是localStorage模式，跳转登录
         if (data.error === 'localStorage 模式不支持用户注册') {
           router.replace('/login');
           return;
         }
 
-        // 如果是管理员关闭了注册
         if (data.error === '管理员已关闭用户注册功能') {
           setRegistrationDisabled(true);
           setDisabledReason('管理员已关闭用户注册功能');
@@ -88,10 +67,8 @@ function RegisterPageClient() {
           return;
         }
 
-        // 其他情况显示注册表单（包括用户名已存在等正常的验证错误）
         setShouldShowRegister(true);
       } catch (error) {
-        // 网络错误也显示注册页面
         setShouldShowRegister(true);
       }
     };
@@ -114,11 +91,6 @@ function RegisterPageClient() {
       return;
     }
 
-    if (!cardKey || cardKey.trim() === '') {
-      setError('请输入卡密');
-      return;
-    }
-
     try {
       setLoading(true);
       const res = await fetch('/api/register', {
@@ -128,17 +100,15 @@ function RegisterPageClient() {
           username,
           password,
           confirmPassword,
-          cardKey,
+          ...(cardKey ? { cardKey } : {}),
         }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        // 显示成功消息，稍等一下再跳转
         setError(null);
         setSuccess('注册成功！正在跳转...');
 
-        // Upstash 需要额外延迟等待数据同步
         const delay = data.needDelay ? 2500 : 1500;
 
         setTimeout(() => {
@@ -160,285 +130,244 @@ function RegisterPageClient() {
     return <div>Loading...</div>;
   }
 
-  // 如果注册被禁用，显示提示页面
   if (registrationDisabled) {
     return (
-      <div className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'>
-        {/* Bing 每日壁纸背景 */}
-        {bingWallpaper && (
-          <div
-            className='absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 animate-ken-burns'
-            style={{ backgroundImage: `url(${bingWallpaper})` }}
-          />
-        )}
+      <div className='relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-violet-950 via-purple-950 to-gray-950'>
+        <div className='absolute inset-0'>
+          <div className='absolute top-20 left-20 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl animate-pulse' />
+          <div className='absolute bottom-20 right-20 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse' style={{ animationDelay: '1s' }} />
+        </div>
 
-        {/* 渐变叠加层 */}
-        <div className='absolute inset-0 bg-gradient-to-br from-purple-600/40 via-blue-600/30 to-pink-500/40 dark:from-purple-900/50 dark:via-blue-900/40 dark:to-pink-900/50' />
-        <div className='absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30' />
-
-        <div className='absolute top-4 right-4 z-20'>
+        <div className='absolute top-6 right-6 z-20'>
           <ThemeToggle />
         </div>
-        <div
-          className='relative z-10 w-full max-w-md rounded-3xl bg-gradient-to-br from-white/95 via-white/85 to-white/75 dark:from-zinc-900/95 dark:via-zinc-900/85 dark:to-zinc-900/75 backdrop-blur-2xl shadow-[0_20px_80px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.6)] p-10 border border-white/50 dark:border-zinc-700/50 animate-fade-in hover:shadow-[0_25px_100px_rgba(0,0,0,0.4)] transition-shadow duration-500'
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          }}
-        >
-          {/* Fallback for browsers without backdrop-filter support */}
-          <style jsx>{`
-            @supports (backdrop-filter: blur(24px)) or
-              (-webkit-backdrop-filter: blur(24px)) {
-              div {
-                background-color: transparent !important;
-              }
-            }
-          `}</style>
-          {/* 装饰性光效 */}
-          <div className='absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-br from-yellow-400/30 to-orange-400/30 rounded-full blur-3xl animate-pulse' />
-          <div
-            className='absolute -bottom-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-400/30 to-purple-400/30 rounded-full blur-3xl animate-pulse'
-            style={{ animationDelay: '1s' }}
-          />
 
-          <div className='text-center mb-8'>
-            <div className='inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-600 shadow-lg shadow-yellow-500/50 dark:shadow-yellow-500/30'>
-              <AlertCircle className='w-8 h-8 text-white' />
+        <div className='relative z-10 w-full max-w-lg px-6'>
+          <div className='text-center mb-12'>
+            <div className='inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-2xl shadow-amber-500/30'>
+              <AlertCircle className='w-10 h-10 text-white' />
             </div>
-            <h1 className='text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 dark:from-yellow-400 dark:via-orange-400 dark:to-red-400 tracking-tight text-4xl font-extrabold mb-2 drop-shadow-sm'>
+            <h1 className='text-5xl sm:text-6xl font-bold text-white mb-3 tracking-tight'>
               {siteName}
             </h1>
-          </div>
-          <div className='text-center space-y-6'>
-            <h2 className='text-xl font-semibold text-gray-800 dark:text-gray-200'>
-              注册功能暂不可用
-            </h2>
-            <div className='p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50'>
-              <p className='text-gray-700 dark:text-gray-300 text-sm leading-relaxed'>
-                {disabledReason || '管理员已关闭用户注册功能'}
-              </p>
-            </div>
-            <p className='text-gray-500 dark:text-gray-500 text-xs'>
-              如需注册账户，请联系网站管理员
+            <p className='text-xl text-white/50 font-light'>
+              注册功能暂时不可用
             </p>
-            <button
-              onClick={() => router.push('/login')}
-              className='group relative inline-flex w-full justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 py-3.5 text-base font-semibold text-white shadow-lg shadow-green-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/40 hover:-translate-y-0.5 overflow-hidden'
-            >
-              <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000' />
-              返回登录 →
-            </button>
+          </div>
+
+          <div
+            className='relative backdrop-blur-2xl bg-black/40 rounded-3xl p-8 sm:p-10 border border-white/10 shadow-2xl'
+          >
+            <div className='text-center space-y-6'>
+              <div className='p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20'>
+                <p className='text-amber-400 text-base leading-relaxed'>
+                  {disabledReason || '管理员已关闭用户注册功能'}
+                </p>
+              </div>
+              <p className='text-white/40 text-sm">
+                如需注册账户，请联系网站管理员
+              </p>
+              <button
+                onClick={() => router.push('/login')}
+                className='group relative inline-flex w-full justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 py-4 text-base font-semibold text-white shadow-2xl shadow-violet-600/40 transition-all duration-300 hover:shadow-violet-600/60 hover:-translate-y-1 overflow-hidden'
+              >
+                <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700' />
+                <ArrowRight className='h-5 w-5 relative z-10' />
+                <span className='relative z-10'>返回登录</span>
+              </button>
+            </div>
+          </div>
+
+          <div className='text-center mt-12 text-white/30 text-sm'>
+            <p>© 2025 {siteName} · 极致观影体验</p>
           </div>
         </div>
-        <VersionDisplay />
       </div>
     );
   }
 
   return (
-    <div className='relative min-h-screen flex items-center justify-center px-3 sm:px-4 py-8 sm:py-0 overflow-hidden'>
-      {/* Bing 每日壁纸背景 */}
-      {bingWallpaper && (
-        <div
-          className='absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 animate-ken-burns'
-          style={{ backgroundImage: `url(${bingWallpaper})` }}
-        />
-      )}
+    <div className='relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-violet-950 via-purple-950 to-gray-950'>
+      <div className='absolute inset-0'>
+        <div className='absolute top-20 left-20 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl animate-pulse' />
+        <div className='absolute bottom-20 right-20 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse' style={{ animationDelay: '1s' }} />
+        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl' style={{ animationDelay: '2s' }} />
+      </div>
 
-      {/* 渐变叠加层 */}
-      <div className='absolute inset-0 bg-gradient-to-br from-purple-600/40 via-blue-600/30 to-pink-500/40 dark:from-purple-900/50 dark:via-blue-900/40 dark:to-pink-900/50' />
-      <div className='absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30' />
-
-      <div className='absolute top-3 right-3 sm:top-4 sm:right-4 z-20'>
+      <div className='absolute top-6 right-6 z-20'>
         <ThemeToggle />
       </div>
-      <div
-        className='relative z-10 w-full max-w-md rounded-2xl sm:rounded-3xl bg-gradient-to-br from-white/95 via-white/85 to-white/75 dark:from-zinc-900/95 dark:via-zinc-900/85 dark:to-zinc-900/75 backdrop-blur-2xl shadow-[0_20px_80px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.6)] p-6 sm:p-10 border border-white/50 dark:border-zinc-700/50 animate-fade-in hover:shadow-[0_25px_100px_rgba(0,0,0,0.4)] transition-shadow duration-500'
-        style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        }}
-      >
-        {/* Fallback for browsers without backdrop-filter support */}
-        <style jsx>{`
-          @supports (backdrop-filter: blur(24px)) or
-            (-webkit-backdrop-filter: blur(24px)) {
-            div {
-              background-color: transparent !important;
-            }
-          }
-        `}</style>
-        {/* 装饰性光效 */}
-        <div className='absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-br from-blue-400/30 to-cyan-400/30 rounded-full blur-3xl animate-pulse' />
-        <div
-          className='absolute -bottom-20 -right-20 w-40 h-40 bg-gradient-to-br from-purple-400/30 to-pink-400/30 rounded-full blur-3xl animate-pulse'
-          style={{ animationDelay: '1s' }}
-        />
 
-        {/* 标题区域 */}
-        <div className='text-center mb-6 sm:mb-8'>
-          <div className='inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 mb-3 sm:mb-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/50 dark:shadow-blue-500/30'>
-            <UserPlus className='w-6 h-6 sm:w-8 sm:h-8 text-white' />
+      <div className='relative z-10 w-full max-w-lg px-6'>
+        <div className='text-center mb-12'>
+          <div className='inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-2xl shadow-violet-600/30'>
+            <UserPlus className='w-10 h-10 text-white' />
           </div>
-          <h1 className='text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 tracking-tight text-3xl sm:text-4xl font-extrabold mb-2 drop-shadow-sm'>
+          <h1 className='text-5xl sm:text-6xl font-bold text-white mb-3 tracking-tight'>
             {siteName}
           </h1>
-          <p className='text-gray-600 dark:text-gray-400 text-xs sm:text-sm font-medium'>
-            创建您的新账户
+          <p className='text-xl text-white/50 font-light'>
+            创建您的观影账户
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className='space-y-4 sm:space-y-5'>
-          <div className='group'>
-            <label
-              htmlFor='username'
-              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
-            >
-              用户名
-            </label>
-            <div className='relative'>
-              <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                <User className='h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-500 transition-colors' />
+        <div
+          className='relative backdrop-blur-2xl bg-black/40 rounded-3xl p-8 sm:p-10 border border-white/10 shadow-2xl transition-all duration-500 hover:border-violet-500/20'
+        >
+          <div className='absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-violet-500/30 to-purple-500/30 rounded-full blur-3xl' />
+          <div className='absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-br from-indigo-500/30 to-blue-500/30 rounded-full blur-3xl' style={{ animationDelay: '1s' }} />
+
+          <form onSubmit={handleSubmit} className='space-y-6 relative z-10'>
+            <div className='group'>
+              <label
+                htmlFor='username'
+                className='block text-sm font-medium text-white/80 mb-2'
+              >
+                用户名
+              </label>
+              <div className='relative'>
+                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
+                  <UserPlus className='h-5 w-5 text-white/40 group-focus-within:text-violet-400 transition-colors' />
+                </div>
+                <input
+                  id='username'
+                  type='text'
+                  autoComplete='username'
+                  className='block w-full pl-12 pr-4 py-4 rounded-2xl border border-white/10 bg-white/5 text-white shadow-lg ring-2 ring-transparent focus:ring-violet-500 focus:outline-none focus:bg-white/10 placeholder:text-white/30 transition-all duration-300 text-base'
+                  placeholder='3-20位字母数字下划线'
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
               </div>
-              <input
-                id='username'
-                type='text'
-                autoComplete='username'
-                className='block w-full pl-12 pr-4 py-3.5 rounded-xl border-0 text-gray-900 dark:text-gray-100 shadow-sm ring-2 ring-white/60 dark:ring-white/10 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:outline-none sm:text-base bg-white/80 dark:bg-zinc-800/80 backdrop-blur transition-all duration-300 hover:shadow-md'
-                placeholder='3-20位字母数字下划线'
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
             </div>
-          </div>
 
-          <div className='group'>
-            <label
-              htmlFor='password'
-              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
-            >
-              密码
-            </label>
-            <div className='relative'>
-              <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                <Lock className='h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-500 transition-colors' />
+            <div className='group'>
+              <label
+                htmlFor='password'
+                className='block text-sm font-medium text-white/80 mb-2'
+              >
+                密码
+              </label>
+              <div className='relative'>
+                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
+                  <Lock className='h-5 w-5 text-white/40 group-focus-within:text-violet-400 transition-colors' />
+                </div>
+                <input
+                  id='password'
+                  type='password'
+                  autoComplete='new-password'
+                  className='block w-full pl-12 pr-4 py-4 rounded-2xl border border-white/10 bg-white/5 text-white shadow-lg ring-2 ring-transparent focus:ring-violet-500 focus:outline-none focus:bg-white/10 placeholder:text-white/30 transition-all duration-300 text-base'
+                  placeholder='至少6位字符'
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
-              <input
-                id='password'
-                type='password'
-                autoComplete='new-password'
-                className='block w-full pl-12 pr-4 py-3.5 rounded-xl border-0 text-gray-900 dark:text-gray-100 shadow-sm ring-2 ring-white/60 dark:ring-white/10 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:outline-none sm:text-base bg-white/80 dark:bg-zinc-800/80 backdrop-blur transition-all duration-300 hover:shadow-md'
-                placeholder='至少6位字符'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
             </div>
-          </div>
 
-          <div className='group'>
-            <label
-              htmlFor='confirmPassword'
-              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
-            >
-              确认密码
-            </label>
-            <div className='relative'>
-              <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                <Shield className='h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-500 transition-colors' />
+            <div className='group'>
+              <label
+                htmlFor='confirmPassword'
+                className='block text-sm font-medium text-white/80 mb-2'
+              >
+                确认密码
+              </label>
+              <div className='relative'>
+                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
+                  <Shield className='h-5 w-5 text-white/40 group-focus-within:text-violet-400 transition-colors' />
+                </div>
+                <input
+                  id='confirmPassword'
+                  type='password'
+                  autoComplete='new-password'
+                  className='block w-full pl-12 pr-4 py-4 rounded-2xl border border-white/10 bg-white/5 text-white shadow-lg ring-2 ring-transparent focus:ring-violet-500 focus:outline-none focus:bg-white/10 placeholder:text-white/30 transition-all duration-300 text-base'
+                  placeholder='再次输入密码'
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
               </div>
-              <input
-                id='confirmPassword'
-                type='password'
-                autoComplete='new-password'
-                className='block w-full pl-12 pr-4 py-3.5 rounded-xl border-0 text-gray-900 dark:text-gray-100 shadow-sm ring-2 ring-white/60 dark:ring-white/10 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:outline-none sm:text-base bg-white/80 dark:bg-zinc-800/80 backdrop-blur transition-all duration-300 hover:shadow-md'
-                placeholder='再次输入密码'
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
             </div>
-          </div>
 
-          <div className='group'>
-            <label
-              htmlFor='cardKey'
-              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
-            >
-              卡密 <span className='text-red-500'>*</span>
-            </label>
-            <div className='relative'>
-              <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                <KeyRound className='h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-500 transition-colors' />
+            <div className='group'>
+              <label
+                htmlFor='cardKey'
+                className='block text-sm font-medium text-white/80 mb-2'
+              >
+                卡密 <span className='text-violet-400'>（可选）</span>
+              </label>
+              <div className='relative'>
+                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
+                  <KeyRound className='h-5 w-5 text-white/40 group-focus-within:text-violet-400 transition-colors' />
+                </div>
+                <input
+                  id='cardKey'
+                  type='text'
+                  autoComplete='off'
+                  className='block w-full pl-12 pr-4 py-4 rounded-2xl border border-white/10 bg-white/5 text-white shadow-lg ring-2 ring-transparent focus:ring-violet-500 focus:outline-none focus:bg-white/10 placeholder:text-white/30 transition-all duration-300 text-base'
+                  placeholder='如有卡密请输入'
+                  value={cardKey}
+                  onChange={(e) => setCardKey(e.target.value)}
+                />
               </div>
-              <input
-                id='cardKey'
-                type='text'
-                autoComplete='off'
-                className='block w-full pl-12 pr-4 py-3.5 rounded-xl border-0 text-gray-900 dark:text-gray-100 shadow-sm ring-2 ring-white/60 dark:ring-white/10 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:outline-none sm:text-base bg-white/80 dark:bg-zinc-800/80 backdrop-blur transition-all duration-300 hover:shadow-md'
-                placeholder='请输入注册卡密'
-                value={cardKey}
-                onChange={(e) => setCardKey(e.target.value)}
-              />
-            </div>
-            <p className='mt-1.5 text-xs text-gray-500 dark:text-gray-400'>
-              注册需要绑定卡密才能使用系统功能
-            </p>
-          </div>
-
-          {error && (
-            <div className='flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 animate-slide-down'>
-              <AlertCircle className='h-4 w-4 text-red-600 dark:text-red-400 shrink-0' />
-              <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className='flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 animate-slide-down'>
-              <CheckCircle className='h-4 w-4 text-green-600 dark:text-green-400 shrink-0' />
-              <p className='text-sm text-green-600 dark:text-green-400'>
-                {success}
+              <p className='mt-2 text-xs text-white/40'>
+                💡 注册需要绑定卡密才能使用系统功能
               </p>
             </div>
-          )}
 
-          <button
-            type='submit'
-            disabled={
-              !username ||
-              !password ||
-              !confirmPassword ||
-              !cardKey ||
-              loading ||
-              !!success
-            }
-            className='group relative inline-flex w-full justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-lg overflow-hidden'
-          >
-            <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000' />
-            <UserPlus className='h-5 w-5' />
-            {loading
-              ? '注册中...'
-              : success
-                ? '注册成功，正在跳转...'
-                : '立即注册'}
-          </button>
+            {error && (
+              <div className='flex items-center gap-2 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm'>
+                <span className='text-lg'>⚠️</span>
+                <span>{error}</span>
+              </div>
+            )}
 
-          <div className='mt-6 pt-6 border-t border-gray-200 dark:border-gray-700'>
-            <p className='text-center text-gray-600 dark:text-gray-400 text-sm mb-3'>
+            {success && (
+              <div className='flex items-center gap-2 p-4 rounded-2xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm'>
+                <CheckCircle className='h-5 w-5' />
+                <span>{success}</span>
+              </div>
+            )}
+
+            <button
+              type='submit'
+              disabled={
+                !username ||
+                !password ||
+                !confirmPassword ||
+                loading ||
+                !!success
+              }
+              className='group relative inline-flex w-full justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 py-4 text-base font-semibold text-white shadow-2xl shadow-violet-600/40 transition-all duration-300 hover:shadow-violet-600/60 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-violet-600/40 overflow-hidden'
+            >
+              <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700' />
+              <UserPlus className='h-5 w-5 relative z-10' />
+              <span className='relative z-10'>
+                {loading
+                  ? '注册中...'
+                  : success
+                    ? '注册成功，正在跳转...'
+                    : '立即注册'}
+              </span>
+            </button>
+          </form>
+
+          <div className='mt-8 pt-8 border-t border-white/10 text-center'>
+            <p className='text-white/50 text-sm mb-4'>
               已有账户？
             </p>
             <a
               href='/login'
-              className='group flex items-center justify-center gap-2 w-full px-6 py-2.5 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800/50 text-blue-700 dark:text-blue-400 text-sm font-semibold hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-300 hover:shadow-md hover:scale-[1.02] active:scale-100'
+              className='group inline-flex items-center justify-center gap-2 w-full px-6 py-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white font-semibold transition-all duration-300 hover:scale-105'
             >
-              <Lock className='w-4 h-4' />
               <span>立即登录</span>
-              <span className='inline-block transition-transform group-hover:translate-x-1'>
-                →
-              </span>
+              <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
             </a>
           </div>
-        </form>
-      </div>
+        </div>
 
-      <VersionDisplay />
+        <div className='text-center mt-12 text-white/30 text-sm'>
+          <p>© 2025 {siteName} · 极致观影体验</p>
+        </div>
+      </div>
     </div>
   );
 }
