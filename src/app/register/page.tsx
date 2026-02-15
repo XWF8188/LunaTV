@@ -39,8 +39,6 @@ function RegisterPageClient() {
   const [disabledReason, setDisabledReason] = useState('');
 
   const { siteName } = useSite();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   // 从URL获取邀请码
   useEffect(() => {

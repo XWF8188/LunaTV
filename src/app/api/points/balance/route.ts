@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfo } from '@/lib/auth';
+import { getAuthInfoFromCookie } from '@/lib/auth';
 import { PointsService } from '@/lib/invitation-points';
 
 export const runtime = 'nodejs';
