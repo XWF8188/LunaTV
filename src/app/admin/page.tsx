@@ -35,6 +35,7 @@ import {
   ExternalLink,
   FileText,
   FolderOpen,
+  Gift,
   KeyRound,
   Settings,
   Shield,
@@ -8085,6 +8086,7 @@ function AdminPageClient() {
     dataMigration: false,
     performanceMonitor: false,
     cardKeyConfig: false,
+    invitationConfig: false,
   });
 
   // 获取管理员配置
@@ -8639,6 +8641,38 @@ function AdminPageClient() {
                 onToggle={() => toggleTab('cardKeyConfig')}
               >
                 <CardKeyManager />
+              </CollapsibleTab>
+            )}
+
+            {/* 邀请配置标签 - 仅管理员可见 */}
+            {(role === 'owner' || role === 'admin') && (
+              <CollapsibleTab
+                title='邀请配置'
+                icon={
+                  <Gift
+                    size={20}
+                    className='text-orange-600 dark:text-orange-400'
+                  />
+                }
+                isExpanded={expandedTabs.invitationConfig}
+                onToggle={() => toggleTab('invitationConfig')}
+              >
+                <div className='p-4'>
+                  <div className='flex items-center justify-between mb-4'>
+                    <h3 className='text-lg font-semibold'>邀请奖励配置</h3>
+                    <a
+                      href='/admin/invitation-config'
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className={buttonStyles.primary}
+                    >
+                      管理邀请配置
+                    </a>
+                  </div>
+                  <p className='text-sm text-gray-600 dark:text-gray-400'>
+                    点击上方按钮进入邀请奖励配置页面,可设置邀请奖励积分和兑换卡密配置
+                  </p>
+                </div>
               </CollapsibleTab>
             )}
           </div>
