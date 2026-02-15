@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const authInfo = await getAuthInfo(request);
+    const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo?.username) {
       return NextResponse.json(
         { error: '未登录或登录已过期' },
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const authInfo = await getAuthInfo(request);
+    const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo?.username) {
       return NextResponse.json(
         { error: '未登录或登录已过期' },
