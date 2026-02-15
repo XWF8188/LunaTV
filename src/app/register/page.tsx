@@ -54,14 +54,14 @@ function RegisterPageClient() {
 
         const data = await res.json();
 
-        if (data.error === 'localStorage 模式不支持用户注册') {
+        if (data.error === "localStorage 模式不支持用户注册") {
           router.replace('/login');
           return;
         }
 
-        if (data.error === '管理员已关闭用户注册功能') {
+        if (data.error === "管理员已关闭用户注册功能") {
           setRegistrationDisabled(true);
-          setDisabledReason('管理员已关闭用户注册功能');
+          setDisabledReason("管理员已关闭用户注册功能");
           setShouldShowRegister(true);
           return;
         }
@@ -81,12 +81,12 @@ function RegisterPageClient() {
     setSuccess(null);
 
     if (!username || !password || !confirmPassword) {
-      setError('请填写完整信息');
+      setError("请填写完整信息");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('两次输入的密码不一致');
+      setError("两次输入的密码不一致");
       return;
     }
 
@@ -106,7 +106,7 @@ function RegisterPageClient() {
       if (res.ok) {
         const data = await res.json();
         setError(null);
-        setSuccess('注册成功！正在跳转...');
+        setSuccess("注册成功！正在跳转...");
 
         const delay = data.needDelay ? 2500 : 1500;
 
@@ -116,10 +116,10 @@ function RegisterPageClient() {
         }, delay);
       } else {
         const data = await res.json();
-        setError(data.error ?? '注册失败');
+        setError(data.error ?? "注册失败");
       }
     } catch (error) {
-      setError('网络错误，请稍后重试');
+      setError("网络错误，请稍后重试");
     } finally {
       setLoading(false);
     }
@@ -160,7 +160,7 @@ function RegisterPageClient() {
             <div className="text-center space-y-6">
               <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-200/50">
                 <p className="text-amber-700 text-base leading-relaxed">
-                  {disabledReason || '管理员已关闭用户注册功能'}
+                  {disabledReason || "管理员已关闭用户注册功能'}
                 </p>
               </div>
               <p className="text-orange-500/40 text-sm">
@@ -342,9 +342,9 @@ function RegisterPageClient() {
               <UserPlus className="h-5 w-5 relative z-10" />
               <span className="relative z-10">
                 {loading
-                  ? '注册中...'
+                  ? "注册中..."
                   : success
-                    ? '注册成功，正在跳转...'
+                    ? "注册成功，正在跳转..."
                     : '立即注册'}
               </span>
             </button>
