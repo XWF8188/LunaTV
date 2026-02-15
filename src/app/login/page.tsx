@@ -54,6 +54,7 @@ function LoginPageClient() {
         body: JSON.stringify({
           password,
           ...(shouldAskUsername ? { username } : {}),
+          ...(cardKey ? { cardKey } : {}),
         }),
       });
 
