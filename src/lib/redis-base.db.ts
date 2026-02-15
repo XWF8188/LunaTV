@@ -1862,10 +1862,10 @@ export abstract class BaseRedisStorage implements IStorage {
     const inviteeKey = `invitation:invitee:${invitation.invitee}`;
     const inviterKey = `invitation:inviter:${invitation.inviter}:${invitation.id}`;
 
-    await this.client.multi();
-    await this.client.set(inviteeKey, JSON.stringify(invitation));
-    await this.client.set(inviterKey, JSON.stringify(invitation));
-    await this.client.exec();
+    await Promise.all([
+      this.client.set(inviteeKey, JSON.stringify(invitation)),
+      this.client.set(inviterKey, JSON.stringify(invitation)),
+    ]);
   }
 
   async updateInvitation(
