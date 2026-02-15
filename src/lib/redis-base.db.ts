@@ -1665,7 +1665,11 @@ export abstract class BaseRedisStorage implements IStorage {
     console.log('updateUserCardKeyInfo - userName:', userName, 'info:', info);
     const config = await this.getAdminConfig();
     if (!config) {
-      throw new Error('Admin config not found');
+      console.warn(
+        'Admin config not found, skipping update to AdminConfig.Users',
+      );
+      // 不抛出错误，继续更新用户信息
+      return;
     }
 
     const userIndex = config.UserConfig.Users.findIndex(
@@ -1678,7 +1682,9 @@ export abstract class BaseRedisStorage implements IStorage {
       config.UserConfig.Users.length,
     );
     if (userIndex === -1) {
-      throw new Error('User not found');
+      console.warn('User not found in AdminConfig.Users, skipping update');
+      // 不抛出错误，继续更新用户信息
+      return;
     }
 
     config.UserConfig.Users[userIndex].cardKey = info;
