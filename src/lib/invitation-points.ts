@@ -26,7 +26,6 @@ export class InvitationService {
   // 为用户生成邀请码
   static async generateInvitationCode(username: string): Promise<string> {
     const code = generateInvitationCode();
-    
 
     // 检查是否已存在邀请码
     const existingPoints = await db.getUserPoints(username);
@@ -51,8 +50,6 @@ export class InvitationService {
   static async validateInvitationCode(
     code: string,
   ): Promise<{ valid: boolean; inviter?: string }> {
-    
-
     // 通过查找所有用户的积分记录来验证邀请码
     // 实际实现中，邀请码应该存储在用户数据中
     // 这里使用一个简化的实现：邀请码就是用户的用户名
@@ -72,8 +69,6 @@ export class InvitationService {
     code: string,
     ip: string,
   ): Promise<void> {
-    
-
     const invitation: Invitation = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       inviter,
@@ -91,8 +86,6 @@ export class InvitationService {
   static async getUserInvitationInfo(
     username: string,
   ): Promise<UserInvitationInfo> {
-    
-
     const userPoints = await db.getUserPoints(username);
     const invitations = await db.getInvitationsByInviter(username);
 
@@ -106,7 +99,6 @@ export class InvitationService {
 
   // 检查IP是否已奖励过
   static async checkIPRewarded(ip: string): Promise<boolean> {
-    
     const record = await db.getIPRewardRecord(ip);
     return !!record;
   }
@@ -116,7 +108,6 @@ export class InvitationService {
 export class PointsService {
   // 获取用户积分余额
   static async getUserBalance(username: string): Promise<number> {
-    
     const userPoints = await db.getUserPoints(username);
     return userPoints?.balance || 0;
   }
@@ -128,8 +119,6 @@ export class PointsService {
     reason: string,
     relatedUser?: string,
   ): Promise<void> {
-    
-
     const userPoints = await db.getUserPoints(username);
     if (!userPoints) {
       throw new Error(`用户 ${username} 不存在`);
@@ -161,8 +150,6 @@ export class PointsService {
     amount: number,
     reason: string,
   ): Promise<void> {
-    
-
     const userPoints = await db.getUserPoints(username);
     if (!userPoints) {
       throw new Error(`用户 ${username} 不存在`);
@@ -197,7 +184,6 @@ export class PointsService {
     page: number = 1,
     pageSize: number = 20,
   ): Promise<PointsRecord[]> {
-    
     return await db.getPointsHistory(username, page, pageSize);
   }
 
@@ -205,8 +191,6 @@ export class PointsService {
   static async redeemForCardKey(
     username: string,
   ): Promise<{ success: boolean; cardKey?: string; error?: string }> {
-    
-
     try {
       // 获取邀请配置
       const config = await db.getInvitationConfig();
@@ -228,19 +212,29 @@ export class PointsService {
       await this.deductPoints(username, requiredPoints, '兑换一周卡密');
 
       // 生成卡密
-      const { createCardKey } = await import('./cardkey');
-      const cardKey = await createCardKey(config.cardKeyType);
+      const { CardKeyService } = await import('./cardkey');
+      const cardKeyService = new CardKeyService();
+      const result = await cardKeyService.createCardKey(config.cardKeyType);
+      const cardKey = result.keys[0];
+
+      // 获取完整的卡密信息
+      const allCardKeys = await db.getAllCardKeys();
+      const fullCardKey = allCardKeys.find((ck) => ck.key === cardKey);
+
+      if (!fullCardKey) {
+        throw new Error('卡密生成失败');
+      }
 
       // 创建用户卡密记录
       const userCardKey: UserCardKey = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        keyHash: cardKey.keyHash,
+        keyHash: fullCardKey.keyHash,
         username,
         type: config.cardKeyType,
         status: 'unused',
         source: 'redeem',
         createdAt: Date.now(),
-        expiresAt: cardKey.expiresAt,
+        expiresAt: fullCardKey.expiresAt,
       };
 
       await db.addUserCardKey(userCardKey);
@@ -254,7 +248,7 @@ export class PointsService {
 
       return {
         success: true,
-        cardKey: cardKey.key,
+        cardKey: fullCardKey.key,
       };
     } catch (error) {
       console.error('兑换卡密失败:', error);
