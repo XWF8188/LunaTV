@@ -160,7 +160,7 @@ function RegisterPageClient() {
             <div className="text-center space-y-6">
               <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-200/50">
                 <p className="text-amber-700 text-base leading-relaxed">
-                  {disabledReason || "管理员已关闭用户注册功能'}
+                  {disabledReason || "管理员已关闭用户注册功能"}
                 </p>
               </div>
               <p className="text-orange-500/40 text-sm">
