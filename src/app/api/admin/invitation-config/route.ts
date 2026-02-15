@@ -76,6 +76,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const config = {
+      enabled: true,
       rewardPoints,
       redeemThreshold,
       cardKeyType,
