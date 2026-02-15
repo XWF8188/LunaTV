@@ -1505,18 +1505,43 @@ export class UpstashRedisStorage implements IStorage {
   }
 
   async getFullUserCardKey(userName: string): Promise<UserCardKeyInfo | null> {
+    console.log('=== getFullUserCardKey 开始 (Upstash) ===');
+    console.log('userName:', userName);
+
     const userCardKeyInfo = await this.getUserCardKeyInfo(userName);
     if (!userCardKeyInfo) {
+      console.log('userCardKeyInfo 不存在,返回 null');
       return null;
     }
+    console.log('userCardKeyInfo:', JSON.stringify(userCardKeyInfo, null, 2));
 
     // 获取卡密详细信息
     const allCardKeys = await this.getAllCardKeys();
+    console.log('getFullUserCardKey - allCardKeys count:', allCardKeys.length);
+
+    if (allCardKeys.length > 0) {
+      console.log(
+        'getFullUserCardKey - 前几个卡密的 keyHash:',
+        allCardKeys.slice(0, 3).map((ck) => ck.keyHash),
+      );
+    }
+
     const cardKey = allCardKeys.find(
       (ck) => ck.keyHash === userCardKeyInfo.boundKey,
     );
+    console.log(
+      'getFullUserCardKey - 查找 boundKey:',
+      userCardKeyInfo.boundKey,
+    );
+    console.log('getFullUserCardKey - found cardKey:', cardKey);
 
     if (!cardKey) {
+      console.error(
+        '未找到匹配的卡密, boundKey:',
+        userCardKeyInfo.boundKey,
+        '所有卡密 keyHash:',
+        allCardKeys.map((ck) => ck.keyHash),
+      );
       return null;
     }
 
@@ -1529,7 +1554,7 @@ export class UpstashRedisStorage implements IStorage {
     const isExpired = userCardKeyInfo.expiresAt < now;
     const isExpiring = !isExpired && daysRemaining <= 30;
 
-    return {
+    const result = {
       plainKey: cardKey.key,
       boundKey: userCardKeyInfo.boundKey,
       expiresAt: userCardKeyInfo.expiresAt,
@@ -1538,6 +1563,13 @@ export class UpstashRedisStorage implements IStorage {
       isExpiring,
       isExpired,
     };
+
+    console.log(
+      'getFullUserCardKey - 返回结果:',
+      JSON.stringify(result, null, 2),
+    );
+    console.log('=== getFullUserCardKey 结束 (Upstash) ===');
+    return result;
   }
 }
 

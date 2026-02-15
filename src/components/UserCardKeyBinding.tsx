@@ -24,16 +24,24 @@ export default function UserCardKeyBinding() {
   // 获取用户卡密状态
   const fetchCardKeyStatus = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
       const res = await fetch('/api/user/cardkey');
       if (!res.ok) {
-        throw new Error(`获取卡密状态失败: ${res.status}`);
+        const errorData = await res.json();
+        throw new Error(
+          errorData.error ||
+            errorData.details ||
+            `获取卡密状态失败: ${res.status}`,
+        );
       }
       const data = await res.json();
+      console.log('获取卡密状态响应:', data);
       setHasCardKey(data.hasCardKey);
       setCardKeyInfo(data.cardKeyInfo || null);
     } catch (err) {
       console.error('获取卡密状态失败:', err);
+      setError(err instanceof Error ? err.message : '获取卡密状态失败');
     } finally {
       setLoading(false);
     }
@@ -120,6 +128,13 @@ export default function UserCardKeyBinding() {
         </button>
       </div>
 
+      {/* 错误提示 */}
+      {error && (
+        <div className='p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg'>
+          <p className='text-sm text-red-800 dark:text-red-200'>{error}</p>
+        </div>
+      )}
+
       {/* 卡密状态 */}
       {loading ? (
         <div className='p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-center'>
@@ -197,8 +212,8 @@ export default function UserCardKeyBinding() {
                     }`}
                   >
                     {cardKeyInfo.isExpired
-                      ? '您的卡密已过期，请立即绑定新卡密以继续使用系统。'
-                      : `您的卡密将在 ${cardKeyInfo.daysRemaining} 天后过期，请及时续费。`}
+                      ? '您的卡密已过期,请立即绑定新卡密以继续使用系统。'
+                      : `您的卡密将在 ${cardKeyInfo.daysRemaining} 天后过期,请及时续费。`}
                   </p>
                 </div>
               </div>
@@ -206,72 +221,80 @@ export default function UserCardKeyBinding() {
           )}
 
           {/* 卡密信息 */}
-          <div className='p-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg'>
-            <div className='flex items-center mb-4'>
-              <CheckCircle className='w-6 h-6 text-green-600 dark:text-green-400 mr-3' />
-              <h3 className='text-lg font-semibold text-green-800 dark:text-green-200'>
-                已绑定卡密
-              </h3>
-            </div>
-            <div className='space-y-3'>
-              {cardKeyInfo?.plainKey && (
+          {cardKeyInfo ? (
+            <div className='p-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg'>
+              <div className='flex items-center mb-4'>
+                <CheckCircle className='w-6 h-6 text-green-600 dark:text-green-400 mr-3' />
+                <h3 className='text-lg font-semibold text-green-800 dark:text-green-200'>
+                  已绑定卡密
+                </h3>
+              </div>
+              <div className='space-y-3'>
+                {cardKeyInfo.plainKey && (
+                  <div className='flex justify-between items-center py-2 border-b border-green-200 dark:border-green-800'>
+                    <span className='text-sm font-medium text-green-700 dark:text-green-300'>
+                      卡密
+                    </span>
+                    <div className='flex items-center gap-2'>
+                      <code className='text-sm text-green-800 dark:text-green-200 font-mono bg-green-100 dark:bg-green-900/40 px-2 py-1 rounded'>
+                        {cardKeyInfo.plainKey}
+                      </code>
+                      <button
+                        type='button'
+                        onClick={() => copyCardKey(cardKeyInfo.plainKey!)}
+                        className='p-1 hover:bg-green-100 dark:hover:bg-green-900/40 rounded transition-colors'
+                        title='复制卡密'
+                      >
+                        <Copy className='w-4 h-4 text-green-600 dark:text-green-400' />
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div className='flex justify-between items-center py-2 border-b border-green-200 dark:border-green-800'>
                   <span className='text-sm font-medium text-green-700 dark:text-green-300'>
-                    卡密
+                    过期时间
                   </span>
-                  <div className='flex items-center gap-2'>
-                    <code className='text-sm text-green-800 dark:text-green-200 font-mono bg-green-100 dark:bg-green-900/40 px-2 py-1 rounded'>
-                      {cardKeyInfo.plainKey}
-                    </code>
-                    <button
-                      type='button'
-                      onClick={() => copyCardKey(cardKeyInfo.plainKey!)}
-                      className='p-1 hover:bg-green-100 dark:hover:bg-green-900/40 rounded transition-colors'
-                      title='复制卡密'
-                    >
-                      <Copy className='w-4 h-4 text-green-600 dark:text-green-400' />
-                    </button>
-                  </div>
+                  <span className='text-sm text-green-800 dark:text-green-200 font-mono'>
+                    {formatDate(cardKeyInfo.expiresAt)}
+                  </span>
                 </div>
-              )}
-              <div className='flex justify-between items-center py-2 border-b border-green-200 dark:border-green-800'>
-                <span className='text-sm font-medium text-green-700 dark:text-green-300'>
-                  过期时间
-                </span>
-                <span className='text-sm text-green-800 dark:text-green-200 font-mono'>
-                  {cardKeyInfo ? formatDate(cardKeyInfo.expiresAt) : '-'}
-                </span>
-              </div>
-              <div className='flex justify-between items-center py-2 border-b border-green-200 dark:border-green-800'>
-                <span className='text-sm font-medium text-green-700 dark:text-green-300'>
-                  剩余天数
-                </span>
-                <span className='text-sm text-green-800 dark:text-green-200 font-mono'>
-                  {cardKeyInfo?.daysRemaining} 天
-                </span>
-              </div>
-              <div className='flex justify-between items-center py-2'>
-                <span className='text-sm font-medium text-green-700 dark:text-green-300'>
-                  状态
-                </span>
-                <span
-                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    cardKeyInfo?.isExpired
-                      ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
-                      : cardKeyInfo?.isExpiring
-                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200'
-                        : 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
-                  }`}
-                >
-                  {cardKeyInfo?.isExpired
-                    ? '已过期'
-                    : cardKeyInfo?.isExpiring
-                      ? '即将过期'
-                      : '正常'}
-                </span>
+                <div className='flex justify-between items-center py-2 border-b border-green-200 dark:border-green-800'>
+                  <span className='text-sm font-medium text-green-700 dark:text-green-300'>
+                    剩余天数
+                  </span>
+                  <span className='text-sm text-green-800 dark:text-green-200 font-mono'>
+                    {cardKeyInfo.daysRemaining} 天
+                  </span>
+                </div>
+                <div className='flex justify-between items-center py-2'>
+                  <span className='text-sm font-medium text-green-700 dark:text-green-300'>
+                    状态
+                  </span>
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      cardKeyInfo.isExpired
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
+                        : cardKeyInfo.isExpiring
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200'
+                          : 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
+                    }`}
+                  >
+                    {cardKeyInfo.isExpired
+                      ? '已过期'
+                      : cardKeyInfo.isExpiring
+                        ? '即将过期'
+                        : '正常'}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className='p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg'>
+              <p className='text-sm text-red-800 dark:text-red-200'>
+                无法加载卡密信息,请点击刷新按钮重试。
+              </p>
+            </div>
+          )}
 
           {/* 重新绑定 */}
           <div className='p-6 bg-gray-100 dark:bg-gray-800 rounded-lg'>
