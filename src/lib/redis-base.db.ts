@@ -1713,7 +1713,7 @@ export abstract class BaseRedisStorage implements IStorage {
 
   async getFullUserCardKey(userName: string): Promise<UserCardKeyInfo | null> {
     console.log('getFullUserCardKey - userName:', userName);
-    const userCardKeyInfo = await this.getUserCardKeyInfo(userName);
+    let userCardKeyInfo = await this.getUserCardKeyInfo(userName);
     console.log('getFullUserCardKey - userCardKeyInfo:', userCardKeyInfo);
     if (!userCardKeyInfo) {
       // 如果 AdminConfig.Users 中找不到，尝试从 Redis Hash 中读取
@@ -1728,6 +1728,16 @@ export abstract class BaseRedisStorage implements IStorage {
       if (!userInfo || !userInfo.cardKey) {
         return null;
       }
+
+      // 解析 Hash 中的 cardKey
+      try {
+        userCardKeyInfo = JSON.parse(userInfo.cardKey as string);
+        console.log('getFullUserCardKey - parsed cardKey from hash:', userCardKeyInfo);
+      } catch (error) {
+        console.error('getFullUserCardKey - 解析 cardKey 失败:', error);
+        return null;
+      }
+    }
 
       // 解析 Hash 中的 cardKey
       try {
