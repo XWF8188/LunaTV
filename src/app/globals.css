@@ -107,7 +107,7 @@
 
 :root {
   --foreground-rgb: 255, 255, 255;
-  --background-rgb: 10, 10, 10;
+  --background-rgb: 5, 5, 10;
 }
 
 html,
@@ -123,12 +123,12 @@ body {
 }
 
 html:not(.dark) body {
-  background: linear-gradient(180deg, #0a0a0a 0%, #171717 100%);
+  background: linear-gradient(180deg, #05050a 0%, #0a0a0f 100%);
   background-attachment: fixed;
 }
 
 .dark body {
-  background: linear-gradient(180deg, #0a0a0a 0%, #171717 100%);
+  background: linear-gradient(180deg, #05050a 0%, #0a0a0f 100%);
   background-attachment: fixed;
 }
 
@@ -195,8 +195,8 @@ html:not(.dark) body {
 .video-card-hover:hover {
   transform: translateY(-8px) scale(1.02);
   box-shadow:
-    0 20px 40px -5px rgba(0, 0, 0, 0.3),
-    0 0 30px rgba(99, 102, 241, 0.15);
+    0 20px 40px -5px rgba(0, 0, 0, 0.4),
+    0 0 40px rgba(139, 92, 246, 0.2);
 }
 
 /* 卡片光泽动画 */
@@ -237,41 +237,54 @@ html:not(.dark) body {
 
 /* 卡片式悬停效果 */
 .video-card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .video-card-hover:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 24px rgba(139, 92, 246, 0.25);
+  transform: translateY(-8px) scale(1.01);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.4),
+    0 0 50px rgba(139, 92, 246, 0.15);
 }
 
 /* 霓虹按钮效果 */
 .neon-button {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 12px rgba(139, 92, 246, 0.4),
+    0 0 24px rgba(139, 92, 246, 0.2);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .neon-button:hover {
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
-  transform: translateY(-2px);
+  box-shadow:
+    0 6px 24px rgba(139, 92, 246, 0.6),
+    0 0 40px rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px) scale(1.02);
 }
 
 /* 卡片容器风格 */
 .card-container {
-  background: rgba(23, 23, 23, 0.8);
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
+  background: rgba(10, 10, 15, 0.9);
+  border-radius: 20px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(139, 92, 246, 0.1);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .dark .card-container {
-  background: rgba(23, 23, 23, 0.8);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: rgba(10, 10, 15, 0.9);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(139, 92, 246, 0.1);
 }
 
 .card-container:hover {
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(139, 92, 246, 0.2);
+  transform: translateY(-4px) scale(1.01);
 }
 
 /* 浮动动画 */
@@ -281,12 +294,12 @@ html:not(.dark) body {
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
   }
 }
 
 .float-gentle {
-  animation: float-gentle 4s ease-in-out infinite;
+  animation: float-gentle 6s ease-in-out infinite;
 }
 
 /* 脉冲效果 */
@@ -296,17 +309,85 @@ html:not(.dark) body {
     opacity: 1;
   }
   50% {
-    opacity: 0.7;
+    opacity: 0.6;
   }
 }
 
 .pulse-soft {
-  animation: pulse-soft 2s ease-in-out infinite;
+  animation: pulse-soft 3s ease-in-out infinite;
 }
 
 .dark .glass-effect {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 3D Tilt 效果 */
+@keyframes tilt-3d {
+  0%,
+  100% {
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+  }
+  25% {
+    transform: perspective(1000px) rotateX(2deg) rotateY(-2deg);
+  }
+  75% {
+    transform: perspective(1000px) rotateX(-2deg) rotateY(2deg);
+  }
+}
+
+/* 淡入上浮动画 */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.8s ease-out forwards;
+}
+
+.animate-delay-100 {
+  animation-delay: 0.1s;
+}
+
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+
+/* 淡入动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* 缩放淡入动画 */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 /* 光泽动画 */
@@ -334,7 +415,7 @@ html:not(.dark) body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
+    rgba(139, 92, 246, 0.15) 50%,
     transparent 100%
   );
   animation: shimmer 2.5s ease-in-out infinite;

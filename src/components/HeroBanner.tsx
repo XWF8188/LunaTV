@@ -9,6 +9,7 @@ import {
   Play,
   Volume2,
   VolumeX,
+  Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -234,7 +235,7 @@ function HeroBanner({
 
   return (
     <div
-      className='relative w-full h-[65vh] sm:h-[70vh] md:h-[75vh] overflow-hidden group card-container'
+      className='relative w-full h-screen overflow-hidden group card-container'
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       {...swipeHandlers}
@@ -257,22 +258,28 @@ function HeroBanner({
                 index === currentIndex ? 'opacity-100' : 'opacity-0'
               }`}
             >
-              <Image
-                src={getProxiedImageUrl(
-                  getHDBackdrop(item.backdrop) || item.poster,
-                )}
-                alt={item.title}
-                fill
-                className='object-cover object-center'
-                priority={index === 0}
-                quality={100}
-                sizes='100vw'
-                unoptimized={
-                  item.backdrop?.includes('/l/') ||
-                  item.backdrop?.includes('/l_ratio_poster/') ||
-                  false
-                }
-              />
+              <div
+                className={`absolute inset-0 transition-transform duration-[10s] ease-in-out ${
+                  index === currentIndex ? 'scale-105' : 'scale-100'
+                }`}
+              >
+                <Image
+                  src={getProxiedImageUrl(
+                    getHDBackdrop(item.backdrop) || item.poster,
+                  )}
+                  alt={item.title}
+                  fill
+                  className='object-cover object-center'
+                  priority={index === 0}
+                  quality={100}
+                  sizes='100vw'
+                  unoptimized={
+                    item.backdrop?.includes('/l/') ||
+                    item.backdrop?.includes('/l_ratio_poster/') ||
+                    false
+                  }
+                />
+              </div>
 
               {enableVideo &&
                 getEffectiveTrailerUrl(item) &&
@@ -348,31 +355,40 @@ function HeroBanner({
           );
         })}
 
-        <div className='absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40' />
+        <div className='absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/60' />
 
-        <div className='absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-950/95 to-transparent' />
+        <div className='absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/80' />
+
+        <div className='absolute inset-0 bg-gradient-to-b from-gray-950/30 via-transparent to-transparent' />
       </div>
 
-      <div className='absolute bottom-0 left-0 right-0 px-6 sm:px-12 md:px-20 lg:px-28 pb-8 sm:pb-12 md:pb-16 lg:pb-20'>
-        <div className='space-y-4 sm:space-y-5 md:space-y-6 max-w-4xl'>
-          <h1 className='text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white drop-shadow-2xl leading-tight break-words animate-slide-in-up'>
+      <div className='absolute bottom-0 left-0 right-0 px-6 sm:px-12 md:px-20 lg:px-32 pb-16 sm:pb-20 md:pb-24 lg:pb-32'>
+        <div className='space-y-6 sm:space-y-8 md:space-y-10 max-w-5xl'>
+          <div className='flex items-center gap-2 mb-2'>
+            <Sparkles className='w-5 h-5 text-violet-400 animate-pulse' />
+            <span className='text-violet-400 text-sm font-medium tracking-wider uppercase'>
+              精选推荐
+            </span>
+          </div>
+
+          <h1 className='text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white drop-shadow-2xl leading-tight break-words animate-slide-in-up'>
             {currentItem.title}
           </h1>
 
-          <div className='flex items-center gap-3 sm:gap-4 text-base sm:text-lg md:text-xl flex-wrap animate-slide-in-up animate-delay-100'>
+          <div className='flex items-center gap-4 sm:gap-5 text-base sm:text-lg md:text-xl flex-wrap animate-slide-in-up animate-delay-100'>
             {currentItem.rate && (
-              <div className='flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-sm border border-white/10 rounded-lg font-semibold text-white/90'>
-                <span className='text-amber-400'>★</span>
-                <span>{currentItem.rate}</span>
+              <div className='flex items-center gap-2 px-4 py-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl font-semibold text-white/90'>
+                <span className='text-amber-400 text-lg'>★</span>
+                <span className='text-lg'>{currentItem.rate}</span>
               </div>
             )}
             {currentItem.year && (
-              <span className='text-white/80 font-medium'>
+              <span className='text-white/80 font-medium text-lg'>
                 {currentItem.year}
               </span>
             )}
             {currentItem.type && (
-              <span className='px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/10 rounded-lg text-white/80 font-medium'>
+              <span className='px-4 py-2 bg-white/10 backdrop-blur-md border border-white/10 rounded-xl text-white/80 font-medium'>
                 {currentItem.type === 'movie'
                   ? '电影'
                   : currentItem.type === 'tv'
@@ -388,20 +404,21 @@ function HeroBanner({
             )}
           </div>
 
-          <div className='flex gap-3 sm:gap-4 pt-2 animate-slide-in-up animate-delay-200'>
+          <div className='flex gap-4 sm:gap-5 pt-3 animate-slide-in-up animate-delay-200'>
             <Link
               href={
                 currentItem.type === 'shortdrama'
                   ? `/play?title=${encodeURIComponent(currentItem.title)}&shortdrama_id=${currentItem.id}`
                   : `/play?title=${encodeURIComponent(currentItem.title)}${currentItem.year ? `&year=${currentItem.year}` : ''}${currentItem.douban_id ? `&douban_id=${currentItem.douban_id}` : ''}${currentItem.type ? `&stype=${currentItem.type}` : ''}`
               }
-              className='flex items-center gap-2.5 px-7 sm:px-9 md:px-11 py-3 sm:py-3.5 md:py-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl hover:from-violet-500 hover:to-purple-500 transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-violet-500/40 text-base sm:text-lg md:text-xl'
+              className='relative flex items-center gap-3 px-8 sm:px-10 md:px-12 py-4 sm:py-4.5 md:py-5 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-2xl hover:from-violet-500 hover:to-purple-500 transition-all transform hover:scale-105 active:scale-95 shadow-2xl shadow-violet-600/40 text-base sm:text-lg md:text-xl group overflow-hidden'
             >
+              <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
               <Play
-                className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7'
+                className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 relative z-10'
                 fill='currentColor'
               />
-              <span>播放</span>
+              <span className='relative z-10'>播放</span>
             </Link>
             <Link
               href={
@@ -413,10 +430,11 @@ function HeroBanner({
                         : currentItem.type || 'movie'
                     }`
               }
-              className='flex items-center gap-2.5 px-7 sm:px-9 md:px-11 py-3 sm:py-3.5 md:py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 transition-all hover:scale-105 active:scale-95 text-sm sm:text-base md:text-lg'
+              className='relative flex items-center gap-3 px-8 sm:px-10 md:px-12 py-4 sm:py-4.5 md:py-5 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-2xl hover:bg-white/20 transition-all hover:scale-105 active:scale-95 text-sm sm:text-base md:text-lg group overflow-hidden'
             >
-              <Info className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7' />
-              <span>加入片单</span>
+              <div className='absolute inset-0 border-2 border-transparent rounded-2xl group-hover:border-violet-500/50 transition-all duration-300' />
+              <Info className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 relative z-10' />
+              <span className='relative z-10'>加入片单</span>
             </Link>
           </div>
         </div>
@@ -425,13 +443,13 @@ function HeroBanner({
       {enableVideo && getEffectiveTrailerUrl(currentItem) && (
         <button
           onClick={toggleMute}
-          className='absolute bottom-8 sm:bottom-10 right-6 sm:right-10 md:right-14 lg:right-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-all border border-white/20 z-10'
+          className='absolute bottom-20 sm:bottom-24 right-6 sm:right-10 md:right-14 lg:right-20 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/80 transition-all border border-white/20 z-10'
           aria-label={isMuted ? '取消静音' : '静音'}
         >
           {isMuted ? (
-            <VolumeX className='w-5 h-5 sm:w-6 sm:h-6' />
+            <VolumeX className='w-6 h-6 sm:w-7 sm:h-7' />
           ) : (
-            <Volume2 className='w-5 h-5 sm:w-6 sm:h-6' />
+            <Volume2 className='w-6 h-6 sm:w-7 sm:h-7' />
           )}
         </button>
       )}
@@ -440,31 +458,31 @@ function HeroBanner({
         <>
           <button
             onClick={handlePrev}
-            className='hidden md:flex absolute left-6 lg:left-12 top-1/2 -translate-y-1/2 w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-black/40 backdrop-blur-sm text-white items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-black/60 transition-all transform hover:scale-110 border border-white/10'
+            className='hidden md:flex absolute left-6 lg:left-12 top-1/2 -translate-y-1/2 w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-black/40 backdrop-blur-md text-white items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-black/60 transition-all transform hover:scale-110 border border-white/10'
             aria-label='上一张'
           >
-            <ChevronLeft className='w-6 h-6 lg:w-7 lg:h-7' />
+            <ChevronLeft className='w-7 h-7 lg:w-8 lg:h-8' />
           </button>
           <button
             onClick={handleNext}
-            className='hidden md:flex absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-black/40 backdrop-blur-sm text-white items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-black/60 transition-all transform hover:scale-110 border border-white/10'
+            className='hidden md:flex absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-black/40 backdrop-blur-md text-white items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-black/60 transition-all transform hover:scale-110 border border-white/10'
             aria-label='下一张'
           >
-            <ChevronRight className='w-6 h-6 lg:w-7 lg:h-7' />
+            <ChevronRight className='w-7 h-7 lg:w-8 lg:h-8' />
           </button>
         </>
       )}
 
       {showIndicators && items.length > 1 && (
-        <div className='absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5'>
+        <div className='absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-2'>
           {items.map((_, index) => (
             <button
               key={index}
               onClick={() => handleIndicatorClick(index)}
-              className={`h-1 rounded-full transition-all duration-300 ${
+              className={`h-1.5 rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? 'w-6 sm:w-8 bg-white shadow-lg'
-                  : 'w-1.5 bg-white/40 hover:bg-white/60'
+                  ? 'w-8 sm:w-10 bg-white shadow-lg'
+                  : 'w-2 bg-white/40 hover:bg-white/60'
               }`}
               aria-label={`跳转到第 ${index + 1} 张`}
             />
@@ -472,8 +490,8 @@ function HeroBanner({
         </div>
       )}
 
-      <div className='absolute top-4 sm:top-6 md:top-8 right-4 sm:right-8 md:right-12'>
-        <div className='px-2 py-1 bg-black/40 backdrop-blur-sm border border-white/10 rounded text-white/70 text-xs sm:text-sm font-medium'>
+      <div className='absolute top-6 sm:top-8 md:top-10 right-6 sm:right-10 md:right-14'>
+        <div className='px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg text-white/70 text-sm font-medium'>
           {currentIndex + 1} / {items.length}
         </div>
       </div>

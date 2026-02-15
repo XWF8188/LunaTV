@@ -132,7 +132,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${inter.className} min-h-screen bg-gray-950 text-gray-100`}
+        className={`${inter.className} min-h-screen bg-[rgb(var(--background-rgb))] text-gray-100`}
       >
         <ThemeProvider
           attribute='class'
