@@ -167,7 +167,7 @@ function RegisterPageClient() {
                 如需注册账户，请联系网站管理员
               </p>
               <button
-                onClick={() => router.push('/login')}
+                onClick={() => router.push(`/login`)}
                 className='group relative inline-flex w-full justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-orange-500 py-4 text-base font-semibold text-white shadow-2xl shadow-orange-500/40 transition-all duration-300 hover:shadow-orange-600/60 hover:-translate-y-1 overflow-hidden'
               >
                 <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700' />
