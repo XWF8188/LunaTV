@@ -771,11 +771,14 @@ function HomeClient() {
                     <span>卡密到期:</span>
                   </span>
                   <span className='font-semibold text-amber-600 dark:text-amber-400'>
-                    {new Date(cardKeyInfo.expiresAt).toLocaleDateString('zh-CN', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit'
-                    })}
+                    {new Date(cardKeyInfo.expiresAt).toLocaleDateString(
+                      'zh-CN',
+                      {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                      },
+                    )}
                   </span>
                 </div>
               )}
@@ -785,22 +788,6 @@ function HomeClient() {
                   <span>加载卡密信息...</span>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-                )}
-                {loadingCardKey && (
-                  <div className='flex items-center gap-2 text-xs sm:text-sm text-gray-400 animate-pulse-soft'>
-                    <span>⏳</span>
-                    <span>加载卡密信息...</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 装饰图标 - 卡片式 */}
-              <div className='hidden md:flex items-center justify-center shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg float-gentle'>
-                <Film className='w-8 h-8 text-white' />
-              </div>
             </div>
           </div>
         </div>
