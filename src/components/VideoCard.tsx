@@ -821,14 +821,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             } as React.CSSProperties
           }
           onContextMenu={(e) => {
-            // 阻止默认右键菜单
             e.preventDefault();
             e.stopPropagation();
 
-            // 右键弹出操作菜单
             setShowMobileActions(true);
 
-            // 异步检查收藏状态，不阻塞菜单显示
             if (
               from === 'search' &&
               !isAggregate &&
@@ -842,14 +839,12 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             return false;
           }}
           onDragStart={(e) => {
-            // 阻止拖拽
             e.preventDefault();
             return false;
           }}
         >
-          {/* 海报容器 - 卡片式 */}
           <div
-            className={`relative aspect-[2/3] overflow-hidden rounded-lg ${origin === 'live' ? 'ring-2 ring-amber-500/50' : ''} bg-gray-100 dark:bg-gray-800`}
+            className={`relative aspect-[2/3] overflow-hidden rounded-xl ${origin === 'live' ? 'ring-2 ring-amber-500/50' : ''} bg-gray-900 shadow-lg group-hover:shadow-2xl group-hover:-translate-y-1 transition-all duration-300 ease-out`}
             style={
               {
                 WebkitUserSelect: 'none',
@@ -862,20 +857,17 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               return false;
             }}
           >
-            {/* 渐变光泽动画层 - 现代化增强 */}
             <div
               className='absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10 overflow-hidden'
               style={{
                 background:
-                  'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.2) 45%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 55%, transparent 70%)',
+                  'linear-gradient(110deg, transparent 30%, rgba(139, 92, 246, 0.1) 45%, rgba(139, 92, 246, 0.3) 50%, rgba(139, 92, 246, 0.1) 55%, transparent 70%)',
                 backgroundSize: '200% 100%',
                 animation: 'card-shimmer 2s ease-in-out infinite',
               }}
             />
 
-            {/* 骨架屏 */}
             {!isLoading && <ImagePlaceholder aspectRatio='aspect-[2/3]' />}
-            {/* 图片 */}
             <Image
               src={processImageUrl(actualPoster)}
               alt={actualTitle}
@@ -895,33 +887,28 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 setImageLoaded(true);
               }}
               onError={(e) => {
-                // 图片加载失败时的处理
                 const img = e.target as HTMLImageElement;
                 if (origin === 'live') {
-                  // 直播频道使用默认图标，不重试避免闪烁
                   img.src =
-                    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"%3E%3Crect fill="%23374151" width="200" height="300"/%3E%3Cg fill="%239CA3AF"%3E%3Ccircle cx="100" cy="120" r="30"/%3E%3Cpath d="M60 160 Q60 140 80 140 L120 140 Q140 140 140 160 L140 200 Q140 220 120 220 L80 220 Q60 220 60 200 Z"/%3E%3C/g%3E%3Ctext x="100" y="260" font-family="Arial" font-size="14" fill="%239CA3AF" text-anchor="middle"%3E直播频道%3C/text%3E%3C/svg%3E';
+                    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"%3E%3Crect fill="%23111827" width="200" height="300"/%3E%3Cg fill="%236B7280"%3E%3Ccircle cx="100" cy="120" r="30"/%3E%3Cpath d="M60 160 Q60 140 80 140 L120 140 Q140 140 140 160 L140 200 Q140 220 120 220 L80 220 Q60 220 60 200 Z"/%3E%3C/g%3E%3Ctext x="100" y="260" font-family="Arial" font-size="14" fill="%236B7280" text-anchor="middle"%3E直播频道%3C/text%3E%3C/svg%3E';
                   setImageLoaded(true);
                 } else if (!img.dataset.retried) {
-                  // 非直播内容重试一次
                   img.dataset.retried = 'true';
                   setTimeout(() => {
                     img.src = processImageUrl(actualPoster);
                   }, 2000);
                 } else {
-                  // 重试失败，使用通用占位图
                   img.src =
-                    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"%3E%3Crect fill="%23374151" width="200" height="300"/%3E%3Cg fill="%239CA3AF"%3E%3Cpath d="M100 80 L100 120 M80 100 L120 100" stroke="%239CA3AF" stroke-width="8" stroke-linecap="round"/%3E%3Crect x="60" y="140" width="80" height="100" rx="5" fill="none" stroke="%239CA3AF" stroke-width="4"/%3E%3Cpath d="M70 160 L90 180 L130 140" stroke="%239CA3AF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/%3E%3C/g%3E%3Ctext x="100" y="270" font-family="Arial" font-size="12" fill="%239CA3AF" text-anchor="middle"%3E暂无海报%3C/text%3E%3C/svg%3E';
+                    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"%3E%3Crect fill="%23111827" width="200" height="300"/%3E%3Cg fill="%236B7280"%3E%3Cpath d="M100 80 L100 120 M80 100 L120 100" stroke="%236B7280" stroke-width="8" stroke-linecap="round"/%3E%3Crect x="60" y="140" width="80" height="100" rx="5" fill="none" stroke="%236B7280" stroke-width="4"/%3E%3Cpath d="M70 160 L90 180 L130 140" stroke="%236B7280" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/%3E%3C/g%3E%3Ctext x="100" y="270" font-family="Arial" font-size="12" fill="%236B7280" text-anchor="middle"%3E暂无海报%3C/text%3E%3C/svg%3E';
                   setImageLoaded(true);
                 }
               }}
               style={
                 {
-                  // 禁用图片的默认长按效果
                   WebkitUserSelect: 'none',
                   userSelect: 'none',
                   WebkitTouchCallout: 'none',
-                  pointerEvents: 'none', // 图片不响应任何指针事件
+                  pointerEvents: 'none',
                 } as React.CSSProperties
               }
               onContextMenu={(e) => {
@@ -934,9 +921,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               }}
             />
 
-            {/* 悬浮遮罩 - 简洁渐变 */}
             <div
-              className='absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out'
+              className='absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out'
               style={
                 {
                   WebkitUserSelect: 'none',
@@ -950,7 +936,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               }}
             />
 
-            {/* 播放按钮 / 即将上映提示 */}
             {config.showPlayButton && (
               <div
                 data-button='true'
@@ -968,19 +953,17 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 }}
               >
                 {isUpcoming ? (
-                  // 即将上映 - 显示敬请期待
-                  <div className='flex flex-col items-center gap-2 bg-black/60 backdrop-blur-md px-6 py-4 rounded-xl'>
+                  <div className='flex flex-col items-center gap-2 bg-black/70 backdrop-blur-md px-6 py-4 rounded-xl'>
                     <span className='text-3xl'>📅</span>
                     <span className='text-white font-bold text-sm whitespace-nowrap'>
                       敬请期待
                     </span>
                   </div>
                 ) : (
-                  // 正常内容 - 霓虹橙按钮
                   <PlayCircleIcon
                     size={50}
                     strokeWidth={2}
-                    className='text-white fill-amber-500/90 transition-all duration-300 ease-out hover:fill-amber-600 hover:scale-110'
+                    className='text-white fill-violet-500/90 transition-all duration-300 ease-out hover:fill-violet-600 hover:scale-110'
                     style={
                       {
                         WebkitUserSelect: 'none',
@@ -1209,10 +1192,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 );
               })()}
 
-            {/* 评分徽章 - 动态颜色 - 🎯 使用容器查询替代媒体查询 */}
             {config.showRating && rate && ratingBadgeStyle && (
               <div
-                className={`absolute top-2 right-2 ${ratingBadgeStyle.bgColor} ${ratingBadgeStyle.ringColor} ${ratingBadgeStyle.shadowColor} ${ratingBadgeStyle.textColor} ${ratingBadgeStyle.glowClass} text-xs font-bold rounded-full flex flex-col items-center justify-center transition-all duration-300 ease-out group-hover:scale-110 backdrop-blur-sm w-9 h-9 @[180px]:w-10 @[180px]:h-10`}
+                className={`absolute top-2 right-2 bg-black/50 backdrop-blur-md border border-white/10 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1 px-2 py-1 transition-all duration-300 ease-out group-hover:scale-105`}
                 style={
                   {
                     WebkitUserSelect: 'none',
@@ -1225,10 +1207,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   return false;
                 }}
               >
-                <Star size={10} className='fill-current mb-0.5' />
-                <span className='text-[10px] @[180px]:text-xs font-extrabold leading-none'>
-                  {rate}
-                </span>
+                <Star size={12} className='fill-amber-400 text-amber-400' />
+                <span className='text-xs font-bold'>{rate}</span>
               </div>
             )}
 
