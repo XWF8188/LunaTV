@@ -134,7 +134,7 @@ function RegisterPageClient() {
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
         <div className="absolute inset-0">
           <div className="absolute top-20 left-20 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-amber-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-amber-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
         <div className="absolute top-6 right-6 z-20">
@@ -191,7 +191,7 @@ function RegisterPageClient() {
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-amber-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-yellow-400/10 rounded-full blur-3xl" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-yellow-400/10 rounded-full blur-3xl" style={{ animationDelay: "2s" }} />
       </div>
 
       <div className="absolute top-6 right-6 z-20">
@@ -215,7 +215,7 @@ function RegisterPageClient() {
           className="relative backdrop-blur-2xl bg-white/40 rounded-3xl p-8 sm:p-10 border border-orange-200/50 shadow-2xl transition-all duration-500 hover:border-orange-300/50"
         >
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-orange-500/30 to-amber-500/30 rounded-full blur-3xl" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-br from-amber-500/30 to-yellow-500/30 rounded-full blur-3xl" style={{ animationDelay: '1s' }} />
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-br from-amber-500/30 to-yellow-500/30 rounded-full blur-3xl" style={{ animationDelay: "1s" }} />
 
           <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
             <div className="group">
