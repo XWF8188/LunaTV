@@ -26,10 +26,10 @@ export class InvitationService {
   // 为用户生成邀请码
   static async generateInvitationCode(username: string): Promise<string> {
     const code = generateInvitationCode();
-    const storage = db.storage;
+    
 
     // 检查是否已存在邀请码
-    const existingPoints = await storage.getUserPoints(username);
+    const existingPoints = await db.getUserPoints(username);
     if (existingPoints) {
       return code;
     }
@@ -42,7 +42,7 @@ export class InvitationService {
       totalRedeemed: 0,
       updatedAt: Date.now(),
     };
-    await storage.updateUserPoints(userPoints);
+    await db.updateUserPoints(userPoints);
 
     return code;
   }
@@ -51,12 +51,12 @@ export class InvitationService {
   static async validateInvitationCode(
     code: string,
   ): Promise<{ valid: boolean; inviter?: string }> {
-    const storage = db.storage;
+    
 
     // 通过查找所有用户的积分记录来验证邀请码
     // 实际实现中，邀请码应该存储在用户数据中
     // 这里使用一个简化的实现：邀请码就是用户的用户名
-    const users = await storage.getAllUsers();
+    const users = await db.getAllUsers();
     const inviter = users.find((u) => u === code);
 
     return {
@@ -72,7 +72,7 @@ export class InvitationService {
     code: string,
     ip: string,
   ): Promise<void> {
-    const storage = db.storage;
+    
 
     const invitation: Invitation = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -84,17 +84,17 @@ export class InvitationService {
       createdAt: Date.now(),
     };
 
-    await storage.createInvitation(invitation);
+    await db.createInvitation(invitation);
   }
 
   // 获取用户邀请信息
   static async getUserInvitationInfo(
     username: string,
   ): Promise<UserInvitationInfo> {
-    const storage = db.storage;
+    
 
-    const userPoints = await storage.getUserPoints(username);
-    const invitations = await storage.getInvitationsByInviter(username);
+    const userPoints = await db.getUserPoints(username);
+    const invitations = await db.getInvitationsByInviter(username);
 
     return {
       code: username, // 简化实现：用户名即为邀请码
@@ -106,8 +106,8 @@ export class InvitationService {
 
   // 检查IP是否已奖励过
   static async checkIPRewarded(ip: string): Promise<boolean> {
-    const storage = db.storage;
-    const record = await storage.getIPRewardRecord(ip);
+    
+    const record = await db.getIPRewardRecord(ip);
     return !!record;
   }
 }
@@ -116,8 +116,8 @@ export class InvitationService {
 export class PointsService {
   // 获取用户积分余额
   static async getUserBalance(username: string): Promise<number> {
-    const storage = db.storage;
-    const userPoints = await storage.getUserPoints(username);
+    
+    const userPoints = await db.getUserPoints(username);
     return userPoints?.balance || 0;
   }
 
@@ -128,9 +128,9 @@ export class PointsService {
     reason: string,
     relatedUser?: string,
   ): Promise<void> {
-    const storage = db.storage;
+    
 
-    const userPoints = await storage.getUserPoints(username);
+    const userPoints = await db.getUserPoints(username);
     if (!userPoints) {
       throw new Error(`用户 ${username} 不存在`);
     }
@@ -139,7 +139,7 @@ export class PointsService {
     userPoints.totalEarned += amount;
     userPoints.updatedAt = Date.now();
 
-    await storage.updateUserPoints(userPoints);
+    await db.updateUserPoints(userPoints);
 
     // 记录积分历史
     const record: PointsRecord = {
@@ -152,7 +152,7 @@ export class PointsService {
       createdAt: Date.now(),
     };
 
-    await storage.addPointsRecord(record);
+    await db.addPointsRecord(record);
   }
 
   // 扣除用户积分
@@ -161,9 +161,9 @@ export class PointsService {
     amount: number,
     reason: string,
   ): Promise<void> {
-    const storage = db.storage;
+    
 
-    const userPoints = await storage.getUserPoints(username);
+    const userPoints = await db.getUserPoints(username);
     if (!userPoints) {
       throw new Error(`用户 ${username} 不存在`);
     }
@@ -176,7 +176,7 @@ export class PointsService {
     userPoints.totalRedeemed += amount;
     userPoints.updatedAt = Date.now();
 
-    await storage.updateUserPoints(userPoints);
+    await db.updateUserPoints(userPoints);
 
     // 记录积分历史
     const record: PointsRecord = {
@@ -188,7 +188,7 @@ export class PointsService {
       createdAt: Date.now(),
     };
 
-    await storage.addPointsRecord(record);
+    await db.addPointsRecord(record);
   }
 
   // 获取积分历史记录
@@ -197,19 +197,19 @@ export class PointsService {
     page: number = 1,
     pageSize: number = 20,
   ): Promise<PointsRecord[]> {
-    const storage = db.storage;
-    return await storage.getPointsHistory(username, page, pageSize);
+    
+    return await db.getPointsHistory(username, page, pageSize);
   }
 
   // 使用积分兑换一周卡密
   static async redeemForCardKey(
     username: string,
   ): Promise<{ success: boolean; cardKey?: string; error?: string }> {
-    const storage = db.storage;
+    
 
     try {
       // 获取邀请配置
-      const config = await storage.getInvitationConfig();
+      const config = await db.getInvitationConfig();
       if (!config) {
         return { success: false, error: '邀请配置未设置' };
       }
@@ -243,13 +243,13 @@ export class PointsService {
         expiresAt: cardKey.expiresAt,
       };
 
-      await storage.addUserCardKey(userCardKey);
+      await db.addUserCardKey(userCardKey);
 
       // 更新积分记录，关联卡密
       const history = await this.getPointsHistory(username, 1, 1);
       if (history.length > 0) {
         history[0].cardKeyId = userCardKey.id;
-        await storage.addPointsRecord(history[0]);
+        await db.addPointsRecord(history[0]);
       }
 
       return {

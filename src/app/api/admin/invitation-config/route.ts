@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '权限不足' }, { status: 403 });
     }
 
-    const config = await db.storage.getInvitationConfig();
+    const config = await db.getInvitationConfig();
     return NextResponse.json(config);
   } catch (error) {
     console.error('获取邀请配置失败:', error);
@@ -82,7 +82,7 @@ export async function PUT(request: NextRequest) {
       updatedAt: Date.now(),
     };
 
-    await db.storage.setInvitationConfig(config);
+    await db.setInvitationConfig(config);
 
     return NextResponse.json({ ok: true, config });
   } catch (error) {
