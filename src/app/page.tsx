@@ -743,45 +743,51 @@ function HomeClient() {
       <div className='overflow-visible -mt-6 md:mt-0 pb-32 md:pb-safe-bottom'>
         {/* 欢迎横幅 - 卡片式用户信息 + 卡密到期时间 */}
         <div className='mb-8 card-container p-6 sm:p-8'>
-          <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
-            <div className='flex-1 min-w-0'>
-              {/* 用户信息 */}
-              <div className='flex flex-col gap-1 mb-3'>
-                <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white animate-slide-in-up flex items-center gap-2 flex-wrap'>
-                  <span className='bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent'>
-                    {greeting}
+          <div className='flex flex-col gap-1'>
+            {/* 用户信息 */}
+            <div className='flex flex-col gap-1'>
+              <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white animate-slide-in-up flex items-center gap-2 flex-wrap'>
+                <span className='bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent'>
+                  {greeting}
+                </span>
+                {username && (
+                  <span className='text-amber-600 dark:text-amber-400'>
+                    ，{username}
                   </span>
-                  {username && (
-                    <span className='text-amber-600 dark:text-amber-400'>
-                      ，{username}
-                    </span>
-                  )}
-                  <span className='text-2xl'>👋</span>
-                </h2>
-                <p className='text-sm sm:text-base text-gray-500 dark:text-gray-400 animate-slide-in-up animate-delay-100'>
-                  {username
-                    ? '欢迎回来，开始您的观影之旅'
-                    : '登录后解锁更多精彩内容'}
-                </p>
+                )}
+                <span className='text-2xl'>👋</span>
+              </h2>
+              <p className='text-sm sm:text-base text-gray-500 dark:text-gray-400 animate-slide-in-up animate-delay-100'>
+                {username
+                  ? '欢迎回来，开始您的观影之旅'
+                  : '登录后解锁更多精彩内容'}
+              </p>
 
-                {/* 卡密到期时间 */}
-                {!loadingCardKey && cardKeyInfo && cardKeyInfo.expiresAt && (
-                  <div className='flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300 animate-slide-in-up animate-delay-200'>
-                    <span className='flex items-center gap-1'>
-                      <span>📅</span>
-                      <span>卡密到期:</span>
-                    </span>
-                    <span className='font-semibold text-amber-600 dark:text-amber-400'>
-                      {new Date(cardKeyInfo.expiresAt).toLocaleDateString(
-                        'zh-CN',
-                        {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                        },
-                      )}
-                    </span>
-                  </div>
+              {/* 卡密到期时间 */}
+              {!loadingCardKey && cardKeyInfo && cardKeyInfo.expiresAt && (
+                <div className='flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300 animate-slide-in-up animate-delay-200'>
+                  <span className='flex items-center gap-1'>
+                    <span>📅</span>
+                    <span>卡密到期:</span>
+                  </span>
+                  <span className='font-semibold text-amber-600 dark:text-amber-400'>
+                    {new Date(cardKeyInfo.expiresAt).toLocaleDateString('zh-CN', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit'
+                    })}
+                  </span>
+                </div>
+              )}
+              {loadingCardKey && (
+                <div className='flex items-center gap-2 text-xs sm:text-sm text-gray-400 animate-pulse-soft'>
+                  <span>⏳</span>
+                  <span>加载卡密信息...</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
                 )}
                 {loadingCardKey && (
                   <div className='flex items-center gap-2 text-xs sm:text-sm text-gray-400 animate-pulse-soft'>
