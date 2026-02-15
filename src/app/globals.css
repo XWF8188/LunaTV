@@ -106,8 +106,30 @@
 }
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-rgb: 5, 5, 10;
+  --foreground-rgb: 30, 30, 30;
+  --background-rgb: 245, 247, 250;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+}
+
+html:not(.dark) body {
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  background-attachment: fixed;
+}
+
+.dark body {
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  background-attachment: fixed;
 }
 
 html,
@@ -193,6 +215,13 @@ html:not(.dark) body {
 }
 
 .video-card-hover:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.1),
+    0 0 50px rgba(255, 165, 0, 0.08);
+}
+
+.video-card-hover:hover {
   transform: translateY(-8px) scale(1.02);
   box-shadow:
     0 20px 40px -5px rgba(0, 0, 0, 0.4),
@@ -265,25 +294,25 @@ html:not(.dark) body {
 
 /* 卡片容器风格 */
 .card-container {
-  background: rgba(10, 10, 15, 0.9);
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 20px;
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.5),
-    0 0 40px rgba(139, 92, 246, 0.1);
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 0 40px rgba(139, 92, 246, 0.05);
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .dark .card-container {
-  background: rgba(10, 10, 15, 0.9);
+  background: rgba(255, 255, 255, 0.9);
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.5),
-    0 0 40px rgba(139, 92, 246, 0.1);
+    0 4px 20px rgba(0, 0, 0, 0.1),
+    0 0 40px rgba(139, 92, 246, 0.08);
 }
 
 .card-container:hover {
   box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.6),
-    0 0 60px rgba(139, 92, 246, 0.2);
+    0 8px 30px rgba(0, 0, 0, 0.12),
+    0 0 60px rgba(139, 92, 246, 0.12);
   transform: translateY(-4px) scale(1.01);
 }
 
