@@ -1571,6 +1571,148 @@ export class UpstashRedisStorage implements IStorage {
     console.log('=== getFullUserCardKey 结束 (Upstash) ===');
     return result;
   }
+
+  // ========== 积分和邀请系统 ==========
+
+  async getUserPoints(
+    userName: string,
+  ): Promise<import('./types').UserPoints | null> {
+    const key = `user:points:${userName}`;
+    const data = await this.client.get(key);
+    return data ? JSON.parse(data) : null;
+  }
+
+  async updateUserPoints(points: import('./types').UserPoints): Promise<void> {
+    const key = `user:points:${points.username}`;
+    await this.client.set(key, JSON.stringify(points));
+  }
+
+  async addPointsRecord(record: import('./types').PointsRecord): Promise<void> {
+    const key = `user:points:history:${record.username}`;
+    await this.client.lpush(key, JSON.stringify(record));
+    await this.client.ltrim(key, 0, 999);
+  }
+
+  async getPointsHistory(
+    userName: string,
+    page: number = 1,
+    pageSize: number = 20,
+  ): Promise<import('./types').PointsRecord[]> {
+    const key = `user:points:history:${userName}`;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize - 1;
+    const records = await this.client.lrange(key, start, end);
+    return records.map((r) => JSON.parse(r));
+  }
+
+  async getInvitationByInvitee(
+    invitee: string,
+  ): Promise<import('./types').Invitation | null> {
+    const key = `invitation:invitee:${invitee}`;
+    const data = await this.client.get(key);
+    return data ? JSON.parse(data) : null;
+  }
+
+  async getInvitationsByInviter(
+    inviter: string,
+  ): Promise<import('./types').Invitation[]> {
+    const pattern = `invitation:inviter:${inviter}:*`;
+    const keys = await this.client.keys(pattern);
+    if (keys.length === 0) return [];
+
+    const values = await this.client.mget(keys);
+    return values.filter((v) => v !== null).map((v) => JSON.parse(v));
+  }
+
+  async createInvitation(
+    invitation: import('./types').Invitation,
+  ): Promise<void> {
+    const inviteeKey = `invitation:invitee:${invitation.invitee}`;
+    const inviterKey = `invitation:inviter:${invitation.inviter}:${invitation.id}`;
+
+    await Promise.all([
+      this.client.set(inviteeKey, JSON.stringify(invitation)),
+      this.client.set(inviterKey, JSON.stringify(invitation)),
+    ]);
+  }
+
+  async updateInvitation(
+    id: string,
+    updates: Partial<import('./types').Invitation>,
+  ): Promise<void> {
+    const pattern = `invitation:*:*${id}`;
+    const keys = await this.client.keys(pattern);
+    if (keys.length === 0) return;
+
+    const data = await this.client.get(keys[0]);
+    if (data) {
+      const invitation = JSON.parse(data);
+      const updated = { ...invitation, ...updates };
+      await this.client.set(keys[0], JSON.stringify(updated));
+    }
+  }
+
+  async getIPRewardRecord(
+    ipAddress: string,
+  ): Promise<import('./types').IPRewardRecord | null> {
+    const key = `ip:reward:${ipAddress}`;
+    const data = await this.client.get(key);
+    return data ? JSON.parse(data) : null;
+  }
+
+  async createIPRewardRecord(
+    record: import('./types').IPRewardRecord,
+  ): Promise<void> {
+    const key = `ip:reward:${record.ipAddress}`;
+    await this.client.set(key, JSON.stringify(record));
+  }
+
+  async getInvitationConfig(): Promise<
+    import('./types').InvitationConfig | null
+  > {
+    const key = 'config:invitation';
+    const data = await this.client.get(key);
+    return data ? JSON.parse(data) : null;
+  }
+
+  async setInvitationConfig(
+    config: import('./types').InvitationConfig,
+  ): Promise<void> {
+    const key = 'config:invitation';
+    await this.client.set(key, JSON.stringify(config));
+  }
+
+  async getUserCardKeys(
+    userName: string,
+  ): Promise<import('./types').UserCardKey[]> {
+    const pattern = `user:cardkey:${userName}:*`;
+    const keys = await this.client.keys(pattern);
+    if (keys.length === 0) return [];
+
+    const values = await this.client.mget(keys);
+    return values.filter((v) => v !== null).map((v) => JSON.parse(v));
+  }
+
+  async addUserCardKey(cardKey: import('./types').UserCardKey): Promise<void> {
+    const key = `user:cardkey:${cardKey.username}:${cardKey.id}`;
+    await this.client.set(key, JSON.stringify(cardKey));
+  }
+
+  async updateUserCardKey(
+    id: string,
+    updates: Partial<import('./types').UserCardKey>,
+  ): Promise<void> {
+    const pattern = `user:cardkey:*:${id}`;
+    const keys = await this.client.keys(pattern);
+    if (keys.length === 0) return;
+
+    const data = await this.client.get(keys[0]);
+    if (data) {
+      const cardKey = JSON.parse(data);
+      const updated = { ...cardKey, ...updates };
+      await this.client.set(keys[0], JSON.stringify(updated));
+    }
+  }
 }
 
 // 单例 Upstash Redis 客户端
