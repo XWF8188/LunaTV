@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
     icon: Home,
     label: '首页',
     href: '/',
-    activeGradient: 'bg-gradient-to-r from-violet-600 to-purple-600',
+    activeGradient: 'bg-gradient-to-r from-orange-600 to-amber-600',
   },
   {
     icon: Search,
@@ -52,7 +52,7 @@ const navItems: NavItem[] = [
     icon: Tv,
     label: '剧集',
     href: '/douban?type=tv',
-    activeGradient: 'bg-gradient-to-r from-purple-500 to-indigo-500',
+    activeGradient: 'bg-gradient-to-r from-orange-500 to-red-500',
   },
   {
     icon: PlaySquare,
@@ -64,7 +64,7 @@ const navItems: NavItem[] = [
     icon: Cat,
     label: '动漫',
     href: '/douban?type=anime',
-    activeGradient: 'bg-gradient-to-r from-violet-400 to-purple-400',
+    activeGradient: 'bg-gradient-to-r from-orange-500 to-amber-500',
   },
   {
     icon: Clover,
@@ -154,7 +154,7 @@ export default function SideNavigation() {
                 <Icon className='w-5 h-5' />
                 {active && (
                   <div
-                    className={`absolute -right-2 w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse`}
+                    className={`absolute -right-2 w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse`}
                   />
                 )}
               </Link>
@@ -169,7 +169,7 @@ export default function SideNavigation() {
             isCollapsed ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
           }`}
         >
-          <div className='w-10 h-10 rounded-full bg-violet-600/20 backdrop-blur-xl flex items-center justify-center text-violet-400 border border-violet-500/30 hover:scale-110 transition-transform cursor-pointer'>
+          <div className='w-10 h-10 rounded-full bg-orange-600/20 backdrop-blur-xl flex items-center justify-center text-orange-400 border border-orange-500/30 hover:scale-110 transition-transform cursor-pointer'>
             <Sparkles className='w-5 h-5' />
           </div>
         </div>

@@ -1008,7 +1008,7 @@ export default function SkipController({
               </div>
 
               {/* 片尾设置 */}
-              <div className="space-y-4 bg-linear-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-xl border border-purple-100/50 dark:border-purple-800/50 backdrop-blur-sm">
+              <div className="space-y-4 bg-linear-to-br from-orange-50/50 to-pink-50/50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-xl border border-purple-100/50 dark:border-purple-800/50 backdrop-blur-sm">
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 border-b border-purple-200/50 dark:border-purple-700/50 pb-2 flex items-center gap-2">
                   <span className="text-xl">🎭</span>
                   片尾设置
@@ -1064,7 +1064,7 @@ export default function SkipController({
                   />
                   <button
                     onClick={markCurrentAsEndingStart}
-                    className="w-full px-4 py-2 bg-linear-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg text-sm font-medium transition-all shadow-md hover:shadow-lg hover:scale-105 backdrop-blur-sm"
+                    className="w-full px-4 py-2 bg-linear-to-r from-orange-500 to-amber-600 hover:from-purple-600 hover:to-amber-700 text-white rounded-lg text-sm font-medium transition-all shadow-md hover:shadow-lg hover:scale-105 backdrop-blur-sm"
                     title="标记当前播放时间为片尾开始时间"
                   >
                     📍 标记当前时间

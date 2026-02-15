@@ -411,7 +411,7 @@ function HeroBanner({
                   ? `/play?title=${encodeURIComponent(currentItem.title)}&shortdrama_id=${currentItem.id}`
                   : `/play?title=${encodeURIComponent(currentItem.title)}${currentItem.year ? `&year=${currentItem.year}` : ''}${currentItem.douban_id ? `&douban_id=${currentItem.douban_id}` : ''}${currentItem.type ? `&stype=${currentItem.type}` : ''}`
               }
-              className='relative flex items-center gap-3 px-8 sm:px-10 md:px-12 py-4 sm:py-4.5 md:py-5 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-2xl hover:from-violet-500 hover:to-purple-500 transition-all transform hover:scale-105 active:scale-95 shadow-2xl shadow-violet-600/40 text-base sm:text-lg md:text-xl group overflow-hidden'
+              className='relative flex items-center gap-3 px-8 sm:px-10 md:px-12 py-4 sm:py-4.5 md:py-5 bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold rounded-2xl hover:from-orange-500 hover:to-amber-500 transition-all transform hover:scale-105 active:scale-95 shadow-2xl shadow-orange-600/40 text-base sm:text-lg md:text-xl group overflow-hidden'
             >
               <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
               <Play
