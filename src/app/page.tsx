@@ -759,7 +759,9 @@ function HomeClient() {
                   <span className='text-2xl'>👋</span>
                 </h2>
                 <p className='text-sm sm:text-base text-gray-500 dark:text-gray-400 animate-slide-in-up animate-delay-100'>
-                  {username ? '欢迎回来，开始您的观影之旅' : '登录后解锁更多精彩内容'}
+                  {username
+                    ? '欢迎回来，开始您的观影之旅'
+                    : '登录后解锁更多精彩内容'}
                 </p>
 
                 {/* 卡密到期时间 */}
@@ -770,11 +772,14 @@ function HomeClient() {
                       <span>卡密到期:</span>
                     </span>
                     <span className='font-semibold text-amber-600 dark:text-amber-400'>
-                      {new Date(cardKeyInfo.expiresAt).toLocaleDateString('zh-CN', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                      })}
+                      {new Date(cardKeyInfo.expiresAt).toLocaleDateString(
+                        'zh-CN',
+                        {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                        },
+                      )}
                     </span>
                   </div>
                 )}
@@ -788,32 +793,6 @@ function HomeClient() {
 
               {/* 快捷操作 */}
               <div className='flex gap-3 animate-slide-in-up animate-delay-300'>
-                <Link
-                  href='/settings'
-                  className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
-                >
-                  <span>⚙️</span>
-                  <span>设置</span>
-                </Link>
-                <Link
-                  href='/favorites'
-                  className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-md'
-                >
-                  <span>❤️</span>
-                  <span>收藏</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* 装饰图标 - 卡片式 */}
-            <div className='hidden md:flex items-center justify-center shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg float-gentle'>
-              <Film className='w-8 h-8 text-white' />
-            </div>
-          </div>
-        </div>
-
-              {/* 快捷操作 */}
-              <div className='flex gap-3 animate-slide-in-up animate-delay-200'>
                 <Link
                   href='/settings'
                   className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
