@@ -176,6 +176,7 @@ function RegisterPageClient() {
               </button>
             </div>
           </div>
+          </div>
 
           <div className='text-center mt-12 text-orange-300/60 text-sm'>
             <p>© 2025 {siteName} · 致敬观影体验</p>
