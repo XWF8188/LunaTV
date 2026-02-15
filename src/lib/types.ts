@@ -581,6 +581,7 @@ export interface IPRewardRecord {
 
 // 邀请配置
 export interface InvitationConfig {
+  enabled: boolean;
   rewardPoints: number;
   redeemThreshold: number;
   cardKeyType: CardKeyType;
