@@ -454,34 +454,16 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
                 <label className='block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2'>
                   卡密类型
                 </label>
-                <div className='grid grid-cols-2 gap-2'>
-                  {[
-                    { value: 'year', label: '1年', days: '365天', icon: '📅' },
-                    {
-                      value: 'quarter',
-                      label: '1季',
-                      days: '90天',
-                      icon: '📊',
-                    },
-                    { value: 'month', label: '1月', days: '30天', icon: '📋' },
-                    { value: 'week', label: '1周', days: '7天', icon: '📝' },
-                  ].map((type) => (
-                    <button
-                      key={type.value}
-                      type='button'
-                      onClick={() => setNewKeyType(type.value as any)}
-                      className={`p-3 rounded-xl transition-all duration-200 ${
-                        newKeyType === type.value
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      <div className='text-2xl mb-1'>{type.icon}</div>
-                      <div className='text-sm font-bold'>{type.label}</div>
-                      <div className='text-xs opacity-80'>{type.days}</div>
-                    </button>
-                  ))}
-                </div>
+                <select
+                  value={newKeyType}
+                  onChange={(e) => setNewKeyType(e.target.value as any)}
+                  className='w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-900 dark:text-white'
+                >
+                  <option value='year'>1年（365天）</option>
+                  <option value='quarter'>1季（90天）</option>
+                  <option value='month'>1月（30天）</option>
+                  <option value='week'>1周（7天）</option>
+                </select>
               </div>
 
               {/* 生成数量 */}
