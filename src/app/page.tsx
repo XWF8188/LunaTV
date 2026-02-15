@@ -159,6 +159,39 @@ function HomeClient() {
     showAnnouncement: false,
   });
 
+  // 卡密信息状态
+  const [cardKeyInfo, setCardKeyInfo] = useState<any>(null);
+  const [loadingCardKey, setLoadingCardKey] = useState(false);
+
+  // 获取卡密信息
+  useEffect(() => {
+    const fetchCardKeyInfo = async () => {
+      const authInfo = getAuthInfoFromBrowserCookie();
+      if (!authInfo?.username) {
+        return;
+      }
+
+      setLoadingCardKey(true);
+      try {
+        const response = await fetch('/api/user/cardkey');
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        if (data.hasCardKey && data.cardKeyInfo) {
+          setCardKeyInfo(data.cardKeyInfo);
+        }
+      } catch (error) {
+        console.error('获取卡密信息失败:', error);
+      } finally {
+        setLoadingCardKey(false);
+      }
+    };
+
+    fetchCardKeyInfo();
+  }, []);
+
   const { announcement } = useSite();
 
   // 解构状态以便使用
@@ -708,7 +741,7 @@ function HomeClient() {
       <TelegramWelcomeModal />
 
       <div className='overflow-visible -mt-6 md:mt-0 pb-32 md:pb-safe-bottom'>
-        {/* 欢迎横幅 - 卡片式用户信息 */}
+        {/* 欢迎横幅 - 卡片式用户信息 + 卡密到期时间 */}
         <div className='mb-8 card-container p-6 sm:p-8'>
           <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
             <div className='flex-1 min-w-0'>
@@ -726,11 +759,58 @@ function HomeClient() {
                   <span className='text-2xl'>👋</span>
                 </h2>
                 <p className='text-sm sm:text-base text-gray-500 dark:text-gray-400 animate-slide-in-up animate-delay-100'>
-                  {username
-                    ? '欢迎回来，开始您的观影之旅'
-                    : '登录后解锁更多精彩内容'}
+                  {username ? '欢迎回来，开始您的观影之旅' : '登录后解锁更多精彩内容'}
                 </p>
+
+                {/* 卡密到期时间 */}
+                {!loadingCardKey && cardKeyInfo && cardKeyInfo.expiresAt && (
+                  <div className='flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300 animate-slide-in-up animate-delay-200'>
+                    <span className='flex items-center gap-1'>
+                      <span>📅</span>
+                      <span>卡密到期:</span>
+                    </span>
+                    <span className='font-semibold text-amber-600 dark:text-amber-400'>
+                      {new Date(cardKeyInfo.expiresAt).toLocaleDateString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                )}
+                {loadingCardKey && (
+                  <div className='flex items-center gap-2 text-xs sm:text-sm text-gray-400 animate-pulse-soft'>
+                    <span>⏳</span>
+                    <span>加载卡密信息...</span>
+                  </div>
+                )}
               </div>
+
+              {/* 快捷操作 */}
+              <div className='flex gap-3 animate-slide-in-up animate-delay-300'>
+                <Link
+                  href='/settings'
+                  className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
+                >
+                  <span>⚙️</span>
+                  <span>设置</span>
+                </Link>
+                <Link
+                  href='/favorites'
+                  className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-md'
+                >
+                  <span>❤️</span>
+                  <span>收藏</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* 装饰图标 - 卡片式 */}
+            <div className='hidden md:flex items-center justify-center shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg float-gentle'>
+              <Film className='w-8 h-8 text-white' />
+            </div>
+          </div>
+        </div>
 
               {/* 快捷操作 */}
               <div className='flex gap-3 animate-slide-in-up animate-delay-200'>
