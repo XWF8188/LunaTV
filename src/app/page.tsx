@@ -742,14 +742,6 @@ function HomeClient() {
           </div>
         </div>
 
-              {/* 装饰图标 - 简洁版 */}
-              <div className='hidden md:flex items-center justify-center shrink-0 w-10 h-10 rounded-full bg-white/10'>
-                <Film className='w-5 h-5 text-white' />
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* 顶部 Tab 切换 - AI 按钮已移至右上角导航栏 */}
         <div className='mb-8 flex items-center justify-center'>
           <CapsuleSwitch
