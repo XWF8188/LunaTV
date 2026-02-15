@@ -1732,16 +1732,6 @@ export abstract class BaseRedisStorage implements IStorage {
       // 解析 Hash 中的 cardKey
       try {
         userCardKeyInfo = JSON.parse(userInfo.cardKey as string);
-        console.log('getFullUserCardKey - parsed cardKey from hash:', userCardKeyInfo);
-      } catch (error) {
-        console.error('getFullUserCardKey - 解析 cardKey 失败:', error);
-        return null;
-      }
-    }
-
-      // 解析 Hash 中的 cardKey
-      try {
-        userCardKeyInfo = JSON.parse(userInfo.cardKey as string);
         console.log(
           'getFullUserCardKey - parsed cardKey from hash:',
           userCardKeyInfo,
