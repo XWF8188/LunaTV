@@ -140,22 +140,19 @@ export async function POST(req: NextRequest) {
     if (cardKey && cardKey.trim()) {
       console.log('尝试绑定卡密:', cardKey);
       try {
-        const bindResult = await cardKeyService.bindCardKeyToUser(cardKey, username);
+        const bindResult = await cardKeyService.bindCardKeyToUser(
+          cardKey,
+          username,
+        );
         console.log('卡密绑定结果:', bindResult);
-        
+
         if (!bindResult.success) {
           cardKeyError = bindResult.error || '卡密绑定失败';
           console.log('卡密错误:', cardKeyError);
-          // 继续执行,但记录错误
         }
       } catch (error) {
         console.error('卡密绑定异常:', error);
         cardKeyError = '卡密绑定失败';
-      }
-    }
-      } catch (error) {
-        console.error('卡密绑定异常:', error);
-        return NextResponse.json({ error: '卡密绑定失败' }, { status: 401 });
       }
     }
 
@@ -194,27 +191,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '用户被封禁' }, { status: 401 });
     }
 
-     // 校验用户密码（V1 和 V2）
-     let pass = false;
-     let userRole = 'user';
+    // 校验用户密码（V1 和 V2）
+    let pass = false;
+    let userRole = 'user';
 
-     try {
-       // 先尝试 V1 验证
-       pass = await db.verifyUser(username, password);
-     } catch (err) {
-       // 如果 V1 验证失败，尝试 V2 验证
-       console.log('V1 验证失败，尝试 V2 验证');
-       pass = await db.verifyUserV2(username, password);
-     }
+    try {
+      // 先尝试 V1 验证
+      pass = await db.verifyUser(username, password);
+    } catch (err) {
+      // 如果 V1 验证失败，尝试 V2 验证
+      console.log('V1 验证失败，尝试 V2 验证');
+      pass = await db.verifyUserV2(username, password);
+    }
 
-     if (!pass) {
-       return NextResponse.json({ error: '密码错误' }, { status: 401 });
-     }
+    if (!pass) {
+      return NextResponse.json({ error: '密码错误' }, { status: 401 });
+    }
 
-     // 如果卡密绑定失败，返回卡密错误
-     if (cardKeyError) {
-       return NextResponse.json({ error: cardKeyError }, { status: 401 });
-     }
+    // 如果卡密绑定失败，返回卡密错误
+    if (cardKeyError) {
+      return NextResponse.json({ error: cardKeyError }, { status: 401 });
+    }
 
     // 检查卡密是否过期（管理员除外）
     if (userRole !== 'owner' && userRole !== 'admin') {
