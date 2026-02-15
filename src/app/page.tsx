@@ -746,7 +746,7 @@ function HomeClient() {
           <div className='flex flex-col gap-1'>
             {/* 用户信息 */}
             <div className='flex flex-col gap-1'>
-              <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white animate-slide-in-up flex items-center gap-2 flex-wrap'>
+              <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 dark:text-orange-100 animate-slide-in-up flex items-center gap-2 flex-wrap'>
                 <span className='bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent'>
                   {greeting}
                 </span>
@@ -846,27 +846,27 @@ function HomeClient() {
                     项
                   </span>
                   {favoriteStats.movie > 0 && (
-                    <span className='px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full'>
+                    <span className='px-3 py-1 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded-full'>
                       电影 {favoriteStats.movie}
                     </span>
                   )}
                   {favoriteStats.tv > 0 && (
-                    <span className='px-3 py-1 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full'>
+                    <span className='px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-full'>
                       剧集 {favoriteStats.tv}
                     </span>
                   )}
                   {favoriteStats.anime > 0 && (
-                    <span className='px-3 py-1 bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-300 rounded-full'>
+                    <span className='px-3 py-1 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 rounded-full'>
                       动漫 {favoriteStats.anime}
                     </span>
                   )}
                   {favoriteStats.shortdrama > 0 && (
-                    <span className='px-3 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 rounded-full'>
+                    <span className='px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-full'>
                       短剧 {favoriteStats.shortdrama}
                     </span>
                   )}
                   {favoriteStats.live > 0 && (
-                    <span className='px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-full'>
+                    <span className='px-3 py-1 bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-300 rounded-full'>
                       直播 {favoriteStats.live}
                     </span>
                   )}
@@ -895,7 +895,7 @@ function HomeClient() {
                       onClick={() => setFavoriteFilter(key)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                         favoriteFilter === key
-                          ? 'bg-linear-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105'
+                          ? 'bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-lg scale-105'
                           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
@@ -922,7 +922,7 @@ function HomeClient() {
                         onClick={() => setFavoriteSortBy(key)}
                         className={`px-3 py-1 rounded-md transition-colors ${
                           favoriteSortBy === key
-                            ? 'bg-blue-500 text-white'
+                            ? 'bg-orange-500 text-white'
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                       >
@@ -1350,7 +1350,7 @@ function HomeClient() {
                   <SectionTitle
                     title='热门剧集'
                     icon={Tv}
-                    iconColor='text-blue-500'
+                    iconColor='text-orange-500'
                   />
                   <Link
                     href='/douban?type=tv'
@@ -1561,13 +1561,13 @@ function HomeClient() {
             }}
           >
             <div className='mb-4'>
-              <h3 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-white border-b border-green-500 pb-1'>
+              <h3 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-orange-100 border-b border-amber-500 pb-1'>
                 提示
               </h3>
             </div>
             <div className='mb-6'>
-              <div className='relative overflow-hidden rounded-lg mb-4 bg-green-50 dark:bg-green-900/20'>
-                <div className='absolute inset-y-0 left-0 w-1.5 bg-green-500 dark:bg-green-400'></div>
+              <div className='relative overflow-hidden rounded-lg mb-4 bg-amber-50 dark:bg-amber-900/20'>
+                <div className='absolute inset-y-0 left-0 w-1.5 bg-amber-500 dark:bg-amber-400'></div>
                 <p className='ml-4 text-gray-600 dark:text-gray-300 leading-relaxed'>
                   {announcement}
                 </p>
@@ -1575,7 +1575,7 @@ function HomeClient() {
             </div>
             <button
               onClick={() => handleCloseAnnouncement(announcement)}
-              className='w-full rounded-lg bg-linear-to-r from-green-600 to-green-700 px-4 py-3 text-white font-medium shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 transition-all duration-300 transform hover:-translate-y-0.5'
+              className='w-full rounded-lg bg-linear-to-r from-orange-600 to-amber-600 px-4 py-3 text-white font-medium shadow-md hover:shadow-lg hover:from-orange-700 hover:to-amber-700 dark:from-orange-600 dark:to-amber-600 dark:hover:from-orange-700 dark:hover:to-amber-700 transition-all duration-300 transform hover:-translate-y-0.5'
             >
               我知道了
             </button>
