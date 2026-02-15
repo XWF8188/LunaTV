@@ -807,7 +807,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     return (
       <>
         <div
-          className='@container group relative w-full rounded-md bg-transparent cursor-pointer transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-gray-200/50'
+          className='@container group relative w-full rounded-2xl bg-transparent cursor-pointer'
           onClick={handleClick}
           {...longPressProps}
           style={
@@ -849,7 +849,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         >
           {/* 海报容器 */}
           <div
-            className={`relative aspect-[2/3] overflow-hidden rounded-md ${origin === 'live' ? 'ring-1 ring-emerald-500/50 dark:ring-emerald-400/50' : ''} bg-gray-100 dark:bg-gray-800`}
+            className={`relative aspect-[2/3] overflow-hidden rounded-2xl ${origin === 'live' ? 'ring-2 ring-indigo-500/50' : ''} card-shimmer-effect`}
             style={
               {
                 WebkitUserSelect: 'none',
@@ -934,9 +934,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               }}
             />
 
-            {/* 悬浮遮罩 - 简洁版 */}
+            {/* 悬浮遮罩 - 玻璃态 */}
             <div
-              className='absolute inset-0 bg-black/40 transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100'
+              className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out backdrop-blur-[2px]'
               style={
                 {
                   WebkitUserSelect: 'none',
@@ -976,11 +976,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                     </span>
                   </div>
                 ) : (
-                  // 正常内容 - 显示播放按钮 - 爱奇艺绿色
+                  // 正常内容 - 显示播放按钮 - 紫色主题
                   <PlayCircleIcon
-                    size={48}
-                    strokeWidth={1}
-                    className='text-white fill-emerald-500/90 transition-all duration-300 ease-out hover:fill-emerald-500 hover:scale-110'
+                    size={52}
+                    strokeWidth={1.5}
+                    className='text-white fill-indigo-500/90 transition-all duration-500 ease-out hover:fill-indigo-600 hover:scale-110 drop-shadow-lg'
                     style={
                       {
                         WebkitUserSelect: 'none',
