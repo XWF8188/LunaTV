@@ -163,7 +163,7 @@ function RegisterPageClient() {
                   {disabledReason || '管理员已关闭用户注册功能'}
                 </p>
               </div>
-              <p className='text-orange-500/40 text-sm">
+              <p className="text-orange-500/40 text-sm">
                 如需注册账户，请联系网站管理员
               </p>
               <button
@@ -220,7 +220,7 @@ function RegisterPageClient() {
           <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
             <div className="group">
               <label
-                htmlFor='username'
+                htmlFor="username"
                 className="block text-sm font-medium text-orange-900/80 mb-2"
               >
                 用户名
@@ -230,11 +230,11 @@ function RegisterPageClient() {
                   <UserPlus className="h-5 w-5 text-orange-300 group-focus-within:text-orange-500 transition-colors" />
                 </div>
                 <input
-                  id='username'
-                  type='text'
-                  autoComplete='username'
+                  id="username"
+                  type="text"
+                  autoComplete="username"
                   className="block w-full pl-12 pr-4 py-4 rounded-2xl border border-orange-200 bg-white/60 text-orange-900 shadow-lg ring-2 ring-orange-200 focus:ring-orange-500 focus:outline-none focus:bg-white/10 placeholder:text-orange-300 transition-all duration-300 text-base"
-                  placeholder='3-20位字母数字下划线'
+                  placeholder="3-20位字母数字下划线"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -243,7 +243,7 @@ function RegisterPageClient() {
 
             <div className="group">
               <label
-                htmlFor='password'
+                htmlFor="password"
                 className="block text-sm font-medium text-orange-900/80 mb-2"
               >
                 密码
@@ -253,11 +253,11 @@ function RegisterPageClient() {
                   <Lock className="h-5 w-5 text-orange-300 group-focus-within:text-orange-500 transition-colors" />
                 </div>
                 <input
-                  id='password'
-                  type='password'
-                  autoComplete='new-password'
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
                   className="block w-full pl-12 pr-4 py-4 rounded-2xl border border-orange-200 bg-white/60 text-orange-900 shadow-lg ring-2 ring-orange-200 focus:ring-orange-500 focus:outline-none focus:bg-white/10 placeholder:text-orange-300 transition-all duration-300 text-base"
-                  placeholder='至少6位字符'
+                  placeholder="至少6位字符"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -266,7 +266,7 @@ function RegisterPageClient() {
 
             <div className="group">
               <label
-                htmlFor='confirmPassword'
+                htmlFor="confirmPassword"
                 className="block text-sm font-medium text-orange-900/80 mb-2"
               >
                 确认密码
@@ -276,11 +276,11 @@ function RegisterPageClient() {
                   <Shield className="h-5 w-5 text-orange-300 group-focus-within:text-orange-500 transition-colors" />
                 </div>
                 <input
-                  id='confirmPassword'
-                  type='password'
-                  autoComplete='new-password'
+                  id="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
                   className="block w-full pl-12 pr-4 py-4 rounded-2xl border border-orange-200 bg-white/60 text-orange-900 shadow-lg ring-2 ring-orange-200 focus:ring-orange-500 focus:outline-none focus:bg-white/10 placeholder:text-orange-300 transition-all duration-300 text-base"
-                  placeholder='再次输入密码'
+                  placeholder="再次输入密码"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
@@ -289,7 +289,7 @@ function RegisterPageClient() {
 
             <div className="group">
               <label
-                htmlFor='cardKey'
+                htmlFor="cardKey"
                 className="block text-sm font-medium text-orange-900/80 mb-2"
               >
                 卡密 <span className="text-orange-600">（可选）</span>
@@ -299,11 +299,11 @@ function RegisterPageClient() {
                   <Sparkles className="h-5 w-5 text-orange-300 group-focus-within:text-orange-500 transition-colors" />
                 </div>
                 <input
-                  id='cardKey'
-                  type='text'
-                  autoComplete='off'
+                  id="cardKey"
+                  type="text"
+                  autoComplete="off"
                   className="block w-full pl-12 pr-4 py-4 rounded-2xl border border-orange-200 bg-white/60 text-orange-900 shadow-lg ring-2 ring-orange-200 focus:ring-orange-500 focus:outline-none focus:bg-white/10 placeholder:text-orange-300 transition-all duration-300 text-base"
-                  placeholder='如有卡密请输入'
+                  placeholder="如有卡密请输入"
                   value={cardKey}
                   onChange={(e) => setCardKey(e.target.value)}
                 />
@@ -328,7 +328,7 @@ function RegisterPageClient() {
             )}
 
             <button
-              type='submit'
+              type="submit"
               disabled={
                 !username ||
                 !password ||
@@ -355,7 +355,7 @@ function RegisterPageClient() {
               已有账户？
             </p>
             <a
-              href='/login'
+              href="/login"
               className="group inline-flex items-center justify-center gap-2 w-full px-6 py-4 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-800/80 hover:text-orange-900 font-semibold transition-all duration-300 hover:scale-105"
             >
               <span>立即登录</span>
