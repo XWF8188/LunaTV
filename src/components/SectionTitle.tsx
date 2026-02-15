@@ -12,7 +12,7 @@ interface SectionTitleProps {
 export default function SectionTitle({
   title,
   icon: Icon,
-  iconColor = 'text-violet-500',
+  iconColor = 'text-orange-500',
   viewAllLink,
 }: SectionTitleProps) {
   return (
@@ -26,13 +26,15 @@ export default function SectionTitle({
           </div>
         )}
 
-        <h2 className='text-2xl sm:text-3xl font-bold text-white'>{title}</h2>
+        <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 dark:text-orange-100'>
+          {title}
+        </h2>
       </div>
 
       {viewAllLink && (
         <Link
           href={viewAllLink}
-          className='flex items-center gap-1 text-sm font-medium text-white/60 hover:text-white/90 transition-colors duration-200'
+          className='flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-800 dark:text-orange-200 dark:hover:text-orange-100 transition-colors duration-200'
         >
           <span>查看全部</span>
           <ChevronRight
