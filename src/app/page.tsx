@@ -791,28 +791,10 @@ function HomeClient() {
                 )}
               </div>
 
-              {/* 快捷操作 */}
-              <div className='flex gap-3 animate-slide-in-up animate-delay-300'>
-                <Link
-                  href='/settings'
-                  className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
-                >
-                  <span>⚙️</span>
-                  <span>设置</span>
-                </Link>
-                <Link
-                  href='/favorites'
-                  className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-md'
-                >
-                  <span>❤️</span>
-                  <span>收藏</span>
-                </Link>
+              {/* 装饰图标 - 卡片式 */}
+              <div className='hidden md:flex items-center justify-center shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg float-gentle'>
+                <Film className='w-8 h-8 text-white' />
               </div>
-            </div>
-
-            {/* 装饰图标 - 卡片式 */}
-            <div className='hidden md:flex items-center justify-center shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg float-gentle'>
-              <Film className='w-8 h-8 text-white' />
             </div>
           </div>
         </div>
