@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const cardKeys = await db.storage.getUserCardKeys(authInfo.username);
+    const cardKeys = await db.getUserCardKeys(authInfo.username);
 
     return NextResponse.json({ cardKeys });
   } catch (error) {

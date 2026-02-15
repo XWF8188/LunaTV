@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
               await import('@/lib/invitation-points');
 
             // 获取邀请配置
-            const config = await db.storage.getInvitationConfig();
+            const config = await db.getInvitationConfig();
             if (config?.enabled) {
               // 检查IP是否已奖励过
               const clientIp =
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
                 );
 
                 // 记录IP奖励
-                await db.storage.createIPRewardRecord({
+                await db.createIPRewardRecord({
                   id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                   ipAddress: clientIp,
                   inviter,

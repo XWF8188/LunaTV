@@ -690,6 +690,148 @@ export class DbManager {
     const cardKeyInfo = await this.getUserCardKey(userName);
     return cardKeyInfo ? cardKeyInfo.isExpired : false;
   }
+
+  // ========== 积分和邀请系统 ==========
+
+  async getUserPoints(
+    userName: string,
+  ): Promise<import('./types').UserPoints | null> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getUserPoints === 'function') {
+      return (this.storage as any).getUserPoints(userName);
+    }
+    return null;
+  }
+
+  async updateUserPoints(points: import('./types').UserPoints): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).updateUserPoints === 'function') {
+      await (this.storage as any).updateUserPoints(points);
+    }
+  }
+
+  async addPointsRecord(record: import('./types').PointsRecord): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).addPointsRecord === 'function') {
+      await (this.storage as any).addPointsRecord(record);
+    }
+  }
+
+  async getPointsHistory(
+    userName: string,
+    page: number = 1,
+    pageSize: number = 20,
+  ): Promise<import('./types').PointsRecord[]> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getPointsHistory === 'function') {
+      return (this.storage as any).getPointsHistory(userName, page, pageSize);
+    }
+    return [];
+  }
+
+  async getInvitationByInvitee(
+    invitee: string,
+  ): Promise<import('./types').Invitation | null> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getInvitationByInvitee === 'function') {
+      return (this.storage as any).getInvitationByInvitee(invitee);
+    }
+    return null;
+  }
+
+  async getInvitationsByInviter(
+    inviter: string,
+  ): Promise<import('./types').Invitation[]> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getInvitationsByInviter === 'function') {
+      return (this.storage as any).getInvitationsByInviter(inviter);
+    }
+    return [];
+  }
+
+  async createInvitation(
+    invitation: import('./types').Invitation,
+  ): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).createInvitation === 'function') {
+      await (this.storage as any).createInvitation(invitation);
+    }
+  }
+
+  async updateInvitation(
+    id: string,
+    updates: Partial<import('./types').Invitation>,
+  ): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).updateInvitation === 'function') {
+      await (this.storage as any).updateInvitation(id, updates);
+    }
+  }
+
+  async getIPRewardRecord(
+    ipAddress: string,
+  ): Promise<import('./types').IPRewardRecord | null> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getIPRewardRecord === 'function') {
+      return (this.storage as any).getIPRewardRecord(ipAddress);
+    }
+    return null;
+  }
+
+  async createIPRewardRecord(
+    record: import('./types').IPRewardRecord,
+  ): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).createIPRewardRecord === 'function') {
+      await (this.storage as any).createIPRewardRecord(record);
+    }
+  }
+
+  async getInvitationConfig(): Promise<
+    import('./types').InvitationConfig | null
+  > {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getInvitationConfig === 'function') {
+      return (this.storage as any).getInvitationConfig();
+    }
+    return null;
+  }
+
+  async setInvitationConfig(
+    config: import('./types').InvitationConfig,
+  ): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).setInvitationConfig === 'function') {
+      await (this.storage as any).setInvitationConfig(config);
+    }
+  }
+
+  async getUserCardKeys(
+    userName: string,
+  ): Promise<import('./types').UserCardKey[]> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getUserCardKeys === 'function') {
+      return (this.storage as any).getUserCardKeys(userName);
+    }
+    return [];
+  }
+
+  async addUserCardKey(cardKey: import('./types').UserCardKey): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).addUserCardKey === 'function') {
+      await (this.storage as any).addUserCardKey(cardKey);
+    }
+  }
+
+  async updateUserCardKey(
+    id: string,
+    updates: Partial<import('./types').UserCardKey>,
+  ): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).updateUserCardKey === 'function') {
+      await (this.storage as any).updateUserCardKey(id, updates);
+    }
+  }
 }
 
 // 导出默认实例
