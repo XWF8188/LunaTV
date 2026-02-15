@@ -123,12 +123,12 @@ body {
 }
 
 html:not(.dark) body {
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
   background-attachment: fixed;
 }
 
 .dark body {
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(180deg, #1c1917 0%, #292524 100%);
   background-attachment: fixed;
 }
 
@@ -145,12 +145,12 @@ body {
 }
 
 html:not(.dark) body {
-  background: linear-gradient(180deg, #05050a 0%, #0a0a0f 100%);
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
   background-attachment: fixed;
 }
 
 .dark body {
-  background: linear-gradient(180deg, #05050a 0%, #0a0a0f 100%);
+  background: linear-gradient(180deg, #1c1917 0%, #292524 100%);
   background-attachment: fixed;
 }
 
@@ -168,7 +168,7 @@ html:not(.dark) body {
 
 /* 深色模式背景 */
 .dark body {
-  background: linear-gradient(135deg, #0a0a0a 0%, #171717 100%);
+  background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
   background-attachment: fixed;
 }
 
