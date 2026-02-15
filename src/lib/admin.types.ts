@@ -197,6 +197,12 @@ export interface AdminConfig {
     enabled: boolean; // 是否启用卡密系统（默认 false）
     requireCardKeyOnRegister: boolean; // 注册时是否必须绑定卡密（默认 true）
   };
+  InvitationConfig?: {
+    enabled: boolean; // 是否启用邀请奖励系统（默认 false）
+    rewardPoints: number; // 邀请一人获得的积分（默认 100）
+    redeemThreshold: number; // 兑换一周卡密所需积分（默认 300）
+    cardKeyType: 'year' | 'quarter' | 'month' | 'week'; // 兑换的卡密类型（默认 week）
+  };
 }
 
 export interface AdminConfigResult {

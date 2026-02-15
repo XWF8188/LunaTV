@@ -77,7 +77,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { username, password, confirmPassword, cardKey } = await req.json();
+    const { username, password, confirmPassword, cardKey, invitationCode } =
+      await req.json();
 
     // 验证卡密
     if (!cardKey || typeof cardKey !== 'string' || cardKey.trim() === '') {
@@ -157,8 +158,19 @@ export async function POST(req: NextRequest) {
           ? config.SiteConfig.DefaultUserTags
           : undefined;
 
-      // 如果有卡密或有默认用户组，使用 V2 注册；否则使用 V1 注册（保持兼容性）
-      if (cardKey || defaultTags) {
+      // 如果有卡密或有默认用户组或邀请码，使用 V2 注册；否则使用 V1 注册（保持兼容性）
+      if (cardKey || defaultTags || invitationCode) {
+        // 验证邀请码
+        let inviter: string | undefined;
+        if (invitationCode) {
+          const { InvitationService } = await import('@/lib/invitation-points');
+          const validation =
+            await InvitationService.validateInvitationCode(invitationCode);
+          if (validation.valid && validation.inviter) {
+            inviter = validation.inviter;
+          }
+        }
+
         // V2 注册（支持卡密和 tags）
         await db.createUserV2(
           username,
@@ -168,7 +180,59 @@ export async function POST(req: NextRequest) {
           undefined, // oidcSub
           undefined, // enabledApis
           cardKey, // 注册卡密
+          inviter, // 邀请人
         );
+
+        // 处理邀请奖励
+        if (inviter) {
+          try {
+            const { InvitationService, PointsService } =
+              await import('@/lib/invitation-points');
+
+            // 获取邀请配置
+            const config = await db.storage.getInvitationConfig();
+            if (config?.enabled) {
+              // 检查IP是否已奖励过
+              const clientIp =
+                req.headers.get('x-forwarded-for')?.split(',')[0] ||
+                req.headers.get('x-real-ip') ||
+                'unknown';
+
+              const ipRewarded =
+                await InvitationService.checkIPRewarded(clientIp);
+
+              if (!ipRewarded) {
+                // 创建推荐关系
+                await InvitationService.createReferral(
+                  inviter,
+                  username,
+                  invitationCode,
+                  clientIp,
+                );
+
+                // 发放积分奖励
+                await PointsService.addPoints(
+                  inviter,
+                  config.rewardPoints,
+                  '邀请好友注册',
+                  username,
+                );
+
+                // 记录IP奖励
+                await db.storage.createIPRewardRecord({
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  ipAddress: clientIp,
+                  inviter,
+                  invitee: username,
+                  rewardTime: Date.now(),
+                });
+              }
+            }
+          } catch (error) {
+            console.error('处理邀请奖励失败:', error);
+            // 不影响注册流程，只记录错误
+          }
+        }
       } else {
         // V1 注册（无卡密和无tags，保持现有行为）
         await db.registerUser(username, password);
