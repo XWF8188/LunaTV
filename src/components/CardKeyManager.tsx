@@ -246,54 +246,49 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
           <button
             type='button'
             onClick={() => setShowCreateModal(true)}
-            className='group relative inline-flex items-center px-5 py-2.5 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white rounded-xl transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-95'
+            className='inline-flex items-center px-5 py-2.5 text-white bg-gradient-to-br from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-95'
           >
-            <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl' />
-            <Plus className='w-4 h-4 mr-2 relative z-10' />
-            <span className='font-semibold relative z-10'>创建卡密</span>
+            <Plus className='w-4 h-4 mr-2' />
+            <span className='font-semibold'>创建卡密</span>
           </button>
           <button
             type='button'
             onClick={handleExportCardKeys}
-            className='group relative inline-flex items-center px-4 py-2.5 bg-gradient-to-br from-emerald-500 via-green-500 to-teal-500 hover:from-emerald-600 hover:via-green-600 hover:to-teal-600 text-white rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95'
+            className='inline-flex items-center px-4 py-2.5 text-white bg-gradient-to-br from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95'
           >
-            <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl' />
-            <Download className='w-4 h-4 mr-2 relative z-10' />
-            <span className='font-medium relative z-10'>导出</span>
+            <Download className='w-4 h-4 mr-2' />
+            <span className='font-medium'>导出</span>
           </button>
           <button
             type='button'
             onClick={handleCleanupExpired}
             disabled={loading}
-            className='group relative inline-flex items-center px-4 py-2.5 bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 text-white rounded-xl transition-all duration-300 shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none'
+            className='inline-flex items-center px-4 py-2.5 text-white bg-gradient-to-br from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 rounded-xl transition-all duration-300 shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none'
           >
-            <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl' />
             <RefreshCw
-              className={`w-4 h-4 mr-2 relative z-10 ${loading ? 'animate-spin' : ''}`}
+              className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}
             />
-            <span className='font-medium relative z-10'>清理过期</span>
+            <span className='font-medium'>清理过期</span>
           </button>
           <button
             type='button'
             onClick={fetchCardKeys}
             disabled={loading}
-            className='group relative inline-flex items-center px-4 py-2.5 bg-gradient-to-br from-gray-500 via-slate-500 to-zinc-500 hover:from-gray-600 hover:via-slate-600 hover:to-zinc-600 text-white rounded-xl transition-all duration-300 shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none'
+            className='inline-flex items-center px-4 py-2.5 text-white bg-gradient-to-br from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 rounded-xl transition-all duration-300 shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none'
           >
-            <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl' />
             <RefreshCw
-              className={`w-4 h-4 mr-2 relative z-10 ${loading ? 'animate-spin' : ''}`}
+              className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}
             />
-            <span className='font-medium relative z-10'>刷新</span>
+            <span className='font-medium'>刷新</span>
           </button>
           {onClose && (
             <button
               type='button'
               onClick={onClose}
-              className='group relative inline-flex items-center px-4 py-2.5 bg-gradient-to-br from-gray-400 via-slate-400 to-zinc-400 hover:from-gray-500 hover:via-slate-500 hover:to-zinc-500 text-white rounded-xl transition-all duration-300 shadow-lg shadow-gray-400/30 hover:shadow-xl hover:shadow-gray-400/40 hover:-translate-y-0.5 active:scale-95'
+              className='inline-flex items-center px-4 py-2.5 text-white bg-gradient-to-br from-gray-400 to-slate-400 hover:from-gray-500 hover:to-slate-500 rounded-xl transition-all duration-300 shadow-lg shadow-gray-400/30 hover:shadow-xl hover:shadow-gray-400/40 hover:-translate-y-0.5 active:scale-95'
             >
-              <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl' />
-              <X className='w-4 h-4 mr-2 relative z-10' />
-              <span className='font-medium relative z-10'>关闭</span>
+              <X className='w-4 h-4 mr-2' />
+              <span className='font-medium'>关闭</span>
             </button>
           )}
         </div>
@@ -576,29 +571,25 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
                 <button
                   type='button'
                   onClick={() => setShowCreateModal(false)}
-                  className='group relative inline-flex items-center px-6 py-3 bg-gradient-to-br from-gray-400 via-slate-400 to-zinc-400 hover:from-gray-500 hover:via-slate-500 hover:to-zinc-500 text-white rounded-xl transition-all duration-300 shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 active:scale-95 overflow-hidden'
+                  className='inline-flex items-center px-6 py-3 text-white bg-gradient-to-br from-gray-400 to-slate-400 hover:from-gray-500 hover:to-slate-500 rounded-xl transition-all duration-300 shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 hover:-translate-y-0.5 active:scale-95'
                 >
-                  <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
-                  <span className='font-medium relative z-10'>取消</span>
+                  <span className='font-medium'>取消</span>
                 </button>
                 <button
                   type='button'
                   onClick={handleCreateCardKeys}
                   disabled={createLoading}
-                  className='group relative inline-flex items-center px-8 py-3 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white rounded-xl transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none'
+                  className='inline-flex items-center px-8 py-3 text-white bg-gradient-to-br from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none'
                 >
-                  <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
                   {createLoading ? (
                     <>
-                      <RefreshCw className='w-5 h-5 mr-2 relative z-10 animate-spin' />
-                      <span className='font-medium relative z-10'>
-                        创建中...
-                      </span>
+                      <RefreshCw className='w-5 h-5 mr-2 animate-spin' />
+                      <span className='font-medium'>创建中...</span>
                     </>
                   ) : (
                     <>
-                      <Plus className='w-5 h-5 mr-2 relative z-10' />
-                      <span className='font-semibold relative z-10'>创建</span>
+                      <Plus className='w-5 h-5 mr-2' />
+                      <span className='font-semibold'>创建</span>
                     </>
                   )}
                 </button>
@@ -637,9 +628,9 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
               <button
                 type='button'
                 onClick={() => setShowCreatedKeys(false)}
-                className='group relative inline-flex items-center p-2.5 hover:bg-gradient-to-br hover:from-gray-100 hover:to-slate-100 dark:hover:from-gray-800 dark:hover:to-slate-800 rounded-xl transition-all duration-300 hover:shadow-md hover:shadow-gray-500/10'
+                className='inline-flex items-center p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all duration-300'
               >
-                <X className='w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors' />
+                <X className='w-5 h-5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors' />
               </button>
             </div>
 
@@ -658,11 +649,10 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
               <button
                 type='button'
                 onClick={copyAllCardKeys}
-                className='group relative inline-flex items-center justify-center w-full px-6 py-3.5 bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-500 hover:from-blue-600 hover:via-indigo-600 hover:to-violet-600 text-white rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 overflow-hidden'
+                className='inline-flex items-center justify-center w-full px-6 py-3.5 text-white bg-gradient-to-br from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95'
               >
-                <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
-                <Copy className='w-5 h-5 mr-3 relative z-10' />
-                <span className='font-semibold relative z-10'>
+                <Copy className='w-5 h-5 mr-3' />
+                <span className='font-semibold'>
                   复制全部卡密 ({createdKeys.length} 个)
                 </span>
               </button>
@@ -686,13 +676,10 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
                   <button
                     type='button'
                     onClick={() => copyCardKey(key)}
-                    className='group/btn relative inline-flex items-center px-4 py-2 bg-gradient-to-br from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl transition-all duration-300 shadow-md shadow-blue-500/30 hover:shadow-lg hover:shadow-blue-500/40 hover:scale-105 active:scale-95 overflow-hidden'
+                    className='inline-flex items-center px-4 py-2 text-white bg-gradient-to-br from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl transition-all duration-300 shadow-md shadow-blue-500/30 hover:shadow-lg hover:shadow-blue-500/40 hover:scale-105 active:scale-95'
                   >
-                    <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300' />
-                    <Copy className='w-4 h-4 mr-2 relative z-10' />
-                    <span className='font-medium text-sm relative z-10'>
-                      复制
-                    </span>
+                    <Copy className='w-4 h-4 mr-2' />
+                    <span className='font-medium text-sm'>复制</span>
                   </button>
                 </div>
               ))}
@@ -703,10 +690,9 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
               <button
                 type='button'
                 onClick={() => setShowCreatedKeys(false)}
-                className='group relative inline-flex items-center justify-center w-full px-6 py-3.5 bg-gradient-to-br from-gray-500 via-slate-500 to-zinc-500 hover:from-gray-600 hover:via-slate-600 hover:to-zinc-600 text-white rounded-xl transition-all duration-300 shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 hover:-translate-y-0.5 active:scale-95 overflow-hidden'
+                className='inline-flex items-center justify-center w-full px-6 py-3.5 text-white bg-gradient-to-br from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 rounded-xl transition-all duration-300 shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 hover:-translate-y-0.5 active:scale-95'
               >
-                <div className='absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
-                <span className='font-semibold relative z-10'>关闭</span>
+                <span className='font-semibold'>关闭</span>
               </button>
             </div>
           </div>
