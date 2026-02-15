@@ -437,13 +437,13 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
       {/* 精美创建卡密弹窗 */}
       {showCreateModal && (
         <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
-          <div className='relative bg-white/98 dark:bg-gray-900/98 backdrop-blur-3xl rounded-3xl p-8 max-w-lg w-full max-h-[90vh] shadow-2xl shadow-orange-500/20 border border-orange-200/30 dark:border-orange-800/30 animate-scale-in flex flex-col'>
+          <div className='relative bg-white/98 dark:bg-gray-900/98 backdrop-blur-3xl rounded-3xl p-8 max-w-lg w-full max-h-[85vh] shadow-2xl shadow-orange-500/20 border border-orange-200/30 dark:border-orange-800/30 animate-scale-in flex flex-col'>
             {/* 装饰性光晕 */}
-            <div className='absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-br from-orange-400 via-amber-400 to-yellow-400 rounded-full blur-3xl opacity-20 pointer-events-none' />
-            <div className='absolute -bottom-20 -right-20 w-40 h-40 bg-gradient-to-br from-amber-400 via-yellow-400 to-orange-400 rounded-full blur-3xl opacity-20 pointer-events-none' />
+            <div className='absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-br from-orange-400 via-amber-400 to-yellow-400 rounded-full blur-3xl opacity-20 pointer-events-none z-0' />
+            <div className='absolute -bottom-20 -right-20 w-40 h-40 bg-gradient-to-br from-amber-400 via-yellow-400 to-orange-400 rounded-full blur-3xl opacity-20 pointer-events-none z-0' />
 
             {/* 标题区域 */}
-            <div className='relative mb-8 shrink-0'>
+            <div className='relative mb-6 shrink-0 z-10'>
               <div className='flex items-center gap-4 mb-2'>
                 <div className='relative'>
                   <div className='absolute inset-0 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl blur-xl opacity-30 animate-pulse-soft' />
@@ -462,10 +462,10 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
               </div>
             </div>
 
-            <div className='relative space-y-6 flex-1 overflow-y-auto pr-2'>
+            <div className='relative space-y-4 flex-1 overflow-y-auto pr-2 min-h-0 z-10'>
               {/* 卡密类型选择 */}
               <div>
-                <label className='block text-sm font-bold tracking-wide text-gray-700 dark:text-gray-300 mb-3'>
+                <label className='block text-sm font-bold tracking-wide text-gray-700 dark:text-gray-300 mb-2'>
                   <span className='flex items-center gap-2'>卡密类型</span>
                 </label>
                 <div className='grid grid-cols-2 gap-3'>
@@ -518,7 +518,7 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
 
               {/* 生成数量 */}
               <div>
-                <label className='block text-sm font-bold tracking-wide text-gray-700 dark:text-gray-300 mb-3'>
+                <label className='block text-sm font-bold tracking-wide text-gray-700 dark:text-gray-300 mb-2'>
                   生成数量
                 </label>
                 <div className='relative'>
@@ -568,7 +568,7 @@ export default function CardKeyManager({ onClose }: CardKeyManagerProps) {
             </div>
 
             {/* 操作按钮 - 固定在底部 */}
-            <div className='relative pt-6 border-t border-gray-200/50 dark:border-gray-700/50 mt-6 shrink-0'>
+            <div className='relative pt-4 border-t border-gray-200/50 dark:border-gray-700/50 mt-4 shrink-0 z-10'>
               <div className='flex justify-end gap-3'>
                 <button
                   type='button'
