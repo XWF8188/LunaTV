@@ -1645,17 +1645,38 @@ export abstract class BaseRedisStorage implements IStorage {
   }
 
   async getUserCardKeyInfo(userName: string): Promise<UserCardKeyData | null> {
+    // 先尝试从 AdminConfig.Users 读取
     const config = await this.getAdminConfig();
-    if (!config) {
+    if (config) {
+      const user = config.UserConfig.Users.find((u) => u.username === userName);
+      if (user && user.cardKey) {
+        console.log('getUserCardKeyInfo - 从 AdminConfig.Users 读取成功');
+        return user.cardKey;
+      }
+    }
+
+    // 如果 AdminConfig.Users 中找不到，尝试从 Redis Hash 读取
+    console.log(
+      'getUserCardKeyInfo - AdminConfig.Users 中找不到，尝试从 Hash 读取',
+    );
+    const userInfo = await this.withRetry(() =>
+      this.client.hGetAll(this.userInfoKey(userName)),
+    );
+    console.log('getUserCardKeyInfo - userInfo from hash:', userInfo);
+
+    if (!userInfo || !userInfo.cardKey) {
+      console.log('getUserCardKeyInfo - Hash 中也没有 cardKey');
       return null;
     }
 
-    const user = config.UserConfig.Users.find((u) => u.username === userName);
-    if (!user || !user.cardKey) {
+    try {
+      const cardKeyInfo = JSON.parse(userInfo.cardKey as string);
+      console.log('getUserCardKeyInfo - 解析成功:', cardKeyInfo);
+      return cardKeyInfo;
+    } catch (error) {
+      console.error('getUserCardKeyInfo - 解析 cardKey 失败:', error);
       return null;
     }
-
-    return user.cardKey;
   }
 
   async updateUserCardKeyInfo(
