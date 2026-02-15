@@ -708,24 +708,47 @@ function HomeClient() {
       <TelegramWelcomeModal />
 
       <div className='overflow-visible -mt-6 md:mt-0 pb-32 md:pb-safe-bottom'>
-        {/* 欢迎横幅 - 卡片式清爽设计 */}
+        {/* 欢迎横幅 - 卡片式用户信息 */}
         <div className='mb-8 card-container p-6 sm:p-8'>
-          <div className='flex items-center justify-between gap-6'>
+          <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
             <div className='flex-1 min-w-0'>
-              <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-2 animate-slide-in-up flex items-center gap-3 flex-wrap'>
-                <span className='bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent'>
-                  {greeting}
-                </span>
-                {username && (
-                  <span className='text-amber-600 dark:text-amber-400'>
-                    ，{username}
+              {/* 用户信息 */}
+              <div className='flex flex-col gap-1 mb-3'>
+                <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white animate-slide-in-up flex items-center gap-2 flex-wrap'>
+                  <span className='bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent'>
+                    {greeting}
                   </span>
-                )}
-                <span className='text-2xl'>👋</span>
-              </h2>
-              <p className='text-base sm:text-lg text-gray-600 dark:text-gray-300 animate-slide-in-up animate-delay-100'>
-                发现精彩内容，享受观影时光
-              </p>
+                  {username && (
+                    <span className='text-amber-600 dark:text-amber-400'>
+                      ，{username}
+                    </span>
+                  )}
+                  <span className='text-2xl'>👋</span>
+                </h2>
+                <p className='text-sm sm:text-base text-gray-500 dark:text-gray-400 animate-slide-in-up animate-delay-100'>
+                  {username
+                    ? '欢迎回来，开始您的观影之旅'
+                    : '登录后解锁更多精彩内容'}
+                </p>
+              </div>
+
+              {/* 快捷操作 */}
+              <div className='flex gap-3 animate-slide-in-up animate-delay-200'>
+                <Link
+                  href='/settings'
+                  className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
+                >
+                  <span>⚙️</span>
+                  <span>设置</span>
+                </Link>
+                <Link
+                  href='/favorites'
+                  className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-md'
+                >
+                  <span>❤️</span>
+                  <span>收藏</span>
+                </Link>
+              </div>
             </div>
 
             {/* 装饰图标 - 卡片式 */}

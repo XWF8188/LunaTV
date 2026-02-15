@@ -3,8 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { CURRENT_VERSION } from '@/lib/version';
-
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -27,7 +25,9 @@ export default function OIDCRegisterPage() {
           setOidcInfo(data);
         } else {
           // session无效,跳转到登录页
-          router.replace('/login?error=' + encodeURIComponent('OIDC会话已过期'));
+          router.replace(
+            '/login?error=' + encodeURIComponent('OIDC会话已过期'),
+          );
         }
       } catch (error) {
         console.error('检查session失败:', error);
@@ -77,7 +77,9 @@ export default function OIDCRegisterPage() {
   if (!oidcInfo) {
     return (
       <div className='relative min-h-screen flex items-center justify-center px-3 sm:px-4'>
-        <div className='text-sm sm:text-base text-gray-500 dark:text-gray-400'>加载中...</div>
+        <div className='text-sm sm:text-base text-gray-500 dark:text-gray-400'>
+          加载中...
+        </div>
       </div>
     );
   }
@@ -87,14 +89,16 @@ export default function OIDCRegisterPage() {
       <div className='absolute top-3 right-3 sm:top-4 sm:right-4 z-20'>
         <ThemeToggle />
       </div>
-      <div className='relative z-10 w-full max-w-md rounded-2xl sm:rounded-3xl bg-gradient-to-b from-white/90 via-white/70 to-white/40 dark:from-zinc-900/90 dark:via-zinc-900/70 dark:to-zinc-900/40 backdrop-blur-xl shadow-2xl p-6 sm:p-10 dark:border dark:border-zinc-800'
+      <div
+        className='relative z-10 w-full max-w-md rounded-2xl sm:rounded-3xl bg-gradient-to-b from-white/90 via-white/70 to-white/40 dark:from-zinc-900/90 dark:via-zinc-900/70 dark:to-zinc-900/40 backdrop-blur-xl shadow-2xl p-6 sm:p-10 dark:border dark:border-zinc-800'
         style={{
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
         }}
       >
         {/* Fallback for browsers without backdrop-filter support */}
         <style jsx>{`
-          @supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
+          @supports (backdrop-filter: blur(12px)) or
+            (-webkit-backdrop-filter: blur(12px)) {
             div {
               background-color: transparent !important;
             }
@@ -134,7 +138,10 @@ export default function OIDCRegisterPage() {
 
         <form onSubmit={handleSubmit} className='space-y-5 sm:space-y-6'>
           <div>
-            <label htmlFor='username' className='block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2'>
+            <label
+              htmlFor='username'
+              className='block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2'
+            >
               选择用户名
             </label>
             <input
@@ -153,7 +160,9 @@ export default function OIDCRegisterPage() {
 
           {error && (
             <div className='p-2.5 sm:p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50'>
-              <p className='text-xs sm:text-sm text-red-600 dark:text-red-400'>{error}</p>
+              <p className='text-xs sm:text-sm text-red-600 dark:text-red-400'>
+                {error}
+              </p>
             </div>
           )}
 
@@ -177,10 +186,7 @@ export default function OIDCRegisterPage() {
           </div>
         </form>
 
-        {/* 版本信息 */}
-        <div className='mt-6 sm:mt-8 text-center text-[11px] sm:text-xs text-gray-500 dark:text-gray-400'>
-          v{CURRENT_VERSION}
-        </div>
+        {/* 版本信息 - 已隐藏 */}
       </div>
     </div>
   );
