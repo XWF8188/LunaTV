@@ -199,6 +199,36 @@ export interface IStorage {
     userName: string,
     info: import('./admin.types').UserCardKeyData,
   ): Promise<void>;
+
+  // ============ 积分和邀请系统相关 ============
+  // 积分相关方法
+  getUserPoints(userName: string): Promise<UserPoints | null>;
+  updateUserPoints(points: UserPoints): Promise<void>;
+  addPointsRecord(record: PointsRecord): Promise<void>;
+  getPointsHistory(
+    userName: string,
+    page?: number,
+    pageSize?: number,
+  ): Promise<PointsRecord[]>;
+
+  // 邀请相关方法
+  getInvitationByInvitee(invitee: string): Promise<Invitation | null>;
+  getInvitationsByInviter(inviter: string): Promise<Invitation[]>;
+  createInvitation(invitation: Invitation): Promise<void>;
+  updateInvitation(id: string, updates: Partial<Invitation>): Promise<void>;
+
+  // IP奖励记录
+  getIPRewardRecord(ipAddress: string): Promise<IPRewardRecord | null>;
+  createIPRewardRecord(record: IPRewardRecord): Promise<void>;
+
+  // 邀请配置
+  getInvitationConfig(): Promise<InvitationConfig | null>;
+  setInvitationConfig(config: InvitationConfig): Promise<void>;
+
+  // 用户卡密列表
+  getUserCardKeys(userName: string): Promise<UserCardKey[]>;
+  addUserCardKey(cardKey: UserCardKey): Promise<void>;
+  updateUserCardKey(id: string, updates: Partial<UserCardKey>): Promise<void>;
 }
 
 // 搜索结果数据结构
@@ -500,4 +530,82 @@ export interface CardKeyValidationResult {
   valid: boolean;
   cardKey?: CardKey;
   error?: string;
+}
+
+// ============ 积分和邀请系统相关类型 ============
+
+// 积分记录类型
+export type PointsRecordType = 'earn' | 'redeem';
+
+// 积分记录
+export interface PointsRecord {
+  id: string;
+  username: string;
+  type: PointsRecordType;
+  amount: number;
+  reason: string;
+  relatedUser?: string;
+  cardKeyId?: string;
+  createdAt: number;
+}
+
+// 用户积分
+export interface UserPoints {
+  username: string;
+  balance: number;
+  totalEarned: number;
+  totalRedeemed: number;
+  updatedAt: number;
+}
+
+// 邀请关系
+export interface Invitation {
+  id: string;
+  inviter: string;
+  invitee: string;
+  invitationCode: string;
+  ipAddress: string;
+  rewarded: boolean;
+  rewardTime?: number;
+  createdAt: number;
+}
+
+// IP奖励记录
+export interface IPRewardRecord {
+  id: string;
+  ipAddress: string;
+  inviter: string;
+  invitee: string;
+  rewardTime: number;
+}
+
+// 邀请配置
+export interface InvitationConfig {
+  rewardPoints: number;
+  redeemThreshold: number;
+  cardKeyType: CardKeyType;
+  updatedAt: number;
+}
+
+// 用户邀请信息
+export interface UserInvitationInfo {
+  code: string;
+  totalInvites: number;
+  totalRewards: number;
+  balance: number;
+}
+
+// 用户卡密扩展（包含来源信息）
+export interface UserCardKey {
+  id: string;
+  keyHash: string;
+  username: string;
+  type: CardKeyType;
+  status: CardKeyStatus;
+  source: 'invitation' | 'redeem' | 'manual';
+  createdAt: number;
+  expiresAt: number;
+  usedAt?: number;
+  usedBy?: string;
+  notes?: string;
 }

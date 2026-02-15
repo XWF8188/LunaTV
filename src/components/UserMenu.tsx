@@ -15,6 +15,7 @@ import {
   PlayCircle,
   Settings,
   Shield,
+  Sparkles,
   Tv,
   User,
   Users,
@@ -1233,6 +1234,34 @@ export const UserMenu: React.FC = () => {
                   {favorites.length}
                 </span>
               )}
+            </button>
+          )}
+
+          {/* 我的邀请按钮 */}
+          {showWatchingUpdates && (
+            <button
+              onClick={() => {
+                handleCloseMenu();
+                router.push('/my-invitation');
+              }}
+              className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-[background-color] duration-150 ease-in-out text-sm'
+            >
+              <Users className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+              <span className='font-medium'>我的邀请</span>
+            </button>
+          )}
+
+          {/* 积分兑换按钮 */}
+          {showWatchingUpdates && (
+            <button
+              onClick={() => {
+                handleCloseMenu();
+                router.push('/points-exchange');
+              }}
+              className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-[background-color] duration-150 ease-in-out text-sm'
+            >
+              <Sparkles className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+              <span className='font-medium'>积分兑换</span>
             </button>
           )}
 
