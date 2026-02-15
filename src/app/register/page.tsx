@@ -168,14 +168,8 @@ function RegisterPageClient() {
               </p>
               <button
                 onClick={() => router.push('/login')}
-               <button
-                 onClick={() => router.push('/login')}
-                 className='group relative inline-flex w-full justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 py-4 text-base font-semibold text-white shadow-2xl shadow-orange-500/40 transition-all duration-300 hover:shadow-orange-600/60 hover:-translate-y-1 overflow-hidden'
-               >
-                 <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700' />
-                 <ArrowRight className='h-5 w-5 relative z-10' />
-                 <span className='relative z-10'>返回登录</span>
-               </button>
+                className='group relative inline-flex w-full justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-orange-500 py-4 text-base font-semibold text-white shadow-2xl shadow-orange-500/40 transition-all duration-300 hover:shadow-orange-600/60 hover:-translate-y-1 overflow-hidden'
+              >
                 <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700' />
                 <ArrowRight className='h-5 w-5 relative z-10' />
                 <span className='relative z-10'>返回登录</span>
@@ -205,7 +199,7 @@ function RegisterPageClient() {
 
       <div className='relative z-10 w-full max-w-lg px-6'>
         <div className='text-center mb-12'>
-          <div className='inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-gradient-to-br from-orange-500 to-amber-600 shadow-2xl shadow-orange-500/30'>
+          <div className='inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-2xl shadow-orange-500/30'>
             <UserPlus className='w-10 h-10 text-white' />
           </div>
           <h1 className='text-5xl sm:text-6xl font-bold text-orange-900 mb-3 tracking-tight'>
@@ -220,7 +214,7 @@ function RegisterPageClient() {
           className='relative backdrop-blur-2xl bg-white/40 rounded-3xl p-8 sm:p-10 border border-orange-200/50 shadow-2xl transition-all duration-500 hover:border-orange-300/50'
         >
           <div className='absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-orange-500/30 to-amber-500/30 rounded-full blur-3xl' />
-          <div className='absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-br from-amber-400/30 to-yellow-400/30 rounded-full blur-3xl' style={{ animationDelay: '1s' }} />
+          <div className='absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-br from-amber-500/30 to-yellow-500/30 rounded-full blur-3xl' style={{ animationDelay: '1s' }} />
 
           <form onSubmit={handleSubmit} className='space-y-6 relative z-10'>
             <div className='group'>
@@ -313,7 +307,7 @@ function RegisterPageClient() {
                   onChange={(e) => setCardKey(e.target.value)}
                 />
               </div>
-              <p className='mt-2 text-xs text-orange-500/40">
+              <p className='mt-2 text-xs text-orange-500/40'>
                 注册需要绑定卡密才能使用系统功能
               </p>
             </div>
