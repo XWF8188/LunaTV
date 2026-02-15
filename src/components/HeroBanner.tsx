@@ -261,7 +261,7 @@ function HeroBanner({
 
   return (
     <div
-      className='relative w-full h-[55vh] sm:h-[60vh] md:h-[65vh] lg:h-[70vh] overflow-hidden group'
+      className='relative w-full h-[45vh] sm:h-[50vh] md:h-[55vh] lg:h-[60vh] overflow-hidden group'
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       {...swipeHandlers}
@@ -387,39 +387,35 @@ function HeroBanner({
           );
         })}
 
-        {/* 现代化渐变遮罩 */}
-        <div className='absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/60' />
+        {/* 简洁渐变遮罩 - 爱奇艺风格 */}
+        <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30' />
 
-        {/* 左侧额外渐变（增强文字可读性） - 更柔和 */}
-        <div className='absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent' />
-
-        {/* 底部发光效果 */}
-        <div className='absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-indigo-500/20 to-transparent' />
+        {/* 左侧额外渐变（增强文字可读性） */}
+        <div className='absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent' />
       </div>
 
-      {/* 内容叠加层 - Netflix风格：左下角 */}
-      <div className='absolute bottom-0 left-0 right-0 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 pb-12 sm:pb-16 md:pb-20 lg:pb-24'>
-        <div className='space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6'>
-          {/* 标题 - Netflix风格：超大字体 */}
-          <h1 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white drop-shadow-2xl leading-tight break-words'>
+      {/* 内容叠加层 - 爱奇艺风格：左下角 */}
+      <div className='absolute bottom-0 left-0 right-0 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 pb-8 sm:pb-12 md:pb-16 lg:pb-20'>
+        <div className='space-y-2 sm:space-y-3 md:space-y-4'>
+          {/* 标题 - 爱奇艺风格 */}
+          <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-lg leading-tight break-words'>
             {currentItem.title}
           </h1>
 
           {/* 元数据 */}
-          <div className='flex items-center gap-3 sm:gap-4 text-sm sm:text-base md:text-lg flex-wrap'>
+          <div className='flex items-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-base flex-wrap'>
             {currentItem.rate && (
-              <div className='flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/90 backdrop-blur-sm rounded'>
-                <span className='text-white font-bold'>★</span>
-                <span className='text-white font-bold'>{currentItem.rate}</span>
+              <div className='flex items-center gap-1 px-2 py-0.5 bg-emerald-600 text-white rounded font-semibold'>
+                <span className='font-bold'>{currentItem.rate}</span>
               </div>
             )}
             {currentItem.year && (
-              <span className='text-white/90 font-semibold drop-shadow-md'>
+              <span className='text-white/90 font-medium'>
                 {currentItem.year}
               </span>
             )}
             {currentItem.type && (
-              <span className='px-3 py-1 bg-white/20 backdrop-blur-sm rounded text-white/90 font-medium border border-white/30'>
+              <span className='px-2 py-0.5 bg-white/20 text-white/90 text-xs font-medium rounded'>
                 {currentItem.type === 'movie'
                   ? '电影'
                   : currentItem.type === 'tv'
@@ -435,14 +431,7 @@ function HeroBanner({
             )}
           </div>
 
-          {/* 描述 - 限制3行 */}
-          {currentItem.description && (
-            <p className='text-sm sm:text-base md:text-lg lg:text-xl text-white/90 line-clamp-3 drop-shadow-lg leading-relaxed max-w-xl'>
-              {currentItem.description}
-            </p>
-          )}
-
-          {/* 操作按钮 - Netflix风格 */}
+          {/* 操作按钮 - 爱奇艺风格 */}
           <div className='flex gap-3 sm:gap-4 pt-2'>
             <Link
               href={
@@ -468,7 +457,7 @@ function HeroBanner({
                         : currentItem.type || 'movie'
                     }`
               }
-              className='flex items-center gap-2 px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-4 bg-white/30 backdrop-blur-md text-white font-bold rounded hover:bg-white/40 transition-all transform hover:scale-105 active:scale-95 shadow-xl text-base sm:text-lg md:text-xl border border-white/50'
+              className='flex items-center gap-2 px-5 sm:px-7 md:px-9 py-2 sm:py-2.5 md:py-3 bg-white/30 backdrop-blur-sm text-white font-semibold rounded hover:bg-white/40 transition-all hover:scale-105 active:scale-95 shadow-lg text-sm sm:text-base md:text-lg'
             >
               <Info className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7' />
               <span>更多信息</span>

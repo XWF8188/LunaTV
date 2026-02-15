@@ -25,17 +25,17 @@
     'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-  /* Primary Colors */
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
+  /* Primary Colors - 爱奇艺绿色主题 */
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-300: #6ee7b7;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981; /* 爱奇艺主绿色 */
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-800: #065f46;
+  --color-primary-900: #064e3b;
   --color-dark: #222222;
 
   /* 修复 Tailwind 4 亮色模式下灰色过淡的问题，恢复高对比度灰色 */
@@ -124,35 +124,41 @@ body {
 }
 
 html:not(.dark) body {
-  background: linear-gradient(
-    135deg,
-    #667eea 0%,
-    #764ba2 25%,
-    #f093fb 50%,
-    #f5576c 75%,
-    #4facfe 100%
-  );
-  background-attachment: fixed;
-  background-size: 400% 400%;
-  animation: gradientBG 15s ease infinite;
+  /* 爱奇艺风格：简洁的浅灰色背景 */
+  background: #f5f5f5;
 }
 
-@keyframes gradientBG {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* 自定义滚动条样式 - 现代化 */
+/* 自定义滚动条样式 - 爱奇艺风格 */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Firefox 滚动条 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db rgba(0, 0, 0, 0.05);
+}
+
+.dark * {
+  scrollbar-color: #4b5563 rgba(255, 255, 255, 0.05);
 }
 
 ::-webkit-scrollbar-track {
@@ -188,18 +194,14 @@ html:not(.dark) body {
     rgba(31, 41, 55, 0.5);
 }
 
-/* 视频卡片悬停效果 - 现代化升级 */
+/* 视频卡片悬停效果 - 爱奇艺风格 */
 .video-card-hover {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-style: preserve-3d;
-  perspective: 1000px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .video-card-hover:hover {
-  transform: translateY(-8px) scale(1.03) rotateX(2deg);
-  box-shadow:
-    0 20px 40px -15px rgba(0, 0, 0, 0.3),
-    0 0 20px rgba(99, 102, 241, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* 卡片光泽动画 */

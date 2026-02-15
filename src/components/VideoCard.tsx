@@ -807,7 +807,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     return (
       <>
         <div
-          className='@container group relative w-full rounded-2xl bg-transparent cursor-pointer transition-all duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) hover:scale-[1.05] hover:z-30 hover:shadow-2xl hover:shadow-indigo-500/20'
+          className='@container group relative w-full rounded-md bg-transparent cursor-pointer transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-gray-200/50'
           onClick={handleClick}
           {...longPressProps}
           style={
@@ -849,7 +849,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         >
           {/* 海报容器 */}
           <div
-            className={`relative aspect-[2/3] overflow-hidden rounded-2xl ${origin === 'live' ? 'ring-2 ring-indigo-500/50 dark:ring-indigo-400/50' : ''} bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900`}
+            className={`relative aspect-[2/3] overflow-hidden rounded-md ${origin === 'live' ? 'ring-1 ring-emerald-500/50 dark:ring-emerald-400/50' : ''} bg-gray-100 dark:bg-gray-800`}
             style={
               {
                 WebkitUserSelect: 'none',
@@ -934,9 +934,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               }}
             />
 
-            {/* 悬浮遮罩 - 玻璃态效果 */}
+            {/* 悬浮遮罩 - 简洁版 */}
             <div
-              className='absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100 backdrop-blur-[2px]'
+              className='absolute inset-0 bg-black/40 transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100'
               style={
                 {
                   WebkitUserSelect: 'none',
@@ -976,11 +976,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                     </span>
                   </div>
                 ) : (
-                  // 正常内容 - 显示播放按钮
+                  // 正常内容 - 显示播放按钮 - 爱奇艺绿色
                   <PlayCircleIcon
-                    size={50}
-                    strokeWidth={0.8}
-                    className='text-white fill-transparent transition-all duration-300 ease-out hover:fill-green-500 hover:scale-[1.1]'
+                    size={48}
+                    strokeWidth={1}
+                    className='text-white fill-emerald-500/90 transition-all duration-300 ease-out hover:fill-emerald-500 hover:scale-110'
                     style={
                       {
                         WebkitUserSelect: 'none',
