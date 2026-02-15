@@ -708,41 +708,34 @@ function HomeClient() {
       <TelegramWelcomeModal />
 
       <div className='overflow-visible -mt-6 md:mt-0 pb-32 md:pb-safe-bottom'>
-        {/* 欢迎横幅 - 现代紫色主题 */}
-        <div className='mb-6 relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 shadow-2xl group'>
-          {/* 动态装饰 */}
-          <div className='absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/5'></div>
-          <div className='absolute -top-32 -right-32 w-64 h-64 bg-white/10 rounded-full blur-3xl opacity-50 group-hover:scale-150 transition-transform duration-700 ease-out'></div>
-          <div className='absolute -bottom-32 -left-32 w-64 h-64 bg-purple-400/20 rounded-full blur-3xl opacity-50 group-hover:scale-150 transition-transform duration-700 ease-out delay-100'></div>
-
-          <div className='relative p-5 sm:p-6'>
-            <div className='relative z-10 flex items-center justify-between gap-4'>
-              <div className='flex-1 min-w-0'>
-                <h2 className='text-xl sm:text-2xl font-bold text-white mb-2 flex items-center gap-2.5 flex-wrap animate-fade-in-up'>
-                  <span className='bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-white to-yellow-200'>
-                    {greeting}
+        {/* 欢迎横幅 - 卡片式清爽设计 */}
+        <div className='mb-8 card-container p-6 sm:p-8'>
+          <div className='flex items-center justify-between gap-6'>
+            <div className='flex-1 min-w-0'>
+              <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-2 animate-slide-in-up flex items-center gap-3 flex-wrap'>
+                <span className='bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent'>
+                  {greeting}
+                </span>
+                {username && (
+                  <span className='text-amber-600 dark:text-amber-400'>
+                    ，{username}
                   </span>
-                  {username && (
-                    <span className='text-purple-200 font-semibold'>
-                      ，{username}
-                    </span>
-                  )}
-                  <span className='inline-block animate-bounce'>👋</span>
-                </h2>
-                <p className='text-sm sm:text-base text-white/95 font-medium animate-fade-in-up animate-delay-100'>
-                  探索无限精彩，发现专属你的影视世界
-                </p>
-              </div>
+                )}
+                <span className='text-2xl'>👋</span>
+              </h2>
+              <p className='text-base sm:text-lg text-gray-600 dark:text-gray-300 animate-slide-in-up animate-delay-100'>
+                发现精彩内容，享受观影时光
+              </p>
+            </div>
 
-              {/* 装饰图标 */}
-              <div className='hidden md:flex items-center justify-center shrink-0 w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 shadow-lg group-hover:scale-110 transition-transform duration-300 ease-out'>
-                <Film className='w-7 h-7 text-white' />
-              </div>
+            {/* 装饰图标 - 卡片式 */}
+            <div className='hidden md:flex items-center justify-center shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg float-gentle'>
+              <Film className='w-8 h-8 text-white' />
             </div>
           </div>
         </div>
 
-        {/* 顶部 Tab 切换 - AI 按钮已移至右上角导航栏 */}
+        {/* 顶部 Tab 切换 - 卡片式 */}
         <div className='mb-8 flex items-center justify-center'>
           <CapsuleSwitch
             options={[

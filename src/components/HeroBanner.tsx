@@ -261,7 +261,7 @@ function HeroBanner({
 
   return (
     <div
-      className='relative w-full h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh] overflow-hidden group'
+      className='relative w-full h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[65vh] overflow-hidden group card-container'
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       {...swipeHandlers}
@@ -387,39 +387,35 @@ function HeroBanner({
           );
         })}
 
-        {/* 现代渐变遮罩 - 沉浸式 */}
-        <div className='absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent' />
+        {/* 简洁渐变遮罩 */}
+        <div className='absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/25' />
 
-        {/* 左侧增强渐变 */}
-        <div className='absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent' />
-
-        {/* 底部光晕效果 */}
-        <div className='absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-indigo-600/20 to-transparent' />
+        {/* 底部装饰 */}
+        <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/5 to-transparent' />
       </div>
 
-      {/* 内容叠加层 - 沉浸式 */}
-      <div className='absolute bottom-0 left-0 right-0 px-6 sm:px-12 md:px-20 lg:px-28 pb-12 sm:pb-16 md:pb-20 lg:pb-24'>
-        <div className='space-y-4 sm:space-y-5 md:space-y-6 lg:space-y-8'>
-          {/* 标题 - 大号字体 */}
-          <h1 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white drop-shadow-2xl leading-tight break-words animate-fade-in-up'>
+      {/* 内容叠加层 - 卡片式布局 */}
+      <div className='absolute bottom-0 left-0 right-0 px-6 sm:px-12 md:px-20 lg:px-28 pb-10 sm:pb-14 md:pb-18 lg:pb-22'>
+        <div className='space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6'>
+          {/* 标题 - 中等大小 */}
+          <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-lg leading-tight break-words animate-slide-in-up'>
             {currentItem.title}
           </h1>
 
           {/* 元数据 */}
-          <div className='flex items-center gap-3 sm:gap-4 text-sm sm:text-base md:text-lg flex-wrap animate-fade-in-up animate-delay-100'>
+          <div className='flex items-center gap-2 sm:gap-3 text-sm sm:text-base md:text-lg flex-wrap animate-slide-in-up animate-delay-100'>
             {currentItem.rate && (
-              <div className='flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/90 backdrop-blur-sm rounded-lg font-semibold shadow-lg'>
-                <span className='text-yellow-300 text-lg'>★</span>
+              <div className='flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 rounded-lg font-semibold shadow-lg'>
                 <span className='text-white'>{currentItem.rate}</span>
               </div>
             )}
             {currentItem.year && (
-              <span className='text-white/90 font-semibold drop-shadow-md'>
+              <span className='text-white/95 font-medium'>
                 {currentItem.year}
               </span>
             )}
             {currentItem.type && (
-              <span className='px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg text-white/90 font-medium border border-white/30 shadow-lg'>
+              <span className='px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg text-white/95 font-medium shadow-lg'>
                 {currentItem.type === 'movie'
                   ? '电影'
                   : currentItem.type === 'tv'
@@ -435,15 +431,8 @@ function HeroBanner({
             )}
           </div>
 
-          {/* 描述 - 限制3行 */}
-          {currentItem.description && (
-            <p className='text-sm sm:text-base md:text-lg lg:text-xl text-white/95 line-clamp-3 drop-shadow-lg leading-relaxed max-w-2xl animate-fade-in-up animate-delay-200'>
-              {currentItem.description}
-            </p>
-          )}
-
-          {/* 操作按钮 - 现代风格 */}
-          <div className='flex gap-3 sm:gap-4 pt-2 animate-fade-in-up animate-delay-300'>
+          {/* 操作按钮 - 霓虹渐变 */}
+          <div className='flex gap-3 sm:gap-4 pt-2 animate-slide-in-up animate-delay-200'>
             <Link
               href={
                 currentItem.type === 'shortdrama'
@@ -468,7 +457,7 @@ function HeroBanner({
                         : currentItem.type || 'movie'
                     }`
               }
-              className='flex items-center gap-2 px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-3.5 bg-white/25 backdrop-blur-md text-white font-semibold rounded-xl hover:bg-white/35 transition-all hover:scale-105 active:scale-95 shadow-xl text-sm sm:text-base md:text-lg border border-white/30'
+              className='flex items-center gap-2.5 px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-3.5 bg-white/20 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/30 transition-all hover:scale-105 active:scale-95 shadow-lg text-sm sm:text-base md:text-lg border border-white/30'
             >
               <Info className='w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7' />
               <span>更多信息</span>
