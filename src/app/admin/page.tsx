@@ -46,7 +46,7 @@ import {
 } from 'lucide-react';
 import { GripVertical, MessageSquare } from 'lucide-react';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom/client';
+import { createPortal } from 'react-dom';
 
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
