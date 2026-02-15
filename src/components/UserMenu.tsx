@@ -9,6 +9,7 @@ import {
   Check,
   ChevronDown,
   ExternalLink,
+  Gift,
   Heart,
   KeyRound,
   LogOut,
@@ -897,6 +898,21 @@ export const UserMenu: React.FC = () => {
     setIsSettingsOpen(false);
   };
 
+  const handleInvitation = () => {
+    setIsOpen(false);
+    router.push('/invitation');
+  };
+
+  const handleRedeem = () => {
+    setIsOpen(false);
+    router.push('/redeem');
+  };
+
+  const handleMyCardKeys = () => {
+    setIsOpen(false);
+    router.push('/my-cardkeys');
+  };
+
   // 设置相关的处理函数
   const handleAggregateToggle = (value: boolean) => {
     setDefaultAggregateSearch(value);
@@ -1184,6 +1200,33 @@ export const UserMenu: React.FC = () => {
           >
             <Settings className='w-4 h-4 text-gray-500 dark:text-gray-400' />
             <span className='font-medium'>设置</span>
+          </button>
+
+          {/* 邀请好友按钮 */}
+          <button
+            onClick={handleInvitation}
+            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-[background-color] duration-150 ease-in-out text-sm'
+          >
+            <Gift className='w-4 h-4 text-orange-500' />
+            <span className='font-medium'>邀请好友</span>
+          </button>
+
+          {/* 积分兑换按钮 */}
+          <button
+            onClick={handleRedeem}
+            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-[background-color] duration-150 ease-in-out text-sm'
+          >
+            <BarChart3 className='w-4 h-4 text-blue-500' />
+            <span className='font-medium'>积分兑换</span>
+          </button>
+
+          {/* 我的卡密按钮 */}
+          <button
+            onClick={handleMyCardKeys}
+            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-[background-color] duration-150 ease-in-out text-sm'
+          >
+            <KeyRound className='w-4 h-4 text-green-500' />
+            <span className='font-medium'>我的卡密</span>
           </button>
 
           {/* 更新提醒按钮 */}

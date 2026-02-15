@@ -199,6 +199,43 @@ export interface IStorage {
     userName: string,
     info: import('./admin.types').UserCardKeyData,
   ): Promise<void>;
+
+  // ============ 邀请奖励系统相关 ============
+  // 邀请码相关
+  createInvitation(invitation: Invitation): Promise<void>;
+  getInvitationByInvitee(invitee: string): Promise<Invitation | null>;
+  getInvitationByCode(code: string): Promise<Invitation | null>;
+  getInvitationsByInviter(inviter: string): Promise<Invitation[]>;
+  updateInvitation(id: string, updates: Partial<Invitation>): Promise<void>;
+
+  // 用户积分相关
+  getUserPoints(username: string): Promise<UserPoints | null>;
+  createOrUpdateUserPoints(
+    username: string,
+    updates: Partial<UserPoints>,
+  ): Promise<void>;
+
+  // 积分历史相关
+  createPointsRecord(record: PointsRecord): Promise<void>;
+  getPointsHistory(
+    username: string,
+    page?: number,
+    pageSize?: number,
+  ): Promise<PointsHistoryResponse>;
+
+  // IP奖励记录相关
+  getIPRewardRecord(ipAddress: string): Promise<IPRewardRecord | null>;
+  createIPRewardRecord(record: IPRewardRecord): Promise<void>;
+
+  // 邀请配置相关
+  getInvitationConfig(): Promise<InvitationConfig | null>;
+  setInvitationConfig(config: InvitationConfig): Promise<void>;
+
+  // 用户拥有的卡密相关
+  createUserCardKey(userCardKey: UserCardKey): Promise<void>;
+  getUserCardKeys(username: string): Promise<UserCardKey[]>;
+  updateUserCardKey(id: string, updates: Partial<UserCardKey>): Promise<void>;
+  getCardKeyByHash(keyHash: string): Promise<UserCardKey | null>;
 }
 
 // 搜索结果数据结构
@@ -500,4 +537,91 @@ export interface CardKeyValidationResult {
   valid: boolean;
   cardKey?: CardKey;
   error?: string;
+}
+
+// 邀请奖励系统相关类型
+
+// 邀请关系数据结构
+export interface Invitation {
+  id: string;
+  inviter: string; // 邀请人用户名
+  invitee: string; // 被邀请人用户名
+  invitationCode: string; // 邀请码
+  ipAddress: string; // 注册IP地址
+  rewarded: boolean; // 是否已发放积分奖励
+  rewardTime?: number; // 奖励发放时间
+  createdAt: number; // 创建时间
+}
+
+// 积分记录数据结构
+export interface PointsRecord {
+  id: string;
+  username: string; // 用户名
+  type: 'earn' | 'redeem'; // 类型：获取或消费
+  amount: number; // 积分数量（正数为获取，负数为消费）
+  reason: string; // 原因描述
+  relatedUser?: string; // 相关用户（如邀请人）
+  cardKeyId?: string; // 关联的卡密ID（兑换时）
+  createdAt: number; // 创建时间
+}
+
+// 用户积分数据结构
+export interface UserPoints {
+  username: string; // 用户名（主键）
+  balance: number; // 积分余额
+  totalEarned: number; // 累计获取积分
+  totalRedeemed: number; // 累计消费积分
+  updatedAt: number; // 更新时间
+}
+
+// IP奖励记录数据结构
+export interface IPRewardRecord {
+  id: string;
+  ipAddress: string; // IP地址（主键）
+  inviter: string; // 邀请人用户名
+  invitee: string; // 被邀请人用户名
+  rewardTime: number; // 奖励时间
+}
+
+// 邀请配置数据结构
+export interface InvitationConfig {
+  rewardPoints: number; // 邀请一人获得的积分
+  redeemThreshold: number; // 兑换一周卡密所需积分
+  cardKeyType: CardKeyType; // 兑换的卡密类型（week）
+  updatedAt: number; // 配置更新时间
+}
+
+// 用户拥有的卡密数据结构
+export interface UserCardKey {
+  id: string;
+  keyHash: string; // 卡密哈希
+  username: string; // 拥有该卡密的用户名
+  type: CardKeyType; // 卡密类型
+  status: 'unused' | 'used' | 'expired'; // 卡密状态
+  source: 'invitation' | 'redeem' | 'manual'; // 卡密来源
+  plainKey?: string; // 卡密明文（用于显示，仅在创建时生成）
+  createdAt: number; // 创建时间
+  expiresAt: number; // 过期时间
+  usedAt?: number; // 使用时间
+  usedBy?: string; // 使用该卡密的用户
+  notes?: string; // 备注（如来源说明）
+}
+
+// 用户邀请信息
+export interface UserInvitationInfo {
+  code: string; // 邀请码
+  inviteLink: string; // 邀请链接
+  totalInvites: number; // 总邀请人数
+  totalRewards: number; // 总奖励积分
+}
+
+// 积分历史响应
+export interface PointsHistoryResponse {
+  records: PointsRecord[];
+  balance: number;
+  totalEarned: number;
+  totalRedeemed: number;
+  page: number;
+  pageSize: number;
+  total: number;
 }

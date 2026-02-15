@@ -309,6 +309,47 @@ export class CardKeyService {
     const computedHash = await this.hashCardKey(cardKey);
     return computedHash === hash;
   }
+
+  // 为指定用户创建卡密
+  async createCardKeyForUser(
+    username: string,
+    type: import('./types').CardKeyType,
+  ): Promise<string> {
+    const plainKey = this.generateRandomCardKey();
+    const hashedKey = await this.hashCardKey(plainKey);
+
+    const cardKey: import('./types').UserCardKey = {
+      id: this.generateId(),
+      keyHash: hashedKey,
+      username,
+      type,
+      status: 'unused',
+      source: 'redeem',
+      plainKey,
+      createdAt: Date.now(),
+      expiresAt: this.calculateExpiryDate(type),
+    };
+
+    await db.createUserCardKey(cardKey);
+
+    console.log(
+      `为用户 ${username} 创建卡密: ${plainKey}, 类型: ${type}, 过期时间: ${new Date(cardKey.expiresAt).toLocaleString('zh-CN')}`,
+    );
+
+    return plainKey;
+  }
+
+  // 获取用户拥有的所有卡密
+  async getUserCardKeys(
+    username: string,
+  ): Promise<import('./types').UserCardKey[]> {
+    return await db.getUserCardKeys(username);
+  }
+
+  // 生成唯一ID
+  private generateId(): string {
+    return `user_cardkey_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
 }
 
 // 导出默认实例

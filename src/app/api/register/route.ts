@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { invitationService } from '@/lib/invitation.service';
+import { pointsService } from '@/lib/points.service';
 
 export const runtime = 'nodejs';
 
@@ -77,11 +79,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { username, password, confirmPassword, cardKey } = await req.json();
+    const { username, password, confirmPassword, cardKey, invitationCode } =
+      await req.json();
 
     // 验证卡密
     if (!cardKey || typeof cardKey !== 'string' || cardKey.trim() === '') {
       return NextResponse.json({ error: '卡密不能为空' }, { status: 400 });
+    }
+
+    // 验证邀请码（可选）
+    let inviter: string | undefined;
+    if (invitationCode && invitationCode.trim()) {
+      const validation =
+        await invitationService.validateInvitationCode(invitationCode);
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: validation.error || '邀请码无效' },
+          { status: 400 },
+        );
+      }
+      inviter = validation.inviter;
+      console.log('邀请码验证通过, 邀请人:', inviter);
     }
 
     // 先检查配置中是否允许注册（在验证输入之前）
@@ -211,6 +229,48 @@ export async function POST(req: NextRequest) {
         httpOnly: false,
         secure: false,
       });
+
+      // 处理邀请奖励
+      if (inviter && invitationCode) {
+        try {
+          const ipAddress =
+            req.headers.get('x-forwarded-for') ||
+            req.headers.get('x-real-ip') ||
+            'unknown';
+
+          console.log(
+            '处理邀请奖励 - 邀请人:',
+            inviter,
+            '被邀请人:',
+            username,
+            'IP:',
+            ipAddress,
+          );
+
+          // 创建推荐关系
+          await invitationService.createReferral(
+            inviter,
+            username,
+            invitationCode,
+            ipAddress,
+          );
+
+          // 发放积分奖励
+          const rewardResult = await pointsService.rewardForInvitation(
+            inviter,
+            username,
+            ipAddress,
+          );
+
+          if (rewardResult.rewarded) {
+            console.log('邀请奖励发放成功');
+          } else {
+            console.log('邀请奖励未发放:', rewardResult.error);
+          }
+        } catch (rewardError) {
+          console.error('处理邀请奖励失败:', rewardError);
+        }
+      }
 
       return response;
     } catch (err) {

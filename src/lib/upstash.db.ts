@@ -1571,6 +1571,258 @@ export class UpstashRedisStorage implements IStorage {
     console.log('=== getFullUserCardKey 结束 (Upstash) ===');
     return result;
   }
+
+  // ============ 邀请奖励系统相关方法 ============
+
+  async createInvitation(
+    invitation: import('./types').Invitation,
+  ): Promise<void> {
+    const key = `invitation:${invitation.id}`;
+    const value = JSON.stringify(invitation);
+    await withRetry(() => this.client.set(key, value));
+
+    const inviterKey = `invitations_by_inviter:${invitation.inviter}`;
+    await withRetry(() => this.client.sadd(inviterKey, invitation.id));
+
+    const inviteeKey = `invitations_by_invitee:${invitation.invitee}`;
+    await withRetry(() => this.client.set(inviteeKey, invitation.id));
+
+    const codeKey = `invitation_by_code:${invitation.invitationCode}`;
+    await withRetry(() => this.client.set(codeKey, invitation.id));
+  }
+
+  async getInvitationByInvitee(
+    invitee: string,
+  ): Promise<import('./types').Invitation | null> {
+    const key = `invitations_by_invitee:${invitee}`;
+    const id = await withRetry(() => this.client.get(key));
+    if (!id) return null;
+
+    const invitationKey = `invitation:${id}`;
+    const value = await withRetry(() => this.client.get(invitationKey));
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async getInvitationByCode(
+    code: string,
+  ): Promise<import('./types').Invitation | null> {
+    const key = `invitation_by_code:${code}`;
+    const id = await withRetry(() => this.client.get(key));
+    if (!id) return null;
+
+    const invitationKey = `invitation:${id}`;
+    const value = await withRetry(() => this.client.get(invitationKey));
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async getInvitationsByInviter(
+    inviter: string,
+  ): Promise<import('./types').Invitation[]> {
+    const key = `invitations_by_inviter:${inviter}`;
+    const ids = await withRetry(() => this.client.smembers(key));
+    if (!ids || ids.length === 0) return [];
+
+    const invitations: import('./types').Invitation[] = [];
+    for (const id of ids) {
+      const invitationKey = `invitation:${id}`;
+      const value = await withRetry(() => this.client.get(invitationKey));
+      if (value) {
+        invitations.push(JSON.parse(value));
+      }
+    }
+
+    return invitations;
+  }
+
+  async updateInvitation(
+    id: string,
+    updates: Partial<import('./types').Invitation>,
+  ): Promise<void> {
+    const key = `invitation:${id}`;
+    const value = await withRetry(() => this.client.get(key));
+    if (!value) return;
+
+    const invitation: import('./types').Invitation = JSON.parse(value);
+    const updated = { ...invitation, ...updates };
+    await withRetry(() => this.client.set(key, JSON.stringify(updated)));
+  }
+
+  async getUserPoints(
+    username: string,
+  ): Promise<import('./types').UserPoints | null> {
+    const key = `user_points:${username}`;
+    const value = await withRetry(() => this.client.get(key));
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async createOrUpdateUserPoints(
+    username: string,
+    updates: Partial<import('./types').UserPoints>,
+  ): Promise<void> {
+    const key = `user_points:${username}`;
+    const existing = await this.getUserPoints(username);
+
+    const pointsData: import('./types').UserPoints = existing || {
+      username,
+      balance: 0,
+      totalEarned: 0,
+      totalRedeemed: 0,
+      updatedAt: Date.now(),
+    };
+
+    const updated = { ...pointsData, ...updates, updatedAt: Date.now() };
+    await withRetry(() => this.client.set(key, JSON.stringify(updated)));
+  }
+
+  async createPointsRecord(
+    record: import('./types').PointsRecord,
+  ): Promise<void> {
+    const key = `points_record:${record.id}`;
+    await withRetry(() => this.client.set(key, JSON.stringify(record)));
+
+    const userKey = `points_records_by_user:${record.username}`;
+    await withRetry(() => this.client.lpush(userKey, record.id));
+
+    const length = await withRetry(() => this.client.llen(userKey));
+    const maxRecords = 1000;
+    if (length > maxRecords) {
+      await withRetry(() => this.client.ltrim(userKey, 0, maxRecords - 1));
+    }
+  }
+
+  async getPointsHistory(
+    username: string,
+    page: number = 1,
+    pageSize: number = 20,
+  ): Promise<import('./types').PointsHistoryResponse> {
+    const userKey = `points_records_by_user:${username}`;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize - 1;
+
+    const recordIds = await withRetry(() => this.client.lrange(userKey, 0, -1));
+    const total = recordIds.length;
+
+    const paginatedIds = recordIds.slice(start, end + 1);
+
+    const records: import('./types').PointsRecord[] = [];
+    for (const id of paginatedIds) {
+      const key = `points_record:${id}`;
+      const value = await withRetry(() => this.client.get(key));
+      if (value) {
+        records.push(JSON.parse(value));
+      }
+    }
+
+    const userPoints = await this.getUserPoints(username);
+    return {
+      records,
+      balance: userPoints?.balance || 0,
+      totalEarned: userPoints?.totalEarned || 0,
+      totalRedeemed: userPoints?.totalRedeemed || 0,
+      page,
+      pageSize,
+      total,
+    };
+  }
+
+  async getIPRewardRecord(
+    ipAddress: string,
+  ): Promise<import('./types').IPRewardRecord | null> {
+    const key = `ip_reward:${ipAddress}`;
+    const value = await withRetry(() => this.client.get(key));
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async createIPRewardRecord(
+    record: import('./types').IPRewardRecord,
+  ): Promise<void> {
+    const key = `ip_reward:${record.ipAddress}`;
+    await withRetry(() => this.client.set(key, JSON.stringify(record)));
+  }
+
+  async getInvitationConfig(): Promise<
+    import('./types').InvitationConfig | null
+  > {
+    const key = 'invitation_config';
+    const value = await withRetry(() => this.client.get(key));
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async setInvitationConfig(
+    config: import('./types').InvitationConfig,
+  ): Promise<void> {
+    const key = 'invitation_config';
+    await withRetry(() => this.client.set(key, JSON.stringify(config)));
+  }
+
+  async createUserCardKey(
+    userCardKey: import('./types').UserCardKey,
+  ): Promise<void> {
+    const key = `user_cardkey:${userCardKey.id}`;
+    await withRetry(() => this.client.set(key, JSON.stringify(userCardKey)));
+
+    const userKey = `user_cardkeys_by_user:${userCardKey.username}`;
+    await withRetry(() => this.client.sadd(userKey, userCardKey.id));
+
+    const hashKey = `user_cardkey_by_hash:${userCardKey.keyHash}`;
+    await withRetry(() => this.client.set(hashKey, userCardKey.id));
+  }
+
+  async getUserCardKeys(
+    username: string,
+  ): Promise<import('./types').UserCardKey[]> {
+    const userKey = `user_cardkeys_by_user:${username}`;
+    const ids = await withRetry(() => this.client.smembers(userKey));
+    if (!ids || ids.length === 0) return [];
+
+    const cardKeys: import('./types').UserCardKey[] = [];
+    for (const id of ids) {
+      const key = `user_cardkey:${id}`;
+      const value = await withRetry(() => this.client.get(key));
+      if (value) {
+        cardKeys.push(JSON.parse(value));
+      }
+    }
+
+    return cardKeys.sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  async updateUserCardKey(
+    id: string,
+    updates: Partial<import('./types').UserCardKey>,
+  ): Promise<void> {
+    const key = `user_cardkey:${id}`;
+    const value = await withRetry(() => this.client.get(key));
+    if (!value) return;
+
+    const cardKey: import('./types').UserCardKey = JSON.parse(value);
+    const updated = { ...cardKey, ...updates };
+    await withRetry(() => this.client.set(key, JSON.stringify(updated)));
+  }
+
+  async getCardKeyByHash(
+    keyHash: string,
+  ): Promise<import('./types').UserCardKey | null> {
+    const hashKey = `user_cardkey_by_hash:${keyHash}`;
+    const id = await withRetry(() => this.client.get(hashKey));
+    if (!id) return null;
+
+    const key = `user_cardkey:${id}`;
+    const value = await withRetry(() => this.client.get(key));
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
 }
 
 // 单例 Upstash Redis 客户端

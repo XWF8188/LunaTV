@@ -1799,4 +1799,262 @@ export abstract class BaseRedisStorage implements IStorage {
     console.log('=== getFullUserCardKey 结束 ===');
     return result;
   }
+
+  // ============ 邀请奖励系统相关方法 ============
+
+  // 邀请码相关
+  async createInvitation(
+    invitation: import('./types').Invitation,
+  ): Promise<void> {
+    const key = `invitation:${invitation.id}`;
+    const value = JSON.stringify(invitation);
+    await this.client.set(key, value);
+
+    const inviterKey = `invitations_by_inviter:${invitation.inviter}`;
+    await this.client.sAdd(inviterKey, invitation.id);
+
+    const inviteeKey = `invitations_by_invitee:${invitation.invitee}`;
+    await this.client.set(inviteeKey, invitation.id);
+
+    const codeKey = `invitation_by_code:${invitation.invitationCode}`;
+    await this.client.set(codeKey, invitation.id);
+  }
+
+  async getInvitationByInvitee(
+    invitee: string,
+  ): Promise<import('./types').Invitation | null> {
+    const key = `invitations_by_invitee:${invitee}`;
+    const id = await this.client.get(key);
+    if (!id) return null;
+
+    const invitationKey = `invitation:${id}`;
+    const value = await this.client.get(invitationKey);
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async getInvitationByCode(
+    code: string,
+  ): Promise<import('./types').Invitation | null> {
+    const key = `invitation_by_code:${code}`;
+    const id = await this.client.get(key);
+    if (!id) return null;
+
+    const invitationKey = `invitation:${id}`;
+    const value = await this.client.get(invitationKey);
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async getInvitationsByInviter(
+    inviter: string,
+  ): Promise<import('./types').Invitation[]> {
+    const key = `invitations_by_inviter:${inviter}`;
+    const ids = await this.client.sMembers(key);
+    if (!ids || ids.length === 0) return [];
+
+    const invitations: import('./types').Invitation[] = [];
+    for (const id of ids) {
+      const invitationKey = `invitation:${id}`;
+      const value = await this.client.get(invitationKey);
+      if (value) {
+        invitations.push(JSON.parse(value));
+      }
+    }
+
+    return invitations;
+  }
+
+  async updateInvitation(
+    id: string,
+    updates: Partial<import('./types').Invitation>,
+  ): Promise<void> {
+    const key = `invitation:${id}`;
+    const value = await this.client.get(key);
+    if (!value) return;
+
+    const invitation: import('./types').Invitation = JSON.parse(value);
+    const updated = { ...invitation, ...updates };
+    await this.client.set(key, JSON.stringify(updated));
+  }
+
+  // 用户积分相关
+  async getUserPoints(
+    username: string,
+  ): Promise<import('./types').UserPoints | null> {
+    const key = `user_points:${username}`;
+    const value = await this.client.get(key);
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async createOrUpdateUserPoints(
+    username: string,
+    updates: Partial<import('./types').UserPoints>,
+  ): Promise<void> {
+    const key = `user_points:${username}`;
+    const existing = await this.getUserPoints(username);
+
+    const pointsData: import('./types').UserPoints = existing || {
+      username,
+      balance: 0,
+      totalEarned: 0,
+      totalRedeemed: 0,
+      updatedAt: Date.now(),
+    };
+
+    const updated = { ...pointsData, ...updates, updatedAt: Date.now() };
+    await this.client.set(key, JSON.stringify(updated));
+  }
+
+  // 积分历史相关
+  async createPointsRecord(
+    record: import('./types').PointsRecord,
+  ): Promise<void> {
+    const key = `points_record:${record.id}`;
+    await this.client.set(key, JSON.stringify(record));
+
+    const userKey = `points_records_by_user:${record.username}`;
+    await this.client.lPush(userKey, record.id);
+
+    const length = await this.client.lLen(userKey);
+    const maxRecords = 1000;
+    if (length > maxRecords) {
+      await this.client.lTrim(userKey, 0, maxRecords - 1);
+    }
+  }
+
+  async getPointsHistory(
+    username: string,
+    page: number = 1,
+    pageSize: number = 20,
+  ): Promise<import('./types').PointsHistoryResponse> {
+    const userKey = `points_records_by_user:${username}`;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize - 1;
+
+    const recordIds = await this.client.lRange(userKey, 0, -1);
+    const total = recordIds.length;
+
+    const paginatedIds = recordIds.slice(start, end + 1);
+
+    const records: import('./types').PointsRecord[] = [];
+    for (const id of paginatedIds) {
+      const key = `points_record:${id}`;
+      const value = await this.client.get(key);
+      if (value) {
+        records.push(JSON.parse(value));
+      }
+    }
+
+    const userPoints = await this.getUserPoints(username);
+    return {
+      records,
+      balance: userPoints?.balance || 0,
+      totalEarned: userPoints?.totalEarned || 0,
+      totalRedeemed: userPoints?.totalRedeemed || 0,
+      page,
+      pageSize,
+      total,
+    };
+  }
+
+  // IP奖励记录相关
+  async getIPRewardRecord(
+    ipAddress: string,
+  ): Promise<import('./types').IPRewardRecord | null> {
+    const key = `ip_reward:${ipAddress}`;
+    const value = await this.client.get(key);
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async createIPRewardRecord(
+    record: import('./types').IPRewardRecord,
+  ): Promise<void> {
+    const key = `ip_reward:${record.ipAddress}`;
+    await this.client.set(key, JSON.stringify(record));
+  }
+
+  // 邀请配置相关
+  async getInvitationConfig(): Promise<
+    import('./types').InvitationConfig | null
+  > {
+    const key = 'invitation_config';
+    const value = await this.client.get(key);
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
+
+  async setInvitationConfig(
+    config: import('./types').InvitationConfig,
+  ): Promise<void> {
+    const key = 'invitation_config';
+    await this.client.set(key, JSON.stringify(config));
+  }
+
+  // 用户拥有的卡密相关
+  async createUserCardKey(
+    userCardKey: import('./types').UserCardKey,
+  ): Promise<void> {
+    const key = `user_cardkey:${userCardKey.id}`;
+    await this.client.set(key, JSON.stringify(userCardKey));
+
+    const userKey = `user_cardkeys_by_user:${userCardKey.username}`;
+    await this.client.sAdd(userKey, userCardKey.id);
+
+    const hashKey = `user_cardkey_by_hash:${userCardKey.keyHash}`;
+    await this.client.set(hashKey, userCardKey.id);
+  }
+
+  async getUserCardKeys(
+    username: string,
+  ): Promise<import('./types').UserCardKey[]> {
+    const userKey = `user_cardkeys_by_user:${username}`;
+    const ids = await this.client.sMembers(userKey);
+    if (!ids || ids.length === 0) return [];
+
+    const cardKeys: import('./types').UserCardKey[] = [];
+    for (const id of ids) {
+      const key = `user_cardkey:${id}`;
+      const value = await this.client.get(key);
+      if (value) {
+        cardKeys.push(JSON.parse(value));
+      }
+    }
+
+    return cardKeys.sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  async updateUserCardKey(
+    id: string,
+    updates: Partial<import('./types').UserCardKey>,
+  ): Promise<void> {
+    const key = `user_cardkey:${id}`;
+    const value = await this.client.get(key);
+    if (!value) return;
+
+    const cardKey: import('./types').UserCardKey = JSON.parse(value);
+    const updated = { ...cardKey, ...updates };
+    await this.client.set(key, JSON.stringify(updated));
+  }
+
+  async getCardKeyByHash(
+    keyHash: string,
+  ): Promise<import('./types').UserCardKey | null> {
+    const hashKey = `user_cardkey_by_hash:${keyHash}`;
+    const id = await this.client.get(hashKey);
+    if (!id) return null;
+
+    const key = `user_cardkey:${id}`;
+    const value = await this.client.get(key);
+    if (!value) return null;
+
+    return JSON.parse(value);
+  }
 }

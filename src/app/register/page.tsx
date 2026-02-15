@@ -12,6 +12,7 @@ import {
   Sparkles,
   CheckCircle,
   AlertCircle,
+  Gift,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -30,6 +31,7 @@ function RegisterPageClient() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [cardKey, setCardKey] = useState('');
+  const [invitationCode, setInvitationCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,11 @@ function RegisterPageClient() {
   const { siteName } = useSite();
 
   useEffect(() => {
+    const inviteCode = searchParams.get('invite');
+    if (inviteCode) {
+      setInvitationCode(inviteCode);
+    }
+
     const checkRegistrationAvailable = async () => {
       try {
         const res = await fetch('/api/register', {
@@ -100,6 +107,7 @@ function RegisterPageClient() {
           password,
           confirmPassword,
           ...(cardKey ? { cardKey } : {}),
+          ...(invitationCode ? { invitationCode } : {}),
         }),
       });
 
@@ -313,6 +321,32 @@ function RegisterPageClient() {
               </div>
               <p className='mt-2 text-xs text-orange-500/40'>
                 注册需要绑定卡密才能使用系统功能
+              </p>
+            </div>
+
+            <div className='group'>
+              <label
+                htmlFor='invitationCode'
+                className='block text-sm font-medium text-orange-900/80 mb-2'
+              >
+                邀请码 <span className='text-orange-600'>（可选）</span>
+              </label>
+              <div className='relative'>
+                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
+                  <Gift className='h-5 w-5 text-orange-300 group-focus-within:text-orange-500 transition-colors' />
+                </div>
+                <input
+                  id='invitationCode'
+                  type='text'
+                  autoComplete='off'
+                  className='block w-full pl-12 pr-4 py-4 rounded-2xl border border-orange-200 bg-white/60 text-orange-900 shadow-sm ring-2 ring-orange-200 focus:ring-orange-500 focus:outline-none focus:bg-white/10 placeholder:text-orange-300 transition-all duration-300 text-base'
+                  placeholder='如有邀请码请输入'
+                  value={invitationCode}
+                  onChange={(e) => setInvitationCode(e.target.value)}
+                />
+              </div>
+              <p className='mt-2 text-xs text-orange-500/40'>
+                填写邀请码后,邀请人可获得积分奖励
               </p>
             </div>
 

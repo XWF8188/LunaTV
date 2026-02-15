@@ -688,6 +688,114 @@ export class DbManager {
     const cardKeyInfo = await this.getUserCardKey(userName);
     return cardKeyInfo ? cardKeyInfo.isExpired : false;
   }
+
+  // ============ 邀请奖励系统相关方法 ============
+  async createInvitation(
+    invitation: import('./types').Invitation,
+  ): Promise<void> {
+    return await this.storage.createInvitation(invitation);
+  }
+
+  async getInvitationByInvitee(
+    invitee: string,
+  ): Promise<import('./types').Invitation | null> {
+    return await this.storage.getInvitationByInvitee(invitee);
+  }
+
+  async getInvitationByCode(
+    code: string,
+  ): Promise<import('./types').Invitation | null> {
+    return await this.storage.getInvitationByCode(code);
+  }
+
+  async getInvitationsByInviter(
+    inviter: string,
+  ): Promise<import('./types').Invitation[]> {
+    return await this.storage.getInvitationsByInviter(inviter);
+  }
+
+  async updateInvitation(
+    id: string,
+    updates: Partial<import('./types').Invitation>,
+  ): Promise<void> {
+    return await this.storage.updateInvitation(id, updates);
+  }
+
+  async getUserPoints(
+    username: string,
+  ): Promise<import('./types').UserPoints | null> {
+    return await this.storage.getUserPoints(username);
+  }
+
+  async createOrUpdateUserPoints(
+    username: string,
+    updates: Partial<import('./types').UserPoints>,
+  ): Promise<void> {
+    return await this.storage.createOrUpdateUserPoints(username, updates);
+  }
+
+  async createPointsRecord(
+    record: import('./types').PointsRecord,
+  ): Promise<void> {
+    return await this.storage.createPointsRecord(record);
+  }
+
+  async getPointsHistory(
+    username: string,
+    page?: number,
+    pageSize?: number,
+  ): Promise<import('./types').PointsHistoryResponse> {
+    return await this.storage.getPointsHistory(username, page, pageSize);
+  }
+
+  async getIPRewardRecord(
+    ipAddress: string,
+  ): Promise<import('./types').IPRewardRecord | null> {
+    return await this.storage.getIPRewardRecord(ipAddress);
+  }
+
+  async createIPRewardRecord(
+    record: import('./types').IPRewardRecord,
+  ): Promise<void> {
+    return await this.storage.createIPRewardRecord(record);
+  }
+
+  async getInvitationConfig(): Promise<
+    import('./types').InvitationConfig | null
+  > {
+    return await this.storage.getInvitationConfig();
+  }
+
+  async setInvitationConfig(
+    config: import('./types').InvitationConfig,
+  ): Promise<void> {
+    return await this.storage.setInvitationConfig(config);
+  }
+
+  async createUserCardKey(
+    userCardKey: import('./types').UserCardKey,
+  ): Promise<void> {
+    return await this.storage.createUserCardKey(userCardKey);
+  }
+
+  async getUserCardKeys(
+    username: string,
+  ): Promise<import('./types').UserCardKey[]> {
+    return await this.storage.getUserCardKeys(username);
+  }
+
+  async updateUserCardKey(
+    id: string,
+    updates: Partial<import('./types').UserCardKey>,
+  ): Promise<void> {
+    return await this.storage.updateUserCardKey(id, updates);
+  }
+
+  async getCardKeyByHash(
+    keyHash: string,
+  ): Promise<import('./types').UserCardKey | null> {
+    return await this.storage.getCardKeyByHash(keyHash);
+  }
 }
 
 // 导出默认实例
