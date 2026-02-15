@@ -168,14 +168,14 @@ function RegisterPageClient() {
               </p>
               <button
                 onClick={() => router.push('/login')}
-              <button
-                onClick={() => router.push('/login')}
-                className='group relative inline-flex w-full justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-orange-500 py-4 text-base font-semibold text-white shadow-2xl shadow-orange-500/40 transition-all duration-300 hover:shadow-orange-600/60 hover:-translate-y-1 overflow-hidden'
-              >
-                <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700' />
-                <ArrowRight className='h-5 w-5 relative z-10' />
-                <span className='relative z-10'>返回登录</span>
-              </button>
+               <button
+                 onClick={() => router.push('/login')}
+                 className='group relative inline-flex w-full justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 py-4 text-base font-semibold text-white shadow-2xl shadow-orange-500/40 transition-all duration-300 hover:shadow-orange-600/60 hover:-translate-y-1 overflow-hidden'
+               >
+                 <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700' />
+                 <ArrowRight className='h-5 w-5 relative z-10' />
+                 <span className='relative z-10'>返回登录</span>
+               </button>
                 <span className='absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700' />
                 <ArrowRight className='h-5 w-5 relative z-10' />
                 <span className='relative z-10'>返回登录</span>
