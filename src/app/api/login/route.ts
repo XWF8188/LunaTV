@@ -126,13 +126,35 @@ export async function POST(req: NextRequest) {
     }
 
     // 数据库 / redis 模式——校验用户名并尝试连接数据库
-    const { username, password } = await req.json();
+    const { username, password, cardKey } = await req.json();
 
     if (!username || typeof username !== 'string') {
       return NextResponse.json({ error: '用户名不能为空' }, { status: 400 });
     }
     if (!password || typeof password !== 'string') {
       return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
+    }
+
+    // 如果提供了卡密，尝试绑定
+    if (cardKey && cardKey.trim()) {
+      console.log('尝试绑定卡密:', cardKey);
+      try {
+        const bindResult = await cardKeyService.bindCardKeyToUser(
+          cardKey,
+          username,
+        );
+        console.log('卡密绑定结果:', bindResult);
+
+        if (!bindResult.success) {
+          return NextResponse.json(
+            { error: bindResult.error || '卡密绑定失败' },
+            { status: 401 },
+          );
+        }
+      } catch (error) {
+        console.error('卡密绑定异常:', error);
+        return NextResponse.json({ error: '卡密绑定失败' }, { status: 401 });
+      }
     }
 
     // 可能是站长，直接读环境变量
