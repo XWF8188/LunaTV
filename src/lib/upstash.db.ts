@@ -1602,7 +1602,7 @@ export class UpstashRedisStorage implements IStorage {
     const value = await withRetry(() => this.client.get(invitationKey));
     if (!value) return null;
 
-    return JSON.parse(value);
+    return JSON.parse(value as string);
   }
 
   async getInvitationByCode(
@@ -1616,7 +1616,7 @@ export class UpstashRedisStorage implements IStorage {
     const value = await withRetry(() => this.client.get(invitationKey));
     if (!value) return null;
 
-    return JSON.parse(value);
+    return JSON.parse(value as string);
   }
 
   async getInvitationsByInviter(
@@ -1631,7 +1631,7 @@ export class UpstashRedisStorage implements IStorage {
       const invitationKey = `invitation:${id}`;
       const value = await withRetry(() => this.client.get(invitationKey));
       if (value) {
-        invitations.push(JSON.parse(value));
+        invitations.push(JSON.parse(value as string));
       }
     }
 
@@ -1646,7 +1646,9 @@ export class UpstashRedisStorage implements IStorage {
     const value = await withRetry(() => this.client.get(key));
     if (!value) return;
 
-    const invitation: import('./types').Invitation = JSON.parse(value);
+    const invitation: import('./types').Invitation = JSON.parse(
+      value as string,
+    );
     const updated = { ...invitation, ...updates };
     await withRetry(() => this.client.set(key, JSON.stringify(updated)));
   }
@@ -1658,7 +1660,7 @@ export class UpstashRedisStorage implements IStorage {
     const value = await withRetry(() => this.client.get(key));
     if (!value) return null;
 
-    return JSON.parse(value);
+    return JSON.parse(value as string);
   }
 
   async createOrUpdateUserPoints(
@@ -1715,7 +1717,7 @@ export class UpstashRedisStorage implements IStorage {
       const key = `points_record:${id}`;
       const value = await withRetry(() => this.client.get(key));
       if (value) {
-        records.push(JSON.parse(value));
+        records.push(JSON.parse(value as string));
       }
     }
 
@@ -1738,7 +1740,7 @@ export class UpstashRedisStorage implements IStorage {
     const value = await withRetry(() => this.client.get(key));
     if (!value) return null;
 
-    return JSON.parse(value);
+    return JSON.parse(value as string);
   }
 
   async createIPRewardRecord(
@@ -1755,7 +1757,7 @@ export class UpstashRedisStorage implements IStorage {
     const value = await withRetry(() => this.client.get(key));
     if (!value) return null;
 
-    return JSON.parse(value);
+    return JSON.parse(value as string);
   }
 
   async setInvitationConfig(
@@ -1790,7 +1792,7 @@ export class UpstashRedisStorage implements IStorage {
       const key = `user_cardkey:${id}`;
       const value = await withRetry(() => this.client.get(key));
       if (value) {
-        cardKeys.push(JSON.parse(value));
+        cardKeys.push(JSON.parse(value as string));
       }
     }
 
@@ -1805,7 +1807,7 @@ export class UpstashRedisStorage implements IStorage {
     const value = await withRetry(() => this.client.get(key));
     if (!value) return;
 
-    const cardKey: import('./types').UserCardKey = JSON.parse(value);
+    const cardKey: import('./types').UserCardKey = JSON.parse(value as string);
     const updated = { ...cardKey, ...updates };
     await withRetry(() => this.client.set(key, JSON.stringify(updated)));
   }
@@ -1821,7 +1823,7 @@ export class UpstashRedisStorage implements IStorage {
     const value = await withRetry(() => this.client.get(key));
     if (!value) return null;
 
-    return JSON.parse(value);
+    return JSON.parse(value as string);
   }
 }
 
