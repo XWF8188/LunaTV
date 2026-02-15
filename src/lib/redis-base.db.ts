@@ -1663,37 +1663,52 @@ export abstract class BaseRedisStorage implements IStorage {
     info: UserCardKeyData,
   ): Promise<void> {
     console.log('updateUserCardKeyInfo - userName:', userName, 'info:', info);
-    const config = await this.getAdminConfig();
-    if (!config) {
-      console.warn(
-        'Admin config not found, skipping update to AdminConfig.Users',
+
+    // 直接更新 Redis Hash 中的 cardKey
+    await this.withRetry(() =>
+      this.client.hSet(this.userInfoKey(userName), {
+        cardKey: JSON.stringify(info),
+      }),
+    );
+    console.log('updateUserCardKeyInfo - cardKey updated in Hash');
+
+    // 尝试更新 AdminConfig.Users（不阻塞主流程）
+    try {
+      const config = await this.getAdminConfig();
+      if (!config) {
+        console.warn(
+          'Admin config not found, skipping update to AdminConfig.Users',
+        );
+        return;
+      }
+
+      const userIndex = config.UserConfig.Users.findIndex(
+        (u) => u.username === userName,
       );
-      // 不抛出错误，继续更新用户信息
-      return;
+      console.log(
+        'updateUserCardKeyInfo - userIndex:',
+        userIndex,
+        'total users:',
+        config.UserConfig.Users.length,
+      );
+      if (userIndex === -1) {
+        console.warn('User not found in AdminConfig.Users, skipping update');
+        return;
+      }
+
+      config.UserConfig.Users[userIndex].cardKey = info;
+      console.log(
+        'updateUserCardKeyInfo - updated config:',
+        config.UserConfig.Users[userIndex].cardKey,
+      );
+
+      await this.setAdminConfig(config);
+    } catch (error) {
+      console.warn(
+        'updateUserCardKeyInfo - 更新 AdminConfig.Users 失败:',
+        error,
+      );
     }
-
-    const userIndex = config.UserConfig.Users.findIndex(
-      (u) => u.username === userName,
-    );
-    console.log(
-      'updateUserCardKeyInfo - userIndex:',
-      userIndex,
-      'total users:',
-      config.UserConfig.Users.length,
-    );
-    if (userIndex === -1) {
-      console.warn('User not found in AdminConfig.Users, skipping update');
-      // 不抛出错误，继续更新用户信息
-      return;
-    }
-
-    config.UserConfig.Users[userIndex].cardKey = info;
-    console.log(
-      'updateUserCardKeyInfo - updated config:',
-      config.UserConfig.Users[userIndex].cardKey,
-    );
-
-    await this.setAdminConfig(config);
   }
 
   async getFullUserCardKey(userName: string): Promise<UserCardKeyInfo | null> {
@@ -1701,7 +1716,30 @@ export abstract class BaseRedisStorage implements IStorage {
     const userCardKeyInfo = await this.getUserCardKeyInfo(userName);
     console.log('getFullUserCardKey - userCardKeyInfo:', userCardKeyInfo);
     if (!userCardKeyInfo) {
-      return null;
+      // 如果 AdminConfig.Users 中找不到，尝试从 Redis Hash 中读取
+      console.log(
+        'getFullUserCardKey - AdminConfig.Users 中找不到，尝试从 Hash 读取',
+      );
+      const userInfo = await this.withRetry(() =>
+        this.client.hGetAll(this.userInfoKey(userName)),
+      );
+      console.log('getFullUserCardKey - userInfo from hash:', userInfo);
+
+      if (!userInfo || !userInfo.cardKey) {
+        return null;
+      }
+
+      // 解析 Hash 中的 cardKey
+      try {
+        userCardKeyInfo = JSON.parse(userInfo.cardKey as string);
+        console.log(
+          'getFullUserCardKey - parsed cardKey from hash:',
+          userCardKeyInfo,
+        );
+      } catch (error) {
+        console.error('getFullUserCardKey - 解析 cardKey 失败:', error);
+        return null;
+      }
     }
 
     // 获取卡密详细信息
