@@ -148,9 +148,18 @@ export class PointsService {
     reason: string,
     relatedUser?: string,
   ): Promise<void> {
-    const userPoints = await db.getUserPoints(username);
+    let userPoints = await db.getUserPoints(username);
+
+    // 如果用户没有积分记录，创建一个
     if (!userPoints) {
-      throw new Error(`用户 ${username} 不存在`);
+      userPoints = {
+        username,
+        invitationCode: '',
+        balance: 0,
+        totalEarned: 0,
+        totalRedeemed: 0,
+        updatedAt: Date.now(),
+      };
     }
 
     userPoints.balance += amount;
