@@ -54,11 +54,24 @@ export class InvitationService {
   static async validateInvitationCode(
     code: string,
   ): Promise<{ valid: boolean; inviter?: string }> {
+    console.log('=== InvitationService.validateInvitationCode 开始 ===');
+    console.log('待验证的邀请码:', code);
+
     const allUsers = await db.getAllUsers();
+    console.log('系统中所有用户数:', allUsers.length);
 
     for (const username of allUsers) {
       const userPoints = await db.getUserPoints(username);
+
+      console.log(`检查用户 ${username}:`, {
+        hasPoints: !!userPoints,
+        hasInvitationCode: !!userPoints?.invitationCode,
+        invitationCode: userPoints?.invitationCode || '无',
+      });
+
       if (userPoints && userPoints.invitationCode === code) {
+        console.log('✅ 找到匹配的邀请人:', username);
+        console.log('=== InvitationService.validateInvitationCode 结束 ===');
         return {
           valid: true,
           inviter: username,
@@ -66,6 +79,8 @@ export class InvitationService {
       }
     }
 
+    console.log('❌ 未找到匹配的邀请码');
+    console.log('=== InvitationService.validateInvitationCode 结束 ===');
     return {
       valid: false,
     };
