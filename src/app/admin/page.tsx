@@ -75,6 +75,7 @@ import PerformanceMonitor from '@/components/admin/PerformanceMonitor';
 import CardKeyManager from '@/components/CardKeyManager';
 import InvitationConfig from '@/components/InvitationConfig';
 import PageLayout from '@/components/PageLayout';
+import PointsManagerModal from '@/components/PointsManagerModal';
 
 // 统一按钮样式系统
 const buttonStyles = {
@@ -476,6 +477,16 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
 
+  // 积分管理状态
+  const [showPointsModal, setShowPointsModal] = useState(false);
+  const [pointsUsername, setPointsUsername] = useState<string>('');
+  const [usersPoints, setUsersPoints] = useState<
+    Record<
+      string,
+      { balance: number; totalEarned: number; totalRedeemed: number }
+    >
+  >({});
+
   // 用户组筛选状态
   const [filterUserGroup, setFilterUserGroup] = useState<string>('all');
 
@@ -793,7 +804,6 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   const handleSelectAllUsers = useCallback(
     (checked: boolean) => {
       if (checked) {
-        // 只选择自己有权限操作的用户
         const selectableUsernames =
           config?.UserConfig?.Users?.filter(
             (user) =>
@@ -808,6 +818,40 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
     },
     [config?.UserConfig?.Users, role, currentUsername],
   );
+
+  // 获取用户积分信息
+  const fetchUsersPoints = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/points/users');
+      if (!res.ok) return;
+      const data = await res.json();
+      const pointsMap: Record<
+        string,
+        { balance: number; totalEarned: number; totalRedeemed: number }
+      > = {};
+      for (const user of data.users || []) {
+        pointsMap[user.username] = {
+          balance: user.balance,
+          totalEarned: user.totalEarned,
+          totalRedeemed: user.totalRedeemed,
+        };
+      }
+      setUsersPoints(pointsMap);
+    } catch (err) {
+      console.error('获取用户积分失败:', err);
+    }
+  }, []);
+
+  // 组件挂载时获取积分信息
+  useEffect(() => {
+    fetchUsersPoints();
+  }, [fetchUsersPoints]);
+
+  // 打开积分管理弹窗
+  const handleOpenPointsModal = (username: string) => {
+    setPointsUsername(username);
+    setShowPointsModal(true);
+  };
 
   // 批量设置用户组
   const handleBatchSetUserGroup = async (userGroup: string) => {
@@ -1674,6 +1718,12 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                   scope='col'
                   className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
                 >
+                  积分
+                </th>
+                <th
+                  scope='col'
+                  className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+                >
                   TVBox Token
                 </th>
                 <th
@@ -1851,6 +1901,19 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                               </button>
                             )}
                           </div>
+                        </td>
+                        {/* 积分列 */}
+                        <td className='px-6 py-4 whitespace-nowrap'>
+                          <button
+                            onClick={() => handleOpenPointsModal(user.username)}
+                            className='flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer'
+                            title='点击查看详情和管理积分'
+                          >
+                            <Gift className='w-4 h-4' />
+                            <span className='font-medium'>
+                              {usersPoints[user.username]?.balance ?? 0}
+                            </span>
+                          </button>
                         </td>
                         {/* TVBox Token 列 */}
                         <td className='px-6 py-4 whitespace-nowrap'>
@@ -3174,6 +3237,21 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
           </div>,
           document.body,
         )}
+
+      {/* 积分管理弹窗 */}
+      {showPointsModal && (
+        <PointsManagerModal
+          isOpen={showPointsModal}
+          onClose={() => {
+            setShowPointsModal(false);
+            setPointsUsername('');
+          }}
+          username={pointsUsername}
+          onSuccess={() => {
+            fetchUsersPoints();
+          }}
+        />
+      )}
 
       {/* TVBox Token 管理弹窗 */}
       {showTVBoxTokenModal &&
