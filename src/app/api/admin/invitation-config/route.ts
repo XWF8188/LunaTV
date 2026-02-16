@@ -23,6 +23,18 @@ export async function GET(request: NextRequest) {
     }
 
     const config = await db.getInvitationConfig();
+
+    // 如果没有配置，返回默认配置
+    if (!config) {
+      const defaultConfig = {
+        enabled: true,
+        rewardPoints: 100,
+        redeemThreshold: 300,
+        cardKeyType: 'week' as const,
+      };
+      return NextResponse.json(defaultConfig);
+    }
+
     return NextResponse.json(config);
   } catch (error) {
     console.error('获取邀请配置失败:', error);
