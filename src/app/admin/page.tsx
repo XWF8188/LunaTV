@@ -35,6 +35,7 @@ import {
   ExternalLink,
   FileText,
   FolderOpen,
+  Gift,
   KeyRound,
   Settings,
   Shield,
