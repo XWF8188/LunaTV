@@ -2,7 +2,14 @@
 
 'use client';
 
-import { Gift, RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import {
+  Gift,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Home,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface PointsHistory {
@@ -109,13 +116,23 @@ export default function PointsExchangePage() {
   return (
     <div className='min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8'>
       <div className='max-w-4xl mx-auto'>
-        <div className='text-center mb-12'>
-          <h1 className='text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4'>
-            积分兑换
-          </h1>
-          <p className='text-lg text-gray-600 dark:text-gray-400'>
-            使用积分兑换卡密，延长账户有效期
-          </p>
+        <div className='flex items-center justify-between mb-12'>
+          <div className='text-center'>
+            <h1 className='text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4'>
+              积分兑换
+            </h1>
+            <p className='text-lg text-gray-600 dark:text-gray-400'>
+              使用积分兑换卡密，延长账户有效期
+            </p>
+          </div>
+          <button
+            type='button'
+            onClick={() => (window.location.href = '/')}
+            className='inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors'
+          >
+            <Home className='w-5 h-5 mr-2' />
+            返回首页
+          </button>
         </div>
 
         {error && (
