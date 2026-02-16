@@ -1,15 +1,17 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
-import { AdminConfig } from './admin.types';
+import { AdminConfig, UserCardKeyData } from './admin.types';
 import { KvrocksStorage } from './kvrocks.db';
 import { RedisStorage } from './redis.db';
 import {
+  CardKey,
   ContentStat,
   EpisodeSkipConfig,
   Favorite,
   IStorage,
   PlayRecord,
   PlayStatsResult,
+  UserCardKeyInfo,
   UserPlayStat,
 } from './types';
 import { UpstashRedisStorage } from './upstash.db';
@@ -66,7 +68,7 @@ export class DbManager {
   async getPlayRecord(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<PlayRecord | null> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -77,7 +79,7 @@ export class DbManager {
     userName: string,
     source: string,
     id: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -94,7 +96,7 @@ export class DbManager {
   async deletePlayRecord(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<void> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -104,7 +106,7 @@ export class DbManager {
   // 🚀 批量保存播放记录（Upstash 优化，使用 mset 只算1条命令）
   async savePlayRecordsBatch(
     userName: string,
-    records: Array<{ source: string; id: string; record: PlayRecord }>
+    records: Array<{ source: string; id: string; record: PlayRecord }>,
   ): Promise<void> {
     if (records.length === 0) return;
 
@@ -129,7 +131,7 @@ export class DbManager {
   async getFavorite(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<Favorite | null> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -140,7 +142,7 @@ export class DbManager {
     userName: string,
     source: string,
     id: string,
-    favorite: Favorite
+    favorite: Favorite,
   ): Promise<void> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -148,7 +150,7 @@ export class DbManager {
   }
 
   async getAllFavorites(
-    userName: string
+    userName: string,
   ): Promise<{ [key: string]: Favorite }> {
     incrementDbQuery();
     return this.storage.getAllFavorites(userName);
@@ -157,7 +159,7 @@ export class DbManager {
   async deleteFavorite(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<void> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -167,7 +169,7 @@ export class DbManager {
   // 🚀 批量保存收藏（Upstash 优化，使用 mset 只算1条命令）
   async saveFavoritesBatch(
     userName: string,
-    favorites: Array<{ source: string; id: string; favorite: Favorite }>
+    favorites: Array<{ source: string; id: string; favorite: Favorite }>,
   ): Promise<void> {
     if (favorites.length === 0) return;
 
@@ -191,7 +193,7 @@ export class DbManager {
   async isFavorited(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<boolean> {
     incrementDbQuery();
     const favorite = await this.getFavorite(userName, source, id);
@@ -232,11 +234,20 @@ export class DbManager {
     role: 'owner' | 'admin' | 'user' = 'user',
     tags?: string[],
     oidcSub?: string,
-    enabledApis?: string[]
+    enabledApis?: string[],
+    cardKey?: string,
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).createUserV2 === 'function') {
-      await (this.storage as any).createUserV2(userName, password, role, tags, oidcSub, enabledApis);
+      await (this.storage as any).createUserV2(
+        userName,
+        password,
+        role,
+        tags,
+        oidcSub,
+        enabledApis,
+        cardKey,
+      );
     }
   }
 
@@ -325,7 +336,7 @@ export class DbManager {
   async getSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<EpisodeSkipConfig | null> {
     incrementDbQuery();
     if (typeof (this.storage as any).getSkipConfig === 'function') {
@@ -338,7 +349,7 @@ export class DbManager {
     userName: string,
     source: string,
     id: string,
-    config: EpisodeSkipConfig
+    config: EpisodeSkipConfig,
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).setSkipConfig === 'function') {
@@ -349,7 +360,7 @@ export class DbManager {
   async deleteSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).deleteSkipConfig === 'function') {
@@ -358,7 +369,7 @@ export class DbManager {
   }
 
   async getAllSkipConfigs(
-    userName: string
+    userName: string,
   ): Promise<{ [key: string]: EpisodeSkipConfig }> {
     incrementDbQuery();
     if (typeof (this.storage as any).getAllSkipConfigs === 'function') {
@@ -371,7 +382,7 @@ export class DbManager {
   async getEpisodeSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<EpisodeSkipConfig | null> {
     incrementDbQuery();
     if (typeof (this.storage as any).getEpisodeSkipConfig === 'function') {
@@ -384,18 +395,23 @@ export class DbManager {
     userName: string,
     source: string,
     id: string,
-    config: EpisodeSkipConfig
+    config: EpisodeSkipConfig,
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).saveEpisodeSkipConfig === 'function') {
-      await (this.storage as any).saveEpisodeSkipConfig(userName, source, id, config);
+      await (this.storage as any).saveEpisodeSkipConfig(
+        userName,
+        source,
+        id,
+        config,
+      );
     }
   }
 
   async deleteEpisodeSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).deleteEpisodeSkipConfig === 'function') {
@@ -404,7 +420,7 @@ export class DbManager {
   }
 
   async getAllEpisodeSkipConfigs(
-    userName: string
+    userName: string,
   ): Promise<{ [key: string]: EpisodeSkipConfig }> {
     incrementDbQuery();
     if (typeof (this.storage as any).getAllEpisodeSkipConfigs === 'function') {
@@ -432,7 +448,11 @@ export class DbManager {
     return null;
   }
 
-  async setCache(key: string, data: any, expireSeconds?: number): Promise<void> {
+  async setCache(
+    key: string,
+    data: any,
+    expireSeconds?: number,
+  ): Promise<void> {
     incrementDbQuery();
     if (typeof this.storage.setCache === 'function') {
       await this.storage.setCache(key, data, expireSeconds);
@@ -499,7 +519,7 @@ export class DbManager {
       lastPlayTime: 0,
       recentRecords: [],
       avgWatchTime: 0,
-      mostWatchedSource: ''
+      mostWatchedSource: '',
     };
   }
 
@@ -517,22 +537,31 @@ export class DbManager {
     _userName: string,
     _source: string,
     _id: string,
-    _watchTime: number
+    _watchTime: number,
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).updatePlayStatistics === 'function') {
-      await (this.storage as any).updatePlayStatistics(_userName, _source, _id, _watchTime);
+      await (this.storage as any).updatePlayStatistics(
+        _userName,
+        _source,
+        _id,
+        _watchTime,
+      );
     }
   }
 
   async updateUserLoginStats(
     userName: string,
     loginTime: number,
-    isFirstLogin?: boolean
+    isFirstLogin?: boolean,
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).updateUserLoginStats === 'function') {
-      await (this.storage as any).updateUserLoginStats(userName, loginTime, isFirstLogin);
+      await (this.storage as any).updateUserLoginStats(
+        userName,
+        loginTime,
+        isFirstLogin,
+      );
     }
   }
 
@@ -548,6 +577,224 @@ export class DbManager {
   isStatsSupported(): boolean {
     const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
     return storageType !== 'localstorage';
+  }
+
+  // ============ 卡密系统相关方法 ============
+
+  async createCardKey(cardKey: CardKey): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).createCardKey === 'function') {
+      await (this.storage as any).createCardKey(cardKey);
+    }
+  }
+
+  async getCardKey(keyHash: string): Promise<CardKey | null> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getCardKey === 'function') {
+      return (this.storage as any).getCardKey(keyHash);
+    }
+    return null;
+  }
+
+  async getAllCardKeys(): Promise<CardKey[]> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getAllCardKeys === 'function') {
+      return (this.storage as any).getAllCardKeys();
+    }
+    return [];
+  }
+
+  async updateCardKey(
+    keyHash: string,
+    updates: Partial<CardKey>,
+  ): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).updateCardKey === 'function') {
+      await (this.storage as any).updateCardKey(keyHash, updates);
+    }
+  }
+
+  async deleteCardKey(keyHash: string): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).deleteCardKey === 'function') {
+      await (this.storage as any).deleteCardKey(keyHash);
+    }
+  }
+
+  async getUserCardKeyInfo(userName: string): Promise<UserCardKeyData | null> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).getUserCardKeyInfo === 'function') {
+      return (this.storage as any).getUserCardKeyInfo(userName);
+    }
+    return null;
+  }
+
+  async updateUserCardKeyInfo(
+    userName: string,
+    info: UserCardKeyData,
+  ): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any).updateUserCardKeyInfo === 'function') {
+      await (this.storage as any).updateUserCardKeyInfo(userName, info);
+    }
+  }
+
+  async getUserCardKey(userName: string): Promise<UserCardKeyInfo | null> {
+    incrementDbQuery();
+    console.log('db.getUserCardKey - userName:', userName);
+    console.log(
+      'db.getUserCardKey - has getFullUserCardKey:',
+      typeof (this.storage as any).getFullUserCardKey === 'function',
+    );
+
+    if (typeof (this.storage as any).getFullUserCardKey === 'function') {
+      const result = (this.storage as any).getFullUserCardKey(userName);
+      console.log(
+        'db.getUserCardKey - result from getFullUserCardKey:',
+        result,
+      );
+      return result;
+    }
+
+    const cardKeyInfo = await this.getUserCardKeyInfo(userName);
+    console.log(
+      'db.getUserCardKey - cardKeyInfo from getUserCardKeyInfo:',
+      cardKeyInfo,
+    );
+
+    if (!cardKeyInfo) {
+      return null;
+    }
+
+    const now = Date.now();
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const daysRemaining = Math.ceil((cardKeyInfo.expiresAt - now) / msPerDay);
+
+    const result = {
+      boundKey: cardKeyInfo.boundKey,
+      expiresAt: cardKeyInfo.expiresAt,
+      boundAt: cardKeyInfo.boundAt,
+      daysRemaining,
+      isExpiring: daysRemaining <= 30,
+      isExpired: daysRemaining <= 0,
+    };
+    console.log('db.getUserCardKey - fallback result:', result);
+
+    return result;
+  }
+
+  async isUserCardKeyExpired(userName: string): Promise<boolean> {
+    incrementDbQuery();
+    const cardKeyInfo = await this.getUserCardKey(userName);
+    return cardKeyInfo ? cardKeyInfo.isExpired : false;
+  }
+
+  // ============ 邀请奖励系统相关方法 ============
+  async createInvitation(
+    invitation: import('./types').Invitation,
+  ): Promise<void> {
+    return await this.storage.createInvitation(invitation);
+  }
+
+  async getInvitationByInvitee(
+    invitee: string,
+  ): Promise<import('./types').Invitation | null> {
+    return await this.storage.getInvitationByInvitee(invitee);
+  }
+
+  async getInvitationByCode(
+    code: string,
+  ): Promise<import('./types').Invitation | null> {
+    return await this.storage.getInvitationByCode(code);
+  }
+
+  async getInvitationsByInviter(
+    inviter: string,
+  ): Promise<import('./types').Invitation[]> {
+    return await this.storage.getInvitationsByInviter(inviter);
+  }
+
+  async updateInvitation(
+    id: string,
+    updates: Partial<import('./types').Invitation>,
+  ): Promise<void> {
+    return await this.storage.updateInvitation(id, updates);
+  }
+
+  async getUserPoints(
+    username: string,
+  ): Promise<import('./types').UserPoints | null> {
+    return await this.storage.getUserPoints(username);
+  }
+
+  async createOrUpdateUserPoints(
+    username: string,
+    updates: Partial<import('./types').UserPoints>,
+  ): Promise<void> {
+    return await this.storage.createOrUpdateUserPoints(username, updates);
+  }
+
+  async createPointsRecord(
+    record: import('./types').PointsRecord,
+  ): Promise<void> {
+    return await this.storage.createPointsRecord(record);
+  }
+
+  async getPointsHistory(
+    username: string,
+    page?: number,
+    pageSize?: number,
+  ): Promise<import('./types').PointsHistoryResponse> {
+    return await this.storage.getPointsHistory(username, page, pageSize);
+  }
+
+  async getIPRewardRecord(
+    ipAddress: string,
+  ): Promise<import('./types').IPRewardRecord | null> {
+    return await this.storage.getIPRewardRecord(ipAddress);
+  }
+
+  async createIPRewardRecord(
+    record: import('./types').IPRewardRecord,
+  ): Promise<void> {
+    return await this.storage.createIPRewardRecord(record);
+  }
+
+  async getInvitationConfig(): Promise<
+    import('./types').InvitationConfig | null
+  > {
+    return await this.storage.getInvitationConfig();
+  }
+
+  async setInvitationConfig(
+    config: import('./types').InvitationConfig,
+  ): Promise<void> {
+    return await this.storage.setInvitationConfig(config);
+  }
+
+  async createUserCardKey(
+    userCardKey: import('./types').UserCardKey,
+  ): Promise<void> {
+    return await this.storage.createUserCardKey(userCardKey);
+  }
+
+  async getUserCardKeys(
+    username: string,
+  ): Promise<import('./types').UserCardKey[]> {
+    return await this.storage.getUserCardKeys(username);
+  }
+
+  async updateUserCardKey(
+    id: string,
+    updates: Partial<import('./types').UserCardKey>,
+  ): Promise<void> {
+    return await this.storage.updateUserCardKey(id, updates);
+  }
+
+  async getCardKeyByHash(
+    keyHash: string,
+  ): Promise<import('./types').UserCardKey | null> {
+    return await this.storage.getCardKeyByHash(keyHash);
   }
 }
 

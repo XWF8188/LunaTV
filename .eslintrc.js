@@ -3,6 +3,9 @@ module.exports = {
     browser: true,
     es2021: true,
     node: true,
+    production: {
+      node: true,
+    },
   },
   plugins: ['@typescript-eslint', 'simple-import-sort', 'unused-imports'],
   extends: [
@@ -14,7 +17,12 @@ module.exports = {
   ],
   rules: {
     'no-unused-vars': 'off',
-    'no-console': 'warn',
+    'no-console': [
+      'warn',
+      {
+        allow: ['warn', 'error'],
+      },
+    ],
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     'react/no-unescaped-entities': 'off',
 
@@ -46,7 +54,7 @@ module.exports = {
         groups: [
           // ext library & side effect imports
           ['^@?\\w', '^\\u0000'],
-          // {s}css files
+          // {}s)css files
           ['^.+\\.s?css$'],
           // Lib and hooks
           ['^@/lib', '^@/hooks'],

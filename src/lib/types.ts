@@ -48,10 +48,10 @@ export interface ShortDramaItem {
   score: number;
   episode_count: number;
   description?: string;
-  author?: string;        // 演员/导演信息
-  backdrop?: string;      // 高清背景图
-  vote_average?: number;  // 用户评分 (0-10)
-  tmdb_id?: number;       // TMDB ID
+  author?: string; // 演员/导演信息
+  backdrop?: string; // 高清背景图
+  vote_average?: number; // 用户评分 (0-10)
+  tmdb_id?: number; // TMDB ID
 }
 
 // 短剧解析结果数据结构
@@ -97,14 +97,14 @@ export interface IStorage {
   setPlayRecord(
     userName: string,
     key: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void>;
   getAllPlayRecords(userName: string): Promise<{ [key: string]: PlayRecord }>;
   deletePlayRecord(userName: string, key: string): Promise<void>;
   // 🚀 批量写入播放记录（Upstash 优化，使用 mset 只算1条命令）
   setPlayRecordsBatch?(
     userName: string,
-    records: { [key: string]: PlayRecord }
+    records: { [key: string]: PlayRecord },
   ): Promise<void>;
 
   // 收藏相关
@@ -115,7 +115,7 @@ export interface IStorage {
   // 🚀 批量写入收藏（Upstash 优化，使用 mset 只算1条命令）
   setFavoritesBatch?(
     userName: string,
-    favorites: { [key: string]: Favorite }
+    favorites: { [key: string]: Favorite },
   ): Promise<void>;
 
   // 用户相关
@@ -144,16 +144,18 @@ export interface IStorage {
   getSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<EpisodeSkipConfig | null>;
   setSkipConfig(
     userName: string,
     source: string,
     id: string,
-    config: EpisodeSkipConfig
+    config: EpisodeSkipConfig,
   ): Promise<void>;
   deleteSkipConfig(userName: string, source: string, id: string): Promise<void>;
-  getAllSkipConfigs(userName: string): Promise<{ [key: string]: EpisodeSkipConfig }>;
+  getAllSkipConfigs(
+    userName: string,
+  ): Promise<{ [key: string]: EpisodeSkipConfig }>;
 
   // 数据清理相关
   clearAllData(): Promise<void>;
@@ -172,15 +174,68 @@ export interface IStorage {
     userName: string,
     source: string,
     id: string,
-    watchTime: number
+    watchTime: number,
   ): Promise<void>;
 
   // 登入统计相关
   updateUserLoginStats(
     userName: string,
     loginTime: number,
-    isFirstLogin?: boolean
+    isFirstLogin?: boolean,
   ): Promise<void>;
+
+  // ============ 卡密系统相关 ============
+  // 卡密相关方法
+  createCardKey(cardKey: CardKey): Promise<void>;
+  getCardKey(keyHash: string): Promise<CardKey | null>;
+  getAllCardKeys(): Promise<CardKey[]>;
+  updateCardKey(keyHash: string, updates: Partial<CardKey>): Promise<void>;
+  deleteCardKey(keyHash: string): Promise<void>;
+  // 用户卡密信息（存储在 AdminConfig 中）
+  getUserCardKeyInfo(
+    userName: string,
+  ): Promise<import('./admin.types').UserCardKeyData | null>;
+  updateUserCardKeyInfo(
+    userName: string,
+    info: import('./admin.types').UserCardKeyData,
+  ): Promise<void>;
+
+  // ============ 邀请奖励系统相关 ============
+  // 邀请码相关
+  createInvitation(invitation: Invitation): Promise<void>;
+  getInvitationByInvitee(invitee: string): Promise<Invitation | null>;
+  getInvitationByCode(code: string): Promise<Invitation | null>;
+  getInvitationsByInviter(inviter: string): Promise<Invitation[]>;
+  updateInvitation(id: string, updates: Partial<Invitation>): Promise<void>;
+
+  // 用户积分相关
+  getUserPoints(username: string): Promise<UserPoints | null>;
+  createOrUpdateUserPoints(
+    username: string,
+    updates: Partial<UserPoints>,
+  ): Promise<void>;
+
+  // 积分历史相关
+  createPointsRecord(record: PointsRecord): Promise<void>;
+  getPointsHistory(
+    username: string,
+    page?: number,
+    pageSize?: number,
+  ): Promise<PointsHistoryResponse>;
+
+  // IP奖励记录相关
+  getIPRewardRecord(ipAddress: string): Promise<IPRewardRecord | null>;
+  createIPRewardRecord(record: IPRewardRecord): Promise<void>;
+
+  // 邀请配置相关
+  getInvitationConfig(): Promise<InvitationConfig | null>;
+  setInvitationConfig(config: InvitationConfig): Promise<void>;
+
+  // 用户拥有的卡密相关
+  createUserCardKey(userCardKey: UserCardKey): Promise<void>;
+  getUserCardKeys(username: string): Promise<UserCardKey[]>;
+  updateUserCardKey(id: string, updates: Partial<UserCardKey>): Promise<void>;
+  getCardKeyByHash(keyHash: string): Promise<UserCardKey | null>;
 }
 
 // 搜索结果数据结构
@@ -228,8 +283,8 @@ export interface DoubanItem {
   first_aired?: string;
   plot_summary?: string;
   // 🎬 Netflix风格字段
-  backdrop?: string;      // 高清背景图（用于HeroBanner）
-  trailerUrl?: string;    // 预告片视频URL
+  backdrop?: string; // 高清背景图（用于HeroBanner）
+  trailerUrl?: string; // 预告片视频URL
 }
 
 export interface DoubanResult {
@@ -412,4 +467,161 @@ export interface PersonalizedReleaseRecommendation {
     matchedPreferences: string[]; // 匹配的用户偏好
   }>;
   generatedAt: number; // 生成时间戳
+}
+
+// ============ 卡密系统相关类型 ============
+
+// 卡密有效期类型
+export type CardKeyType = 'year' | 'quarter' | 'month' | 'week';
+
+// 卡密状态
+export type CardKeyStatus = 'unused' | 'used' | 'expired';
+
+// 卡密数据结构
+export interface CardKey {
+  key: string; // 卡密密钥（明文）
+  keyHash: string; // 卡密哈希（用于验证）
+  keyType: CardKeyType; // 卡密类型
+  status: CardKeyStatus; // 卡密状态
+  createdAt: number; // 创建时间戳
+  expiresAt: number; // 过期时间戳
+  boundTo?: string; // 绑定的用户名
+  boundAt?: number; // 绑定时间戳
+}
+
+// 卡密过期提醒信息
+export interface CardKeyExpiryWarning {
+  daysRemaining: number; // 剩余天数
+  expiresAt: number; // 过期时间戳
+  isUrgent: boolean; // 是否紧急（7天内）
+}
+
+// 用户卡密信息
+export interface UserCardKeyInfo {
+  plainKey?: string; // 卡密明文（可选，用于显示）
+  boundKey: string; // 绑定的卡密（哈希值）
+  expiresAt: number; // 卡密过期时间戳
+  boundAt: number; // 绑定时间戳
+  daysRemaining: number; // 剩余天数
+  isExpiring: boolean; // 30天内过期
+  isExpired: boolean; // 是否已过期
+}
+
+// 卡密创建请求
+export interface CreateCardKeyRequest {
+  type: CardKeyType; // 卡密类型
+  count?: number; // 生成数量（默认1）
+}
+
+// 卡密创建响应
+export interface CreateCardKeyResponse {
+  keys: string[]; // 生成的卡密列表（明文，仅返回一次）
+  totalCount: number; // 总数
+  type: CardKeyType; // 卡密类型
+}
+
+// 卡密绑定请求
+export interface BindCardKeyRequest {
+  cardKey: string; // 卡密（明文）
+}
+
+// 卡密绑定响应
+export interface BindCardKeyResponse {
+  success: boolean;
+  newExpiryDate: number; // 新的过期时间
+  daysExtended: number; // 延长的天数
+}
+
+// 卡密验证结果
+export interface CardKeyValidationResult {
+  valid: boolean;
+  cardKey?: CardKey;
+  error?: string;
+}
+
+// 邀请奖励系统相关类型
+
+// 邀请关系数据结构
+export interface Invitation {
+  id: string;
+  inviter: string; // 邀请人用户名
+  invitee: string; // 被邀请人用户名
+  invitationCode: string; // 邀请码
+  ipAddress: string; // 注册IP地址
+  rewarded: boolean; // 是否已发放积分奖励
+  rewardTime?: number; // 奖励发放时间
+  createdAt: number; // 创建时间
+}
+
+// 积分记录数据结构
+export interface PointsRecord {
+  id: string;
+  username: string; // 用户名
+  type: 'earn' | 'redeem'; // 类型：获取或消费
+  amount: number; // 积分数量（正数为获取，负数为消费）
+  reason: string; // 原因描述
+  relatedUser?: string; // 相关用户（如邀请人）
+  cardKeyId?: string; // 关联的卡密ID（兑换时）
+  createdAt: number; // 创建时间
+}
+
+// 用户积分数据结构
+export interface UserPoints {
+  username: string; // 用户名（主键）
+  balance: number; // 积分余额
+  totalEarned: number; // 累计获取积分
+  totalRedeemed: number; // 累计消费积分
+  updatedAt: number; // 更新时间
+}
+
+// IP奖励记录数据结构
+export interface IPRewardRecord {
+  id: string;
+  ipAddress: string; // IP地址（主键）
+  inviter: string; // 邀请人用户名
+  invitee: string; // 被邀请人用户名
+  rewardTime: number; // 奖励时间
+}
+
+// 邀请配置数据结构
+export interface InvitationConfig {
+  rewardPoints: number; // 邀请一人获得的积分
+  redeemThreshold: number; // 兑换一周卡密所需积分
+  cardKeyType: CardKeyType; // 兑换的卡密类型（week）
+  updatedAt: number; // 配置更新时间
+}
+
+// 用户拥有的卡密数据结构
+export interface UserCardKey {
+  id: string;
+  keyHash: string; // 卡密哈希
+  username: string; // 拥有该卡密的用户名
+  type: CardKeyType; // 卡密类型
+  status: 'unused' | 'used' | 'expired'; // 卡密状态
+  source: 'invitation' | 'redeem' | 'manual'; // 卡密来源
+  plainKey?: string; // 卡密明文（用于显示，仅在创建时生成）
+  createdAt: number; // 创建时间
+  expiresAt: number; // 过期时间
+  usedAt?: number; // 使用时间
+  usedBy?: string; // 使用该卡密的用户
+  notes?: string; // 备注（如来源说明）
+}
+
+// 用户邀请信息
+export interface UserInvitationInfo {
+  code: string; // 邀请码
+  inviteLink: string; // 邀请链接
+  totalInvites: number; // 总邀请人数
+  totalRewards: number; // 总奖励积分
+}
+
+// 积分历史响应
+export interface PointsHistoryResponse {
+  records: PointsRecord[];
+  balance: number;
+  totalEarned: number;
+  totalRedeemed: number;
+  page: number;
+  pageSize: number;
+  total: number;
 }
