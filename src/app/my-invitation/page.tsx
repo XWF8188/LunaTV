@@ -37,11 +37,10 @@ export default function MyInvitationPage() {
     }
   };
 
-  const copyInvitationLink = () => {
+  const copyInvitationCode = () => {
     if (!info) return;
 
-    const link = `${window.location.origin}/register?invitationCode=${info.code}`;
-    navigator.clipboard.writeText(link).then(() => {
+    navigator.clipboard.writeText(info.code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -120,7 +119,7 @@ export default function MyInvitationPage() {
                   </div>
                   <button
                     type='button'
-                    onClick={copyInvitationLink}
+                    onClick={copyInvitationCode}
                     className='inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50'
                   >
                     {copied ? (
@@ -131,14 +130,14 @@ export default function MyInvitationPage() {
                     ) : (
                       <>
                         <Copy className='w-5 h-5 mr-2' />
-                        复制链接
+                        复制邀请码
                       </>
                     )}
                   </button>
                 </div>
 
                 <p className='mt-4 text-sm text-gray-600 dark:text-gray-400'>
-                  分享此链接给好友，好友注册后您将获得积分奖励
+                  分享此邀请码给好友，好友注册时填入邀请码，您将获得积分奖励
                 </p>
               </div>
 
