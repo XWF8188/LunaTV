@@ -190,6 +190,19 @@ export async function POST(req: NextRequest) {
           inviter, // 邀请人
         );
 
+        // 为新注册的用户生成专属邀请码
+        try {
+          const { InvitationService } = await import('@/lib/invitation-points');
+          const userInvitationCode =
+            await InvitationService.generateInvitationCode(username);
+          console.log(
+            `✓ 用户 ${username} 的专属邀请码已生成: ${userInvitationCode}`,
+          );
+        } catch (error) {
+          console.error(`生成用户 ${username} 的邀请码失败:`, error);
+          // 不影响注册流程
+        }
+
         // 处理邀请奖励
         if (inviter) {
           try {
@@ -263,6 +276,19 @@ export async function POST(req: NextRequest) {
       } else {
         // V1 注册（无卡密和无tags，保持现有行为）
         await db.registerUser(username, password);
+
+        // 为V1注册的用户也生成邀请码
+        try {
+          const { InvitationService } = await import('@/lib/invitation-points');
+          const userInvitationCode =
+            await InvitationService.generateInvitationCode(username);
+          console.log(
+            `✓ V1用户 ${username} 的专属邀请码已生成: ${userInvitationCode}`,
+          );
+        } catch (error) {
+          console.error(`生成V1用户 ${username} 的邀请码失败:`, error);
+          // 不影响注册流程
+        }
       }
 
       // 清除缓存，让 configSelfCheck 从数据库同步最新用户列表（包括 tags）
