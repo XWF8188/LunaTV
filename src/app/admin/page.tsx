@@ -72,6 +72,7 @@ import CustomAdFilterConfig from '@/components/CustomAdFilterConfig';
 import WatchRoomConfig from '@/components/WatchRoomConfig';
 import PerformanceMonitor from '@/components/admin/PerformanceMonitor';
 import CardKeyManager from '@/components/CardKeyManager';
+import InvitationConfig from '@/components/InvitationConfig';
 import PageLayout from '@/components/PageLayout';
 
 // 统一按钮样式系统
@@ -8085,6 +8086,7 @@ function AdminPageClient() {
     dataMigration: false,
     performanceMonitor: false,
     cardKeyConfig: false,
+    invitationConfig: false,
   });
 
   // 获取管理员配置
@@ -8639,6 +8641,23 @@ function AdminPageClient() {
                 onToggle={() => toggleTab('cardKeyConfig')}
               >
                 <CardKeyManager />
+              </CollapsibleTab>
+            )}
+
+            {/* 邀请配置标签 - 仅管理员可见 */}
+            {(role === 'owner' || role === 'admin') && (
+              <CollapsibleTab
+                title='邀请配置'
+                icon={
+                  <Gift
+                    size={20}
+                    className='text-purple-600 dark:text-purple-400'
+                  />
+                }
+                isExpanded={expandedTabs.invitationConfig}
+                onToggle={() => toggleTab('invitationConfig')}
+              >
+                <InvitationConfig />
               </CollapsibleTab>
             )}
           </div>
