@@ -1706,7 +1706,7 @@ export class UpstashRedisStorage implements IStorage {
     const keys = await this.client.keys(pattern);
     if (keys.length === 0) return;
 
-    const data = await this.client.get(keys[0]);
+    const data = (await this.client.get(keys[0])) as string | null;
     if (data) {
       const cardKey = JSON.parse(data);
       const updated = { ...cardKey, ...updates };
