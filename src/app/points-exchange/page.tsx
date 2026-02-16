@@ -68,7 +68,7 @@ export default function PointsExchangePage() {
         await Promise.all([
           fetch('/api/points/balance'),
           fetch('/api/points/history'),
-          fetch('/api/admin/invitation-config'),
+          fetch('/api/invitation-config'),
           fetch('/api/cardkeys/my'),
         ]);
 
