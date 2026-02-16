@@ -17,9 +17,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const cardKeys = await db.getUserCardKeys(authInfo.username);
+    const userCardKeys = await db.getUserCardKeys(authInfo.username);
+    const allCardKeys = await db.getAllCardKeys();
 
-    return NextResponse.json({ cardKeys });
+    const cardKeysWithPlainKey = userCardKeys.map((uck) => {
+      const fullCardKey = allCardKeys.find((ck) => ck.keyHash === uck.keyHash);
+      return {
+        ...uck,
+        plainKey: fullCardKey?.key,
+      };
+    });
+
+    return NextResponse.json({ cardKeys: cardKeysWithPlainKey });
   } catch (error) {
     console.error('获取用户卡密列表失败:', error);
     return NextResponse.json(
