@@ -552,6 +552,7 @@ export interface PointsRecord {
 // 用户积分
 export interface UserPoints {
   username: string;
+  invitationCode: string;
   balance: number;
   totalEarned: number;
   totalRedeemed: number;

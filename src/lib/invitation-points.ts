@@ -27,15 +27,19 @@ export class InvitationService {
   static async generateInvitationCode(username: string): Promise<string> {
     const code = generateInvitationCode();
 
-    // 检查是否已存在邀请码
+    // 检查用户是否已有积分记录
     const existingPoints = await db.getUserPoints(username);
     if (existingPoints) {
+      existingPoints.invitationCode = code;
+      existingPoints.updatedAt = Date.now();
+      await db.updateUserPoints(existingPoints);
       return code;
     }
 
     // 如果用户没有积分记录，创建一个
     const userPoints: UserPoints = {
       username,
+      invitationCode: code,
       balance: 0,
       totalEarned: 0,
       totalRedeemed: 0,
@@ -50,15 +54,20 @@ export class InvitationService {
   static async validateInvitationCode(
     code: string,
   ): Promise<{ valid: boolean; inviter?: string }> {
-    // 通过查找所有用户的积分记录来验证邀请码
-    // 实际实现中，邀请码应该存储在用户数据中
-    // 这里使用一个简化的实现：邀请码就是用户的用户名
-    const users = await db.getAllUsers();
-    const inviter = users.find((u) => u === code);
+    const allUsers = await db.getAllUsers();
+
+    for (const username of allUsers) {
+      const userPoints = await db.getUserPoints(username);
+      if (userPoints && userPoints.invitationCode === code) {
+        return {
+          valid: true,
+          inviter: username,
+        };
+      }
+    }
 
     return {
-      valid: !!inviter,
-      inviter: inviter,
+      valid: false,
     };
   }
 
@@ -90,7 +99,7 @@ export class InvitationService {
     const invitations = await db.getInvitationsByInviter(username);
 
     return {
-      code: username, // 简化实现：用户名即为邀请码
+      code: userPoints?.invitationCode || '',
       totalInvites: invitations.length,
       totalRewards: userPoints?.totalEarned || 0,
       balance: userPoints?.balance || 0,
