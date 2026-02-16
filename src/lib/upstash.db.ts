@@ -1578,7 +1578,7 @@ export class UpstashRedisStorage implements IStorage {
     userName: string,
   ): Promise<import('./types').UserPoints | null> {
     const key = `user:points:${userName}`;
-    const data = await this.client.get(key) as string | null;
+    const data = (await this.client.get(key)) as string | null;
     return data ? JSON.parse(data) : null;
   }
 
@@ -1609,7 +1609,7 @@ export class UpstashRedisStorage implements IStorage {
     invitee: string,
   ): Promise<import('./types').Invitation | null> {
     const key = `invitation:invitee:${invitee}`;
-    const data = await this.client.get(key) as string | null;
+    const data = (await this.client.get(key)) as string | null;
     return data ? JSON.parse(data) : null;
   }
 
@@ -1620,7 +1620,7 @@ export class UpstashRedisStorage implements IStorage {
     const keys = await this.client.keys(pattern);
     if (keys.length === 0) return [];
 
-    const values = await this.client.mget(keys) as (string | null)[];
+    const values = (await this.client.mget(keys)) as (string | null)[];
     return values.filter((v) => v !== null).map((v) => JSON.parse(v));
   }
 
@@ -1644,7 +1644,7 @@ export class UpstashRedisStorage implements IStorage {
     const keys = await this.client.keys(pattern);
     if (keys.length === 0) return;
 
-    const data = await this.client.get(keys[0]);
+    const data = (await this.client.get(keys[0])) as string | null;
     if (data) {
       const invitation = JSON.parse(data);
       const updated = { ...invitation, ...updates };
@@ -1656,7 +1656,7 @@ export class UpstashRedisStorage implements IStorage {
     ipAddress: string,
   ): Promise<import('./types').IPRewardRecord | null> {
     const key = `ip:reward:${ipAddress}`;
-    const data = await this.client.get(key) as string | null;
+    const data = (await this.client.get(key)) as string | null;
     return data ? JSON.parse(data) : null;
   }
 
@@ -1671,7 +1671,7 @@ export class UpstashRedisStorage implements IStorage {
     import('./types').InvitationConfig | null
   > {
     const key = 'config:invitation';
-    const data = await this.client.get(key) as string | null;
+    const data = (await this.client.get(key)) as string | null;
     return data ? JSON.parse(data) : null;
   }
 
@@ -1689,7 +1689,7 @@ export class UpstashRedisStorage implements IStorage {
     const keys = await this.client.keys(pattern);
     if (keys.length === 0) return [];
 
-    const values = await this.client.mget(keys) as (string | null)[];
+    const values = (await this.client.mget(keys)) as (string | null)[];
     return values.filter((v) => v !== null).map((v) => JSON.parse(v));
   }
 
