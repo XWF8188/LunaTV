@@ -9,6 +9,7 @@ import type {
   UserCardKey,
   UserPoints,
   UserInvitationInfo,
+  UserPointsInfo,
 } from './types';
 
 // 生成16位随机邀请码
@@ -310,5 +311,104 @@ export class PointsService {
         error: error instanceof Error ? error.message : '兑换失败，请稍后重试',
       };
     }
+  }
+
+  // 管理员调整积分
+  static async adjustPoints(
+    username: string,
+    type: 'add' | 'deduct',
+    amount: number,
+    reason: string,
+    adminUsername: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      if (amount <= 0 || !Number.isInteger(amount)) {
+        return { success: false, error: '积分数量必须为正整数' };
+      }
+
+      if (!reason || reason.trim().length === 0) {
+        return { success: false, error: '请输入调整原因' };
+      }
+
+      if (reason.length > 200) {
+        return { success: false, error: '调整原因不能超过200字符' };
+      }
+
+      let userPoints = await db.getUserPoints(username);
+
+      if (!userPoints) {
+        userPoints = {
+          username,
+          invitationCode: '',
+          balance: 0,
+          totalEarned: 0,
+          totalRedeemed: 0,
+          updatedAt: Date.now(),
+        };
+      }
+
+      if (type === 'add') {
+        userPoints.balance += amount;
+        userPoints.totalEarned += amount;
+      } else {
+        if (userPoints.balance < amount) {
+          return { success: false, error: '扣除积分不能超过用户当前余额' };
+        }
+        userPoints.balance -= amount;
+        userPoints.totalRedeemed += amount;
+      }
+
+      userPoints.updatedAt = Date.now();
+      await db.updateUserPoints(userPoints);
+
+      const record: PointsRecord = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        username,
+        type: 'admin_adjust',
+        amount: type === 'add' ? amount : -amount,
+        reason: reason.trim(),
+        adminUsername,
+        createdAt: Date.now(),
+      };
+
+      await db.addPointsRecord(record);
+
+      return { success: true };
+    } catch (error) {
+      console.error('调整积分失败:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '操作失败，请稍后重试',
+      };
+    }
+  }
+
+  // 获取所有用户的积分信息
+  static async getAllUsersPoints(): Promise<UserPointsInfo[]> {
+    const allUsers = await db.getAllUsers();
+    const usersPoints: UserPointsInfo[] = [];
+
+    for (const username of allUsers) {
+      const points = await db.getUserPoints(username);
+      usersPoints.push({
+        username,
+        balance: points?.balance || 0,
+        totalEarned: points?.totalEarned || 0,
+        totalRedeemed: points?.totalRedeemed || 0,
+      });
+    }
+
+    return usersPoints;
+  }
+
+  // 获取用户积分详情
+  static async getUserPointsInfo(username: string): Promise<UserPointsInfo> {
+    const points = await db.getUserPoints(username);
+    return {
+      username,
+      balance: points?.balance || 0,
+      totalEarned: points?.totalEarned || 0,
+      totalRedeemed: points?.totalRedeemed || 0,
+    };
   }
 }

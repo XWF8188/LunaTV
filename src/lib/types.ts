@@ -535,7 +535,7 @@ export interface CardKeyValidationResult {
 // ============ 积分和邀请系统相关类型 ============
 
 // 积分记录类型
-export type PointsRecordType = 'earn' | 'redeem';
+export type PointsRecordType = 'earn' | 'redeem' | 'admin_adjust';
 
 // 积分记录
 export interface PointsRecord {
@@ -546,6 +546,7 @@ export interface PointsRecord {
   reason: string;
   relatedUser?: string;
   cardKeyId?: string;
+  adminUsername?: string;
   createdAt: number;
 }
 
@@ -595,6 +596,14 @@ export interface UserInvitationInfo {
   totalInvites: number;
   totalRewards: number;
   balance: number;
+}
+
+// 用户积分信息（用于管理员查看）
+export interface UserPointsInfo {
+  username: string;
+  balance: number;
+  totalEarned: number;
+  totalRedeemed: number;
 }
 
 // 用户卡密扩展（包含来源信息）
