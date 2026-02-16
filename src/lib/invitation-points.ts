@@ -241,12 +241,11 @@ export class PointsService {
     return await db.getPointsHistory(username, page, pageSize);
   }
 
-  // 使用积分兑换一周卡密
+  // 使用积分兑换卡密
   static async redeemForCardKey(
     username: string,
   ): Promise<{ success: boolean; cardKey?: string; error?: string }> {
     try {
-      // 获取邀请配置
       const config = await db.getInvitationConfig();
       if (!config) {
         return { success: false, error: '邀请配置未设置' };
@@ -262,16 +261,19 @@ export class PointsService {
         };
       }
 
-      // 扣除积分
-      await this.deductPoints(username, requiredPoints, '兑换一周卡密');
+      const cardKeyTypeLabels: Record<string, string> = {
+        year: '年卡',
+        quarter: '季卡',
+        month: '月卡',
+        week: '周卡',
+      };
+      const cardKeyTypeName = cardKeyTypeLabels[config.cardKeyType] || '卡密';
 
-      // 生成卡密
       const { CardKeyService } = await import('./cardkey');
       const cardKeyService = new CardKeyService();
       const result = await cardKeyService.createCardKey(config.cardKeyType);
       const cardKey = result.keys[0];
 
-      // 获取完整的卡密信息
       const allCardKeys = await db.getAllCardKeys();
       const fullCardKey = allCardKeys.find((ck) => ck.key === cardKey);
 
@@ -279,7 +281,6 @@ export class PointsService {
         throw new Error('卡密生成失败');
       }
 
-      // 创建用户卡密记录
       const userCardKey: UserCardKey = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         keyHash: fullCardKey.keyHash,
@@ -293,12 +294,12 @@ export class PointsService {
 
       await db.addUserCardKey(userCardKey);
 
-      // 更新积分记录，关联卡密
-      const history = await this.getPointsHistory(username, 1, 1);
-      if (history.length > 0) {
-        history[0].cardKeyId = userCardKey.id;
-        await db.addPointsRecord(history[0]);
-      }
+      await this.deductPointsWithCardKey(
+        username,
+        requiredPoints,
+        `兑换${cardKeyTypeName}`,
+        userCardKey.id,
+      );
 
       return {
         success: true,
@@ -311,6 +312,41 @@ export class PointsService {
         error: error instanceof Error ? error.message : '兑换失败，请稍后重试',
       };
     }
+  }
+
+  // 扣除积分并关联卡密（用于兑换，避免重复记录）
+  static async deductPointsWithCardKey(
+    username: string,
+    amount: number,
+    reason: string,
+    cardKeyId: string,
+  ): Promise<void> {
+    const userPoints = await db.getUserPoints(username);
+    if (!userPoints) {
+      throw new Error(`用户 ${username} 不存在`);
+    }
+
+    if (userPoints.balance < amount) {
+      throw new Error('积分不足');
+    }
+
+    userPoints.balance -= amount;
+    userPoints.totalRedeemed += amount;
+    userPoints.updatedAt = Date.now();
+
+    await db.updateUserPoints(userPoints);
+
+    const record: PointsRecord = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      username,
+      type: 'redeem',
+      amount: -amount,
+      reason,
+      cardKeyId,
+      createdAt: Date.now(),
+    };
+
+    await db.addPointsRecord(record);
   }
 
   // 管理员调整积分

@@ -9,12 +9,14 @@ import {
   CheckCircle,
   Clock,
   Home,
+  Copy,
+  Key,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface PointsHistory {
   id: string;
-  type: 'earn' | 'redeem';
+  type: 'earn' | 'redeem' | 'admin_adjust';
   amount: number;
   reason: string;
   relatedUser?: string;
@@ -22,23 +24,53 @@ interface PointsHistory {
   createdAt: number;
 }
 
+interface InvitationConfig {
+  enabled: boolean;
+  rewardPoints: number;
+  redeemThreshold: number;
+  cardKeyType: 'year' | 'quarter' | 'month' | 'week';
+}
+
+interface UserCardKey {
+  id: string;
+  keyHash: string;
+  type: 'year' | 'quarter' | 'month' | 'week';
+  status: 'unused' | 'used' | 'expired';
+  createdAt: number;
+  expiresAt: number;
+  plainKey?: string;
+}
+
+const CARD_KEY_TYPE_LABELS: Record<string, string> = {
+  year: '年卡',
+  quarter: '季卡',
+  month: '月卡',
+  week: '周卡',
+};
+
 export default function PointsExchangePage() {
   const [balance, setBalance] = useState(0);
   const [history, setHistory] = useState<PointsHistory[]>([]);
+  const [config, setConfig] = useState<InvitationConfig | null>(null);
+  const [userCardKeys, setUserCardKeys] = useState<UserCardKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const [balanceRes, historyRes] = await Promise.all([
-        fetch('/api/points/balance'),
-        fetch('/api/points/history'),
-      ]);
+      const [balanceRes, historyRes, configRes, cardKeysRes] =
+        await Promise.all([
+          fetch('/api/points/balance'),
+          fetch('/api/points/history'),
+          fetch('/api/invitation-config'),
+          fetch('/api/cardkeys/my'),
+        ]);
 
       if (!balanceRes.ok) {
         const errorData = await balanceRes.json();
@@ -56,9 +88,13 @@ export default function PointsExchangePage() {
 
       const balanceData = await balanceRes.json();
       const historyData = await historyRes.json();
+      const configData = await configRes.json();
+      const cardKeysData = await cardKeysRes.json();
 
       setBalance(balanceData.balance);
       setHistory(historyData.history || []);
+      setConfig(configData);
+      setUserCardKeys(cardKeysData.cardKeys || []);
     } catch (err) {
       console.error('获取数据失败:', err);
       setError(err instanceof Error ? err.message : '获取数据失败');
@@ -94,6 +130,14 @@ export default function PointsExchangePage() {
     }
   };
 
+  const handleCopyCardKey = async (cardKey: UserCardKey) => {
+    if (cardKey.plainKey) {
+      await navigator.clipboard.writeText(cardKey.plainKey);
+      setCopiedId(cardKey.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -101,6 +145,16 @@ export default function PointsExchangePage() {
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString('zh-CN');
   };
+
+  const formatExpiryDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('zh-CN');
+  };
+
+  const unusedCardKeys = userCardKeys.filter((ck) => ck.status === 'unused');
+  const redeemThreshold = config?.redeemThreshold || 300;
+  const cardKeyTypeName = config?.cardKeyType
+    ? CARD_KEY_TYPE_LABELS[config.cardKeyType]
+    : '周卡';
 
   if (loading) {
     return (
@@ -152,6 +206,64 @@ export default function PointsExchangePage() {
         )}
 
         <div className='space-y-6'>
+          {/* 未使用卡密卡片 */}
+          {unusedCardKeys.length > 0 && (
+            <div className='bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6'>
+              <div className='flex items-center gap-3 mb-6'>
+                <Key className='w-6 h-6 text-amber-600 dark:text-amber-400' />
+                <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  未使用卡密
+                </h2>
+              </div>
+              <div className='space-y-3'>
+                {unusedCardKeys.map((cardKey) => (
+                  <div
+                    key={cardKey.id}
+                    className='flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800'
+                  >
+                    <div className='flex-1'>
+                      <div className='flex items-center gap-2 mb-1'>
+                        <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                          {CARD_KEY_TYPE_LABELS[cardKey.type] || cardKey.type}
+                        </span>
+                        <span className='text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full'>
+                          未使用
+                        </span>
+                      </div>
+                      {cardKey.plainKey && (
+                        <p className='text-lg font-mono text-amber-700 dark:text-amber-300'>
+                          {cardKey.plainKey}
+                        </p>
+                      )}
+                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                        过期时间：{formatExpiryDate(cardKey.expiresAt)}
+                      </p>
+                    </div>
+                    {cardKey.plainKey && (
+                      <button
+                        type='button'
+                        onClick={() => handleCopyCardKey(cardKey)}
+                        className='ml-4 inline-flex items-center px-3 py-2 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors'
+                      >
+                        {copiedId === cardKey.id ? (
+                          <>
+                            <CheckCircle className='w-4 h-4 mr-1' />
+                            已复制
+                          </>
+                        ) : (
+                          <>
+                            <Copy className='w-4 h-4 mr-1' />
+                            复制
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 积分余额卡片 */}
           <div className='bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6'>
             <div className='flex items-center justify-between mb-6'>
@@ -186,7 +298,7 @@ export default function PointsExchangePage() {
             <button
               type='button'
               onClick={handleRedeemCardKey}
-              disabled={redeeming || balance < 300}
+              disabled={redeeming || balance < redeemThreshold}
               className='w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white font-semibold rounded-xl transition-colors disabled:opacity-50'
             >
               {redeeming ? (
@@ -197,14 +309,14 @@ export default function PointsExchangePage() {
               ) : (
                 <>
                   <Gift className='w-5 h-5 mr-2' />
-                  兑换一周卡密（需要300积分）
+                  兑换{cardKeyTypeName}（需要{redeemThreshold}积分）
                 </>
               )}
             </button>
 
-            {balance < 300 && (
+            {balance < redeemThreshold && (
               <p className='mt-4 text-center text-sm text-red-600 dark:text-red-400'>
-                积分不足，需要300积分才能兑换
+                积分不足，需要{redeemThreshold}积分才能兑换
               </p>
             )}
           </div>
@@ -237,6 +349,11 @@ export default function PointsExchangePage() {
                             ({record.relatedUser})
                           </span>
                         )}
+                        {record.type === 'admin_adjust' && (
+                          <span className='text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full'>
+                            管理员调整
+                          </span>
+                        )}
                       </div>
                       <p className='text-xs text-gray-600 dark:text-gray-400'>
                         {formatDate(record.createdAt)}
@@ -244,12 +361,12 @@ export default function PointsExchangePage() {
                     </div>
                     <div
                       className={`text-lg font-semibold ${
-                        record.type === 'earn'
+                        record.amount > 0
                           ? 'text-green-600 dark:text-green-400'
                           : 'text-red-600 dark:text-red-400'
                       }`}
                     >
-                      {record.type === 'earn' ? '+' : ''}
+                      {record.amount > 0 ? '+' : ''}
                       {record.amount}
                     </div>
                   </div>
