@@ -95,14 +95,34 @@ export class InvitationService {
   static async getUserInvitationInfo(
     username: string,
   ): Promise<UserInvitationInfo> {
-    const userPoints = await db.getUserPoints(username);
+    let userPoints = await db.getUserPoints(username);
+
+    // 如果用户没有积分记录，自动创建并生成邀请码
+    if (!userPoints) {
+      const code = generateInvitationCode();
+      userPoints = {
+        username,
+        invitationCode: code,
+        balance: 0,
+        totalEarned: 0,
+        totalRedeemed: 0,
+        updatedAt: Date.now(),
+      };
+      await db.updateUserPoints(userPoints);
+    } else if (!userPoints.invitationCode) {
+      // 如果有积分记录但没有邀请码，生成一个
+      userPoints.invitationCode = generateInvitationCode();
+      userPoints.updatedAt = Date.now();
+      await db.updateUserPoints(userPoints);
+    }
+
     const invitations = await db.getInvitationsByInviter(username);
 
     return {
-      code: userPoints?.invitationCode || '',
+      code: userPoints.invitationCode,
       totalInvites: invitations.length,
-      totalRewards: userPoints?.totalEarned || 0,
-      balance: userPoints?.balance || 0,
+      totalRewards: userPoints.totalEarned || 0,
+      balance: userPoints.balance || 0,
     };
   }
 

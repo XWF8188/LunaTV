@@ -165,7 +165,7 @@ function LoginPageClient() {
                   htmlFor='cardKey'
                   className='block text-sm font-medium text-orange-900/80 mb-2'
                 >
-                  卡密 <span className='text-orange-600'>（可选）</span>
+                  卡密
                 </label>
                 <div className='relative'>
                   <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
