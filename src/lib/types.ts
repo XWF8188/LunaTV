@@ -48,10 +48,10 @@ export interface ShortDramaItem {
   score: number;
   episode_count: number;
   description?: string;
-  author?: string;        // 演员/导演信息
-  backdrop?: string;      // 高清背景图
-  vote_average?: number;  // 用户评分 (0-10)
-  tmdb_id?: number;       // TMDB ID
+  author?: string; // 演员/导演信息
+  backdrop?: string; // 高清背景图
+  vote_average?: number; // 用户评分 (0-10)
+  tmdb_id?: number; // TMDB ID
 }
 
 // 短剧解析结果数据结构
@@ -97,14 +97,14 @@ export interface IStorage {
   setPlayRecord(
     userName: string,
     key: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void>;
   getAllPlayRecords(userName: string): Promise<{ [key: string]: PlayRecord }>;
   deletePlayRecord(userName: string, key: string): Promise<void>;
   // 🚀 批量写入播放记录（Upstash 优化，使用 mset 只算1条命令）
   setPlayRecordsBatch?(
     userName: string,
-    records: { [key: string]: PlayRecord }
+    records: { [key: string]: PlayRecord },
   ): Promise<void>;
 
   // 收藏相关
@@ -115,7 +115,7 @@ export interface IStorage {
   // 🚀 批量写入收藏（Upstash 优化，使用 mset 只算1条命令）
   setFavoritesBatch?(
     userName: string,
-    favorites: { [key: string]: Favorite }
+    favorites: { [key: string]: Favorite },
   ): Promise<void>;
 
   // 用户相关
@@ -144,16 +144,18 @@ export interface IStorage {
   getSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<EpisodeSkipConfig | null>;
   setSkipConfig(
     userName: string,
     source: string,
     id: string,
-    config: EpisodeSkipConfig
+    config: EpisodeSkipConfig,
   ): Promise<void>;
   deleteSkipConfig(userName: string, source: string, id: string): Promise<void>;
-  getAllSkipConfigs(userName: string): Promise<{ [key: string]: EpisodeSkipConfig }>;
+  getAllSkipConfigs(
+    userName: string,
+  ): Promise<{ [key: string]: EpisodeSkipConfig }>;
 
   // 数据清理相关
   clearAllData(): Promise<void>;
@@ -172,15 +174,61 @@ export interface IStorage {
     userName: string,
     source: string,
     id: string,
-    watchTime: number
+    watchTime: number,
   ): Promise<void>;
 
   // 登入统计相关
   updateUserLoginStats(
     userName: string,
     loginTime: number,
-    isFirstLogin?: boolean
+    isFirstLogin?: boolean,
   ): Promise<void>;
+
+  // ============ 卡密系统相关 ============
+  // 卡密相关方法
+  createCardKey(cardKey: CardKey): Promise<void>;
+  getCardKey(keyHash: string): Promise<CardKey | null>;
+  getAllCardKeys(): Promise<CardKey[]>;
+  updateCardKey(keyHash: string, updates: Partial<CardKey>): Promise<void>;
+  deleteCardKey(keyHash: string): Promise<void>;
+  // 用户卡密信息（存储在 AdminConfig 中）
+  getUserCardKeyInfo(
+    userName: string,
+  ): Promise<import('./admin.types').UserCardKeyData | null>;
+  updateUserCardKeyInfo(
+    userName: string,
+    info: import('./admin.types').UserCardKeyData,
+  ): Promise<void>;
+
+  // ============ 积分和邀请系统相关 ============
+  // 积分相关方法
+  getUserPoints(userName: string): Promise<UserPoints | null>;
+  updateUserPoints(points: UserPoints): Promise<void>;
+  addPointsRecord(record: PointsRecord): Promise<void>;
+  getPointsHistory(
+    userName: string,
+    page?: number,
+    pageSize?: number,
+  ): Promise<PointsRecord[]>;
+
+  // 邀请相关方法
+  getInvitationByInvitee(invitee: string): Promise<Invitation | null>;
+  getInvitationsByInviter(inviter: string): Promise<Invitation[]>;
+  createInvitation(invitation: Invitation): Promise<void>;
+  updateInvitation(id: string, updates: Partial<Invitation>): Promise<void>;
+
+  // IP奖励记录
+  getIPRewardRecord(ipAddress: string): Promise<IPRewardRecord | null>;
+  createIPRewardRecord(record: IPRewardRecord): Promise<void>;
+
+  // 邀请配置
+  getInvitationConfig(): Promise<InvitationConfig | null>;
+  setInvitationConfig(config: InvitationConfig): Promise<void>;
+
+  // 用户卡密列表
+  getUserCardKeys(userName: string): Promise<UserCardKey[]>;
+  addUserCardKey(cardKey: UserCardKey): Promise<void>;
+  updateUserCardKey(id: string, updates: Partial<UserCardKey>): Promise<void>;
 }
 
 // 搜索结果数据结构
@@ -228,8 +276,8 @@ export interface DoubanItem {
   first_aired?: string;
   plot_summary?: string;
   // 🎬 Netflix风格字段
-  backdrop?: string;      // 高清背景图（用于HeroBanner）
-  trailerUrl?: string;    // 预告片视频URL
+  backdrop?: string; // 高清背景图（用于HeroBanner）
+  trailerUrl?: string; // 预告片视频URL
 }
 
 export interface DoubanResult {
@@ -412,4 +460,153 @@ export interface PersonalizedReleaseRecommendation {
     matchedPreferences: string[]; // 匹配的用户偏好
   }>;
   generatedAt: number; // 生成时间戳
+}
+
+// ============ 卡密系统相关类型 ============
+
+// 卡密有效期类型
+export type CardKeyType = 'year' | 'quarter' | 'month' | 'week';
+
+// 卡密状态
+export type CardKeyStatus = 'unused' | 'used' | 'expired';
+
+// 卡密数据结构
+export interface CardKey {
+  key: string; // 卡密密钥（明文）
+  keyHash: string; // 卡密哈希（用于验证）
+  keyType: CardKeyType; // 卡密类型
+  status: CardKeyStatus; // 卡密状态
+  createdAt: number; // 创建时间戳
+  expiresAt: number; // 过期时间戳
+  boundTo?: string; // 绑定的用户名
+  boundAt?: number; // 绑定时间戳
+}
+
+// 卡密过期提醒信息
+export interface CardKeyExpiryWarning {
+  daysRemaining: number; // 剩余天数
+  expiresAt: number; // 过期时间戳
+  isUrgent: boolean; // 是否紧急（7天内）
+}
+
+// 用户卡密信息
+export interface UserCardKeyInfo {
+  plainKey?: string; // 卡密明文（可选，用于显示）
+  boundKey: string; // 绑定的卡密（哈希值）
+  expiresAt: number; // 卡密过期时间戳
+  boundAt: number; // 绑定时间戳
+  daysRemaining: number; // 剩余天数
+  isExpiring: boolean; // 30天内过期
+  isExpired: boolean; // 是否已过期
+}
+
+// 卡密创建请求
+export interface CreateCardKeyRequest {
+  type: CardKeyType; // 卡密类型
+  count?: number; // 生成数量（默认1）
+}
+
+// 卡密创建响应
+export interface CreateCardKeyResponse {
+  keys: string[]; // 生成的卡密列表（明文，仅返回一次）
+  totalCount: number; // 总数
+  type: CardKeyType; // 卡密类型
+}
+
+// 卡密绑定请求
+export interface BindCardKeyRequest {
+  cardKey: string; // 卡密（明文）
+}
+
+// 卡密绑定响应
+export interface BindCardKeyResponse {
+  success: boolean;
+  newExpiryDate: number; // 新的过期时间
+  daysExtended: number; // 延长的天数
+}
+
+// 卡密验证结果
+export interface CardKeyValidationResult {
+  valid: boolean;
+  cardKey?: CardKey;
+  error?: string;
+}
+
+// ============ 积分和邀请系统相关类型 ============
+
+// 积分记录类型
+export type PointsRecordType = 'earn' | 'redeem';
+
+// 积分记录
+export interface PointsRecord {
+  id: string;
+  username: string;
+  type: PointsRecordType;
+  amount: number;
+  reason: string;
+  relatedUser?: string;
+  cardKeyId?: string;
+  createdAt: number;
+}
+
+// 用户积分
+export interface UserPoints {
+  username: string;
+  balance: number;
+  totalEarned: number;
+  totalRedeemed: number;
+  updatedAt: number;
+}
+
+// 邀请关系
+export interface Invitation {
+  id: string;
+  inviter: string;
+  invitee: string;
+  invitationCode: string;
+  ipAddress: string;
+  rewarded: boolean;
+  rewardTime?: number;
+  createdAt: number;
+}
+
+// IP奖励记录
+export interface IPRewardRecord {
+  id: string;
+  ipAddress: string;
+  inviter: string;
+  invitee: string;
+  rewardTime: number;
+}
+
+// 邀请配置
+export interface InvitationConfig {
+  enabled: boolean;
+  rewardPoints: number;
+  redeemThreshold: number;
+  cardKeyType: CardKeyType;
+  updatedAt: number;
+}
+
+// 用户邀请信息
+export interface UserInvitationInfo {
+  code: string;
+  totalInvites: number;
+  totalRewards: number;
+  balance: number;
+}
+
+// 用户卡密扩展（包含来源信息）
+export interface UserCardKey {
+  id: string;
+  keyHash: string;
+  username: string;
+  type: CardKeyType;
+  status: CardKeyStatus;
+  source: 'invitation' | 'redeem' | 'manual';
+  createdAt: number;
+  expiresAt: number;
+  usedAt?: number;
+  usedBy?: string;
+  notes?: string;
 }

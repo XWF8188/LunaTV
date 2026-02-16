@@ -2,7 +2,21 @@
 
 'use client';
 
-import { Cat, Clover, Film, Globe, Home, MoreHorizontal, PlaySquare, Radio, Search, Sparkles, Star, Tv, X } from 'lucide-react';
+import {
+  Cat,
+  Clover,
+  Film,
+  Globe,
+  Home,
+  MoreHorizontal,
+  PlaySquare,
+  Radio,
+  Search,
+  Sparkles,
+  Star,
+  Tv,
+  X,
+} from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -24,7 +38,10 @@ interface ModernNavProps {
   onAIButtonClick?: () => void;
 }
 
-export default function ModernNav({ showAIButton = false, onAIButtonClick }: ModernNavProps = {}) {
+export default function ModernNav({
+  showAIButton = false,
+  onAIButtonClick,
+}: ModernNavProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -37,43 +54,43 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
       icon: Home,
       label: '首页',
       href: '/',
-      color: 'text-green-500',
-      gradient: 'from-green-500 to-emerald-500',
+      color: 'text-orange-500',
+      gradient: 'from-orange-500 to-amber-500',
     },
     {
       icon: Search,
       label: '搜索',
       href: '/search',
-      color: 'text-blue-500',
-      gradient: 'from-blue-500 to-cyan-500',
+      color: 'text-amber-500',
+      gradient: 'from-amber-500 to-yellow-500',
     },
     {
       icon: Globe,
       label: '源浏览器',
       href: '/source-browser',
-      color: 'text-emerald-500',
-      gradient: 'from-emerald-500 to-green-500',
+      color: 'text-yellow-500',
+      gradient: 'from-yellow-500 to-orange-400',
     },
     {
       icon: Film,
       label: '电影',
       href: '/douban?type=movie',
       color: 'text-red-500',
-      gradient: 'from-red-500 to-pink-500',
+      gradient: 'from-red-500 to-orange-500',
     },
     {
       icon: Tv,
       label: '剧集',
       href: '/douban?type=tv',
-      color: 'text-blue-600',
-      gradient: 'from-blue-600 to-indigo-600',
+      color: 'text-orange-600',
+      gradient: 'from-orange-600 to-amber-600',
     },
     {
       icon: PlaySquare,
       label: '短剧',
       href: '/shortdrama',
-      color: 'text-purple-500',
-      gradient: 'from-purple-500 to-violet-500',
+      color: 'text-amber-600',
+      gradient: 'from-amber-600 to-orange-500',
     },
     {
       icon: Cat,
@@ -93,8 +110,8 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
       icon: Radio,
       label: '直播',
       href: '/live',
-      color: 'text-teal-500',
-      gradient: 'from-teal-500 to-cyan-500',
+      color: 'text-rose-500',
+      gradient: 'from-rose-500 to-red-500',
     },
   ]);
 
@@ -107,8 +124,8 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
           icon: Star,
           label: '自定义',
           href: '/douban?type=custom',
-          color: 'text-yellow-500',
-          gradient: 'from-yellow-500 to-amber-500',
+          color: 'text-amber-500',
+          gradient: 'from-amber-500 to-orange-500',
         },
       ]);
     }
@@ -135,80 +152,119 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
 
   return (
     <>
-      {/* Desktop Top Navigation - 2025 Disney+ Style */}
-      <nav className='hidden md:block fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50'>
+      {/* Desktop Top Navigation - Premium Luxurious Style */}
+      <nav className='hidden md:block fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-white/98 via-white/95 to-white/92 dark:from-gray-900/98 dark:via-gray-900/95 dark:to-gray-900/92 backdrop-blur-3xl border-b border-gradient-to-b from-orange-200/40 via-orange-100/30 to-amber-50/20 dark:from-orange-900/40 dark:via-orange-800/30 dark:to-amber-900/20 shadow-2xl shadow-orange-500/8 dark:shadow-orange-500/12 transition-all duration-500'>
         <div className='max-w-[2560px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20'>
-          <div className='flex items-center justify-between h-16 gap-4'>
-            {/* Logo */}
-            <FastLink href='/' className='shrink-0'>
-              <div className='text-xl font-bold bg-linear-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-green-400 dark:via-emerald-400 dark:to-teal-400 bg-clip-text text-transparent'>
-                {siteName}
+          <div className='flex items-center justify-between h-[88px] gap-4'>
+            {/* Enhanced Logo with animated gradient and glow */}
+            <FastLink href='/' className='shrink-0 group'>
+              <div className='relative'>
+                <div className='absolute -inset-2 bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400 dark:from-orange-300 dark:via-amber-300 dark:to-yellow-300 rounded-2xl blur-xl opacity-0 group-hover:opacity-40 group-hover:blur-2xl transition-all duration-500 animate-pulse-soft' />
+                <div className='relative text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 dark:from-orange-400 dark:via-amber-400 dark:to-yellow-400 transition-all duration-300 group-hover:scale-105 group-hover:drop-shadow-2xl group-hover:drop-shadow-orange-500/50 animate-gradient-shift'>
+                  {siteName}
+                </div>
               </div>
             </FastLink>
 
-            {/* Navigation Items */}
-            <div className='flex items-center justify-center gap-1 lg:gap-2 overflow-x-auto scrollbar-hide flex-1 px-4'>
+            {/* Enhanced Navigation Items with premium effects */}
+            <div className='flex items-center justify-center gap-2 lg:gap-3 overflow-x-auto scrollbar-hide flex-1 px-4'>
               {menuItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
+                const Icon = item.icon;
+                const active = isActive(item.href);
 
-              return (
-                <FastLink
-                  key={item.label}
-                  href={item.href}
-                  useTransitionNav
-                  onClick={() => setActive(item.href)}
-                  className='group relative flex items-center gap-2 px-3 lg:px-4 py-2 rounded-full transition-all duration-300 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 whitespace-nowrap shrink-0'
-                >
-                  {/* Active indicator */}
-                  {active && (
-                    <div
-                      className={`absolute inset-0 bg-linear-to-r ${item.gradient} opacity-10 rounded-full animate-pulse`}
-                    />
-                  )}
-
-                  {/* Icon */}
-                  <div className='relative'>
-                    <Icon
-                      className={`w-5 h-5 transition-all duration-300 ${
-                        active
-                          ? item.color
-                          : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200'
-                      } ${active ? 'scale-110' : 'group-hover:scale-110'}`}
-                    />
-                  </div>
-
-                  {/* Label */}
-                  <span
-                    className={`text-sm font-medium transition-all duration-300 ${
-                      active
-                        ? `${item.color} font-semibold`
-                        : 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100'
-                    }`}
+                return (
+                  <FastLink
+                    key={item.label}
+                    href={item.href}
+                    useTransitionNav
+                    onClick={() => setActive(item.href)}
+                    className='group relative flex items-center gap-3 px-5 lg:px-6 py-3 rounded-2xl transition-all duration-400 hover:bg-gradient-to-r hover:from-orange-100/80 hover:via-amber-50/80 hover:to-yellow-50/80 dark:hover:from-orange-900/30 dark:hover:via-amber-900/25 dark:hover:to-yellow-900/20 whitespace-nowrap shrink-0 hover:shadow-xl hover:shadow-orange-500/15 hover:-translate-y-0.5'
                   >
-                    {item.label}
-                  </span>
+                    {/* Premium active indicator with layered glow */}
+                    {active && (
+                      <>
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-20 rounded-2xl animate-pulse-soft`}
+                        />
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-15 rounded-2xl transition-opacity duration-400`}
+                        />
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-br from-white/40 via-white/20 to-white/10 dark:from-white/10 dark:via-white/5 dark:to-white/5 rounded-2xl`}
+                        />
+                      </>
+                    )}
 
-                  {/* Bottom active border */}
-                  {active && (
-                    <div
-                      className={`absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r ${item.gradient} rounded-full`}
-                    />
-                  )}
-                </FastLink>
-              );
-            })}
+                    {/* Enhanced Icon with multi-layer glow */}
+                    <div className='relative'>
+                      <Icon
+                        className={`w-[22px] h-[22px] transition-all duration-400 ${
+                          active
+                            ? `${item.color} drop-shadow-xl drop-shadow-orange-500/60 scale-110`
+                            : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 group-hover:scale-105 group-hover:drop-shadow-md group-hover:drop-shadow-orange-500/20'
+                        }`}
+                      />
+                      {active && (
+                        <>
+                          <div
+                            className={`absolute inset-0 bg-gradient-to-br ${item.gradient} blur-2xl opacity-50 rounded-full animate-pulse-soft`}
+                          />
+                          <div
+                            className={`absolute inset-0 bg-gradient-to-br ${item.gradient} blur-xl opacity-30 rounded-full animate-pulse`}
+                          />
+                        </>
+                      )}
+                      {/* Subtle hover glow for inactive state */}
+                      {!active && (
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-br ${item.gradient} blur-xl opacity-0 rounded-full group-hover:opacity-20 group-hover:blur-lg transition-all duration-400`}
+                        />
+                      )}
+                    </div>
+
+                    {/* Enhanced Label with better typography */}
+                    <span
+                      className={`text-sm font-semibold tracking-wide transition-all duration-400 ${
+                        active
+                          ? `${item.color} font-extrabold drop-shadow-sm`
+                          : 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 group-hover:font-semibold'
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+
+                    {/* Enhanced bottom active border with animated glow */}
+                    {active && (
+                      <>
+                        <div
+                          className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-gradient-to-r ${item.gradient} rounded-full shadow-xl shadow-orange-500/60 animate-pulse-soft`}
+                        />
+                        <div
+                          className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-16 h-1.5 bg-gradient-to-r ${item.gradient} blur-xl opacity-50 animate-pulse`}
+                        />
+                        <div
+                          className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-20 h-1.5 bg-gradient-to-r ${item.gradient} blur-2xl opacity-30`}
+                        />
+                      </>
+                    )}
+                  </FastLink>
+                );
+              })}
             </div>
 
-            {/* Right Side Actions - ✨ AI Button, Theme Toggle & User Menu */}
-            <div className='flex items-center gap-2 shrink-0'>
+            {/* Enhanced Right Side Actions with premium styling */}
+            <div className='flex items-center gap-3 shrink-0'>
               {showAIButton && onAIButtonClick && (
                 <button
                   onClick={onAIButtonClick}
-                  className='relative p-2 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 active:scale-95 transition-all duration-200 shadow-lg shadow-blue-500/30 group'
+                  className='relative p-3 rounded-xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 text-white hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 active:scale-95 transition-all duration-300 shadow-xl shadow-orange-500/40 hover:shadow-2xl hover:shadow-orange-500/50 hover:-translate-y-0.5 group'
                   aria-label='AI 推荐'
                 >
-                  <Sparkles className='h-5 w-5 group-hover:scale-110 transition-transform duration-300' />
+                  <Sparkles className='h-[22px] w-[22px] group-hover:scale-110 group-hover:rotate-12 transition-transform duration-400' />
+                  <div className='absolute inset-0 bg-gradient-to-br from-white/25 to-transparent rounded-xl' />
+                  <div className='absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-xl blur-sm' />
+                  {/* Animated ring effect */}
+                  <div className='absolute inset-0 rounded-xl ring-2 ring-orange-300/50 dark:ring-orange-400/30 animate-pulse-soft' />
                 </button>
               )}
               <ThemeToggle />
@@ -218,7 +274,7 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
         </div>
       </nav>
 
-      {/* More Menu Modal - Render outside nav to avoid z-index issues */}
+      {/* More Menu Modal - Premium Style */}
       {showMoreMenu && (
         <div
           className='md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm'
@@ -226,22 +282,24 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
           onClick={() => setShowMoreMenu(false)}
         >
           <div
-            className='absolute bottom-20 left-2 right-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-3xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-800/30 overflow-hidden'
+            className='absolute bottom-24 left-4 right-4 bg-gradient-to-br from-white/95 to-white/90 dark:from-gray-900/95 dark:to-gray-900/90 backdrop-blur-3xl rounded-3xl shadow-2xl shadow-orange-500/20 border border-orange-100/50 dark:border-orange-900/30 overflow-hidden animate-slide-in-up'
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200/50 dark:border-gray-700/50'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>全部分类</h3>
+            <div className='flex items-center justify-between px-6 py-5 border-b border-orange-100/50 dark:border-orange-900/30 bg-gradient-to-r from-orange-50/50 to-amber-50/50 dark:from-orange-900/20 dark:to-amber-900/20'>
+              <h3 className='text-lg font-bold text-gray-900 dark:text-orange-100'>
+                全部分类
+              </h3>
               <button
                 onClick={() => setShowMoreMenu(false)}
-                className='p-2 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors'
+                className='p-2.5 rounded-xl bg-white/80 dark:bg-gray-800/80 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-all duration-200 group'
               >
-                <X className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                <X className='w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-orange-500 transition-colors' />
               </button>
             </div>
 
             {/* All menu items in grid */}
-            <div className='grid grid-cols-4 gap-4 p-4'>
+            <div className='grid grid-cols-4 gap-3 p-4'>
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -255,28 +313,38 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
                       setActive(item.href);
                       setShowMoreMenu(false);
                     }}
-                    className='flex flex-col items-center gap-2 p-3 rounded-2xl transition-all duration-300 active:scale-95 hover:bg-gray-100/50 dark:hover:bg-gray-800/50'
+                    className='flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-300 active:scale-95 hover:bg-gradient-to-br hover:from-orange-50 hover:to-amber-50 dark:hover:from-orange-900/20 dark:hover:to-amber-900/20 group'
                   >
                     <div
-                      className={`flex items-center justify-center w-12 h-12 rounded-2xl ${
+                      className={`flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-300 relative ${
                         active
-                          ? `bg-linear-to-br ${item.gradient}`
-                          : 'bg-gray-100 dark:bg-gray-800'
+                          ? `bg-linear-to-br ${item.gradient} shadow-lg shadow-orange-500/30`
+                          : 'bg-gray-100 dark:bg-gray-800 group-hover:shadow-md'
                       }`}
                     >
+                      {active && (
+                        <>
+                          <div
+                            className={`absolute inset-0 bg-linear-to-br ${item.gradient} blur-xl opacity-40 animate-pulse`}
+                          />
+                          <div
+                            className={`absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl`}
+                          />
+                        </>
+                      )}
                       <Icon
-                        className={`w-6 h-6 ${
+                        className={`w-7 h-7 ${
                           active
-                            ? 'text-white'
-                            : 'text-gray-600 dark:text-gray-400'
+                            ? 'text-white drop-shadow-lg'
+                            : 'text-gray-600 dark:text-gray-400 group-hover:text-orange-500 transition-colors'
                         }`}
                       />
                     </div>
                     <span
-                      className={`text-xs font-medium ${
+                      className={`text-xs font-medium transition-colors duration-300 ${
                         active
-                          ? item.color
-                          : 'text-gray-700 dark:text-gray-300'
+                          ? `${item.color} font-semibold`
+                          : 'text-gray-700 dark:text-gray-300 group-hover:text-orange-500'
                       }`}
                     >
                       {item.label}
@@ -289,16 +357,16 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
         </div>
       )}
 
-      {/* Mobile Bottom Navigation - Netflix Full-Width Style with Light Mode Support */}
+      {/* Enhanced Mobile Bottom Navigation - Premium Style */}
       <nav
-        className='md:hidden fixed left-0 right-0 z-40 bg-white/80 dark:bg-black/95 backdrop-blur-lg border-t border-black/5 dark:border-white/5 shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/40'
+        className='md:hidden fixed left-0 right-0 z-40 bg-gradient-to-t from-white/98 via-white/95 to-white/92 dark:from-gray-900/98 dark:via-gray-900/95 dark:to-gray-900/92 backdrop-blur-3xl border-t border-gradient-to-t from-orange-200/40 via-orange-100/30 to-amber-50/20 dark:from-orange-900/40 dark:via-orange-800/30 dark:to-amber-900/20 shadow-2xl shadow-orange-500/10 dark:shadow-orange-500/15 transition-all duration-500'
         style={{
           bottom: 0,
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        <div className='flex items-center justify-around px-2 py-2'>
-          {/* Show first 4 items + More button */}
+        <div className='flex items-center justify-around px-2 py-3.5'>
+          {/* Enhanced first 4 items with premium effects */}
           {menuItems.slice(0, 4).map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -309,16 +377,42 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
                 href={item.href}
                 useTransitionNav
                 onClick={() => setActive(item.href)}
-                className='flex flex-col items-center justify-center min-w-[60px] flex-1 py-2 px-1 transition-all duration-200 active:scale-95'
+                className='flex flex-col items-center justify-center min-w-[64px] flex-1 py-3 px-2 transition-all duration-300 active:scale-95 group'
               >
-                <Icon
-                  className={`w-6 h-6 mb-1 transition-colors duration-200 ${
-                    active ? item.color : 'text-gray-600 dark:text-gray-400'
-                  }`}
-                />
+                <div className='relative mb-2'>
+                  <Icon
+                    className={`w-[26px] h-[26px] transition-all duration-300 ${
+                      active
+                        ? `${item.color} drop-shadow-2xl drop-shadow-orange-500/60 scale-110`
+                        : 'text-gray-600 dark:text-gray-400 group-hover:text-orange-500 group-hover:scale-105 group-hover:drop-shadow-md group-hover:drop-shadow-orange-500/20'
+                    }`}
+                  />
+                  {active && (
+                    <>
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-br ${item.gradient} blur-2xl opacity-60 rounded-full animate-pulse-soft`}
+                      />
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-br ${item.gradient} blur-xl opacity-40 rounded-full animate-pulse`}
+                      />
+                      <div
+                        className={`absolute -inset-1.5 bg-gradient-to-br ${item.gradient} opacity-0 rounded-full animate-ping`}
+                        style={{ animationDuration: '2.5s' }}
+                      />
+                    </>
+                  )}
+                  {/* Subtle hover glow for inactive state */}
+                  {!active && (
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${item.gradient} blur-lg opacity-0 rounded-full group-hover:opacity-20 group-hover:blur-md transition-all duration-300`}
+                    />
+                  )}
+                </div>
                 <span
-                  className={`text-[10px] font-medium transition-colors duration-200 ${
-                    active ? item.color : 'text-gray-600 dark:text-gray-400'
+                  className={`text-[11px] font-semibold tracking-wide transition-colors duration-300 ${
+                    active
+                      ? `${item.color} font-extrabold drop-shadow-sm`
+                      : 'text-gray-600 dark:text-gray-400 group-hover:text-orange-500 group-hover:font-semibold'
                   }`}
                 >
                   {item.label}
@@ -327,20 +421,26 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
             );
           })}
 
-          {/* More button */}
+          {/* Enhanced More button with premium styling */}
           <button
             onClick={() => setShowMoreMenu(true)}
-            className='flex flex-col items-center justify-center min-w-[60px] flex-1 py-2 px-1 transition-all duration-200 active:scale-95'
+            className='flex flex-col items-center justify-center min-w-[64px] flex-1 py-3 px-2 transition-all duration-300 active:scale-95 group'
           >
-            <MoreHorizontal className='w-6 h-6 mb-1 text-gray-600 dark:text-gray-400' />
-            <span className='text-[10px] font-medium text-gray-600 dark:text-gray-400'>更多</span>
+            <div className='relative mb-2'>
+              <MoreHorizontal className='w-[26px] h-[26px] text-gray-600 dark:text-gray-400 group-hover:text-orange-500 group-hover:scale-105 group-hover:drop-shadow-md group-hover:drop-shadow-orange-500/20 transition-all duration-300' />
+              {/* Subtle glow on hover */}
+              <div className='absolute inset-0 bg-gradient-to-br from-orange-500 to-amber-500 blur-lg opacity-0 rounded-full group-hover:opacity-20 group-hover:blur-md transition-all duration-300' />
+            </div>
+            <span className='text-[11px] font-semibold text-gray-600 dark:text-gray-400 group-hover:text-orange-500 group-hover:font-medium transition-colors duration-300'>
+              更多
+            </span>
           </button>
         </div>
       </nav>
 
-      {/* Spacer for fixed navigation */}
-      <div className='hidden md:block h-16' />
-      <div className='md:hidden h-20' />
+      {/* Enhanced spacer for fixed navigation */}
+      <div className='hidden md:block h-[88px]' />
+      <div className='md:hidden h-[100px]' />
     </>
   );
 }
