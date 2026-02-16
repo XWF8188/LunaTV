@@ -792,7 +792,18 @@ export class DbManager {
   > {
     incrementDbQuery();
     if (typeof (this.storage as any).getInvitationConfig === 'function') {
-      return (this.storage as any).getInvitationConfig();
+      const config = await (this.storage as any).getInvitationConfig();
+      // 如果配置不存在，返回默认配置
+      if (!config) {
+        return {
+          enabled: true,
+          rewardPoints: 100,
+          redeemThreshold: 500,
+          cardKeyType: 'one_week',
+          updatedAt: Date.now(),
+        };
+      }
+      return config;
     }
     return null;
   }
