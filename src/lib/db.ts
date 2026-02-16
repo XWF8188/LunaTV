@@ -799,7 +799,7 @@ export class DbManager {
           enabled: true,
           rewardPoints: 100,
           redeemThreshold: 500,
-          cardKeyType: 'one_week',
+          cardKeyType: 'week',
           updatedAt: Date.now(),
         };
       }
