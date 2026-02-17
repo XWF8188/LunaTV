@@ -4,7 +4,7 @@ import { AdminConfig } from '../../admin.types';
 export interface AdminConfigRow {
   id: number;
   config_key: string;
-  config_value: string;
+  config_value: string | AdminConfig;
   created_at: Date;
   updated_at: Date;
 }
@@ -18,7 +18,11 @@ export async function getAdminConfig(): Promise<AdminConfig | null> {
   if (rows.length === 0) return null;
 
   try {
-    return JSON.parse(rows[0].config_value) as AdminConfig;
+    const value = rows[0].config_value;
+    if (typeof value === 'string') {
+      return JSON.parse(value) as AdminConfig;
+    }
+    return value as AdminConfig;
   } catch (error) {
     console.error('[MySQL] Failed to parse admin config:', error);
     return null;
