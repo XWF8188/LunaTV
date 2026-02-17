@@ -220,7 +220,7 @@ CREATE TABLE IF NOT EXISTS admin_configs (
     config_value JSON NOT NULL COMMENT '配置值(JSON)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    CONSTRAINT single_row CHECK (id = 1)
+    CONSTRAINT chk_admin_config_single_row CHECK (id = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理员配置表';
 
 -- 初始化配置
@@ -277,7 +277,7 @@ CREATE TABLE IF NOT EXISTS invitation_configs (
     card_key_type ENUM('year', 'quarter', 'month', 'week') DEFAULT 'week' COMMENT '兑换卡密类型',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    CONSTRAINT single_row CHECK (id = 1)
+    CONSTRAINT chk_invitation_config_single_row CHECK (id = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='邀请配置表';
 
 -- 初始化默认配置
