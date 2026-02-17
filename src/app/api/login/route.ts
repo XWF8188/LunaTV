@@ -1,6 +1,7 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { cardKeyService } from '@/lib/cardkey';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
@@ -18,7 +19,7 @@ const STORAGE_TYPE =
 // 生成签名
 async function generateSignature(
   data: string,
-  secret: string
+  secret: string,
 ): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -30,7 +31,7 @@ async function generateSignature(
     keyData,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   // 生成签名
@@ -47,7 +48,7 @@ async function generateAuthCookie(
   username?: string,
   password?: string,
   role?: 'owner' | 'admin' | 'user',
-  includePassword = false
+  includePassword = false,
 ): Promise<string> {
   const authData: any = { role: role || 'user' };
 
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
       if (password !== envPassword) {
         return NextResponse.json(
           { ok: false, error: '密码错误' },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
         undefined,
         password,
         'user',
-        true
+        true,
       ); // localstorage 模式包含 password
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
@@ -125,13 +126,34 @@ export async function POST(req: NextRequest) {
     }
 
     // 数据库 / redis 模式——校验用户名并尝试连接数据库
-    const { username, password } = await req.json();
+    const { username, password, cardKey } = await req.json();
 
     if (!username || typeof username !== 'string') {
       return NextResponse.json({ error: '用户名不能为空' }, { status: 400 });
     }
     if (!password || typeof password !== 'string') {
       return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
+    }
+
+    // 如果提供了卡密，尝试绑定
+    let cardKeyError = null;
+    if (cardKey && cardKey.trim()) {
+      console.log('尝试绑定卡密:', cardKey);
+      try {
+        const bindResult = await cardKeyService.bindCardKeyToUser(
+          cardKey,
+          username,
+        );
+        console.log('卡密绑定结果:', bindResult);
+
+        if (!bindResult.success) {
+          cardKeyError = bindResult.error || '卡密绑定失败';
+          console.log('卡密错误:', cardKeyError);
+        }
+      } catch (error) {
+        console.error('卡密绑定异常:', error);
+        cardKeyError = '卡密绑定失败';
+      }
     }
 
     // 可能是站长，直接读环境变量
@@ -145,7 +167,7 @@ export async function POST(req: NextRequest) {
         username,
         password,
         'owner',
-        false
+        false,
       ); // 数据库模式不包含 password
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
@@ -169,24 +191,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '用户被封禁' }, { status: 401 });
     }
 
-    // 校验用户密码（V1）
-    try {
-      const pass = await db.verifyUser(username, password);
+    // 校验用户密码（V1 和 V2）
+    let pass = false;
+    let userRole = 'user';
 
-      if (!pass) {
+    try {
+      // 先尝试 V1 验证
+      pass = await db.verifyUser(username, password);
+    } catch (err) {
+      // 如果 V1 验证失败，尝试 V2 验证
+      console.log('V1 验证失败，尝试 V2 验证');
+      pass = await db.verifyUserV2(username, password);
+    }
+
+    if (!pass) {
+      return NextResponse.json({ error: '密码错误' }, { status: 401 });
+    }
+
+    // 如果卡密绑定失败，返回卡密错误
+    if (cardKeyError) {
+      return NextResponse.json({ error: cardKeyError }, { status: 401 });
+    }
+
+    // 检查卡密是否过期（管理员除外）
+    if (userRole !== 'owner' && userRole !== 'admin') {
+      const isExpired = await cardKeyService.isUserCardKeyExpired(username);
+      if (isExpired) {
         return NextResponse.json(
-          { error: '用户名或密码错误' },
-          { status: 401 }
+          { error: '卡密已过期，请在设置页面重新绑定新卡密' },
+          { status: 401 },
         );
       }
+    }
 
+    try {
       // 验证成功，设置认证cookie
       const response = NextResponse.json({ ok: true });
       const cookieValue = await generateAuthCookie(
         username,
         password,
         user?.role || 'user',
-        false
+        false,
       );
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期

@@ -1,0 +1,39 @@
+/* eslint-disable no-console */
+
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getAuthInfoFromCookie } from '@/lib/auth';
+import { db } from '@/lib/db';
+
+export const runtime = 'nodejs';
+
+export async function GET(request: NextRequest) {
+  try {
+    const authInfo = getAuthInfoFromCookie(request);
+    if (!authInfo?.username) {
+      return NextResponse.json(
+        { error: '未登录或登录已过期' },
+        { status: 401 },
+      );
+    }
+
+    const userCardKeys = await db.getUserCardKeys(authInfo.username);
+    const allCardKeys = await db.getAllCardKeys();
+
+    const cardKeysWithPlainKey = userCardKeys.map((uck) => {
+      const fullCardKey = allCardKeys.find((ck) => ck.keyHash === uck.keyHash);
+      return {
+        ...uck,
+        plainKey: fullCardKey?.key,
+      };
+    });
+
+    return NextResponse.json({ cardKeys: cardKeysWithPlainKey });
+  } catch (error) {
+    console.error('获取用户卡密列表失败:', error);
+    return NextResponse.json(
+      { error: '获取用户卡密列表失败' },
+      { status: 500 },
+    );
+  }
+}
